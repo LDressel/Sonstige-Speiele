@@ -1,8 +1,14 @@
 // Offline-Unterstützung: Dateien werden beim ersten Öffnen gespeichert,
 // danach läuft das Spiel auch ohne Internet.
-const CACHE = 'mitzi-v2';
-const FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
-self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); self.skipWaiting(); });
+const CACHE = 'mitzi-v3';
+const FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png', './ton/liste.json'];
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(async c => {
+    await c.addAll(FILES);
+    try { const l = await (await fetch('./ton/liste.json')).json(); await c.addAll(l.map(n => './ton/' + n + '.mp3')); } catch (err) {}
+  }));
+  self.skipWaiting();
+});
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;

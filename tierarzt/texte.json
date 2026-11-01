@@ -1,0 +1,109 @@
+{
+  "_info": "Alle Sprechtexte des Spiels. Die MP3s in ton/ werden daraus erzeugt (siehe werkzeuge/sprache/LIESMICH.md). 'Belle' wird automatisch wie 'Bell' gesprochen.",
+
+  "tiere": {
+    "hase":    { "hoehe": 1.30, "tempo": 0.95, "kommt": "Da kommt der kleine Hase." },
+    "hund":    { "hoehe": 1.12, "tempo": 1.00, "kommt": "Da kommt der kleine Hund." },
+    "maus":    { "hoehe": 1.45, "tempo": 0.92, "kommt": "Da kommt die kleine Maus." },
+    "baer":    { "hoehe": 0.80, "tempo": 1.12, "kommt": "Da kommt der große Bär." },
+    "fuchs":   { "hoehe": 1.05, "tempo": 1.00, "kommt": "Da kommt der Fuchs." },
+    "schwein": { "hoehe": 1.22, "tempo": 0.97, "kommt": "Da kommt das kleine Schweinchen." }
+  },
+
+  "tiersaetze": {
+    "klage_splitter": "Aua, meine Pfote tut so weh!",
+    "klage_schramme": "Aua! Ich bin hingefallen. Jetzt tut meine Pfote weh.",
+    "klage_fieber": "Mir ist so heiß. Und ich bin ganz schlapp.",
+    "klage_husten": "Hust, hust! Ich muss die ganze Zeit husten.",
+    "klage_bruch": "Aua! Ich bin vom Baum gefallen. Meine Pfote tut ganz doll weh!",
+    "klage_ohren": "Mein Ohr tut weh. Und ich höre gar nicht gut.",
+    "danke": "Danke, Belle! Jetzt geht es mir wieder gut!",
+    "mmm": "Mmmh, lecker!"
+  },
+
+  "erzaehler": {
+    "titel": "Willkommen in Belles Tierarztpraxis! Tippe auf den grünen Knopf.",
+    "tag_1": "Guten Morgen, Belle! Heute macht deine Tierarztpraxis zum ersten Mal auf. Die Tiere kommen zu dir, und du machst sie wieder gesund.",
+    "tag": "Guten Morgen, Belle! Ein neuer Tag in deiner Tierarztpraxis. Die ersten Patienten warten schon.",
+    "koffer_1": "Das ist dein Arztkoffer. Darin sind die Lupe und das Thermometer. Damit untersuchst du die Tiere.",
+
+    "neu_stetho": "Schau mal, du hast ein neues Gerät bekommen: das Stethoskop! Damit hörst du, wie das Herz klopft und wie die Lunge atmet.",
+    "neu_roentgen": "Schau mal, deine Praxis hat jetzt ein Röntgengerät! Damit kannst du in das Tier hineinschauen und die Knochen sehen.",
+    "neu_ohrenspiegel": "Schau mal, ein neues Gerät: der Ohrenspiegel! Er hat ein kleines Licht. Damit kannst du in die Ohren hineinschauen.",
+
+    "untersuchen": "Untersuche deinen Patienten. Zieh ein Gerät aus dem Koffer auf das Tier.",
+    "noch_ein_geraet": "Probier noch ein anderes Gerät aus dem Koffer.",
+    "klemmbrett": "Weißt du jetzt, was dein Patient hat? Dann tippe auf das Klemmbrett.",
+
+    "befund_lupe_splitter": "Schau mal! Da steckt ein Splitter in der Pfote.",
+    "befund_lupe_schramme": "Da ist eine Schramme an der Pfote. Und ein bisschen Schmutz ist auch drin.",
+    "befund_lupe_bruch": "Die Pfote ist dick geschwollen. Von außen sieht man aber nichts. Vielleicht ist innen etwas kaputt?",
+    "befund_lupe_ok": "Mit der Lupe sieht alles gut aus.",
+    "befund_thermo_fieber": "Oh! Das Thermometer zeigt Rot. Der Körper ist viel zu warm. Das ist Fieber!",
+    "befund_thermo_ok": "Das Thermometer zeigt Grün. Kein Fieber.",
+    "befund_stetho_husten": "Hör mal! In der Brust rasselt es. Da sitzt ein dicker Husten.",
+    "befund_stetho_ok": "Das Herz klopft ruhig, und die Lunge klingt gut.",
+    "befund_roentgen_bruch": "Auf dem Röntgenbild sieht man es: Der Knochen in der Pfote ist gebrochen!",
+    "befund_roentgen_ok": "Auf dem Röntgenbild sind alle Knochen heil.",
+    "befund_ohr_ohren": "Das Ohr ist innen ganz rot. Das ist eine Ohrenentzündung.",
+    "befund_ohr_ok": "Die Ohren sind ganz gesund.",
+
+    "diagnose": "Was hat dein Patient? Tippe auf das richtige Bild.",
+    "karte_splitter": "Splitter",
+    "karte_schramme": "Schramme",
+    "karte_fieber": "Fieber",
+    "karte_husten": "Husten",
+    "karte_bruch": "Knochenbruch",
+    "karte_ohren": "Ohrenentzündung",
+    "falsch": "Hmm, das glaube ich nicht. Untersuche lieber noch einmal genau.",
+
+    "richtig_splitter": "Richtig! Ein Splitter. Den holen wir jetzt raus.",
+    "richtig_schramme": "Richtig! Eine Schramme. Die machen wir jetzt sauber.",
+    "richtig_fieber": "Richtig! Dein Patient hat Fieber.",
+    "richtig_husten": "Richtig! Ein dicker Husten.",
+    "richtig_bruch": "Richtig! Ein Knochenbruch. Der braucht einen Gips.",
+    "richtig_ohren": "Richtig! Eine Ohrenentzündung.",
+
+    "schritt_pinzette": "Nimm die Pinzette und zieh den Splitter vorsichtig heraus.",
+    "schritt_pflaster": "Jetzt kommt ein Pflaster drauf. Zieh das Pflaster auf die Pfote.",
+    "schritt_tupfer": "Nimm den Tupfer und wisch die Schramme schön sauber. Reib hin und her.",
+    "schritt_salbe": "Jetzt etwas Salbe drauf. Die hilft beim Heilen.",
+    "schritt_fiebersaft": "Nimm den Löffel mit dem Fiebersaft und gib ihn deinem Patienten in den Mund.",
+    "schritt_waschlappen": "Ein kühler Waschlappen auf der Stirn tut gut.",
+    "schritt_hustensaft": "Ein Löffel Hustensaft hilft gegen den Husten.",
+    "schritt_schal": "Jetzt noch einen warmen Schal um den Hals.",
+    "schritt_gips": "Nimm die Gipsbinde und wickle sie um die Pfote. Reib dafür immer wieder über die Pfote.",
+    "schritt_sticker": "Toll! Zum Schluss darf dein Patient einen Sticker auf den Gips kleben.",
+    "schritt_tropfen": "Nimm die Ohrentropfen und halte sie ans Ohr. Dann tippe dreimal, für drei Tropfen.",
+    "schritt_watte": "Jetzt noch ein Wattebausch ins Ohr, damit es schön warm bleibt.",
+
+    "tippen_tropfen": "Tippe, damit ein Tropfen ins Ohr fällt.",
+    "weiter_reiben": "Weiter so, reib noch ein bisschen.",
+    "weiter_ziehen": "Gut festhalten und weiter ziehen!",
+
+    "lob_1": "Gut gemacht!",
+    "lob_2": "Super!",
+    "lob_3": "Prima!",
+    "lob_4": "Toll!",
+
+    "gesund": "Juhu, wieder gesund! Die Karte kommt in dein Patientenbuch.",
+    "neue_karte": "Eine neue Karte in deinem Patientenbuch! Tippe auf das Buch, dann erkläre ich dir mehr.",
+    "feierabend": "Super gemacht, Belle! Alle Patienten sind wieder gesund. Feierabend!",
+    "morgen": "Tippe auf den grünen Knopf, dann beginnt der nächste Tag.",
+    "morgen_neu": "Morgen gibt es in deiner Praxis etwas Neues. Tippe auf den grünen Knopf.",
+
+    "buch_auf": "Das ist dein Patientenbuch. Tippe auf eine Karte, dann erkläre ich sie dir.",
+    "buch_zu": "Diese Karte hast du noch nicht entdeckt.",
+    "buch_splitter": "Ein Splitter ist ein kleines Stück Holz, das in die Haut gepiekst hat. Man zieht ihn mit einer Pinzette heraus. Dann kommt ein Pflaster drauf, damit kein Schmutz in die Wunde kommt.",
+    "buch_schramme": "Eine Schramme bekommt man, wenn man hinfällt und sich die Haut aufschürft. Zuerst macht man sie sauber, damit keine Keime drin bleiben. Salbe und Pflaster helfen beim Heilen.",
+    "buch_fieber": "Fieber heißt: Der Körper ist zu warm. So kämpft er gegen eine Krankheit. Fiebersaft, ein kühler Waschlappen, viel Trinken und Ruhe helfen.",
+    "buch_husten": "Bei einer Erkältung sitzt oft Schleim in der Lunge. Dann muss man husten, und mit dem Stethoskop hört man ein Rasseln. Hustensaft und ein warmer Schal helfen.",
+    "buch_bruch": "Knochen sind ganz fest. Aber bei einem starken Sturz können sie brechen. Das sieht man nur auf dem Röntgenbild. Der Gips hält den Knochen ganz still, damit er wieder zusammenwachsen kann. Das dauert ein paar Wochen.",
+    "buch_ohren": "Bei einer Ohrenentzündung ist das Ohr innen rot und tut weh. Mit dem Ohrenspiegel kann man hineinschauen. Ohrentropfen helfen, dass es wieder gesund wird.",
+    "buch_lupe": "Die Lupe macht alles ganz groß. So sieht man auch winzige Dinge, wie einen Splitter.",
+    "buch_thermo": "Das Thermometer misst, wie warm der Körper ist. Zeigt es Rot, ist der Körper zu warm. Das ist Fieber.",
+    "buch_stetho": "Mit dem Stethoskop hört man in den Körper hinein: wie das Herz klopft und wie die Lunge atmet.",
+    "buch_roentgen": "Das Röntgengerät macht ein ganz besonderes Foto. Darauf sieht man die Knochen, ohne dass es wehtut.",
+    "buch_ohrenspiegel": "Der Ohrenspiegel hat ein kleines Licht und einen Trichter. Damit schaut man tief ins Ohr hinein."
+  }
+}

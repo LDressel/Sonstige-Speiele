@@ -24,7 +24,7 @@ canvas{display:block;touch-action:none}
 /* =========================================================
    Die erste Katze im Weltraum: Mitzi – ein Tablet-Spiel
    Idee und Geschichte: Lauris Tochter (5) · HTML5 Canvas
-   Mama spricht über die eingebaute Stimme des Geräts.
+   Mama spricht über fertige Sprachdateien (Ordner ton/).
    ========================================================= */
 const W = 1200, H = 900;
 const cv = document.getElementById('c');
@@ -148,39 +148,63 @@ const LINES = {
   home: 'Fast geschafft! Da ist schon die Erde.',
   end: 'Super gemacht! Mitzi und Belle sind wieder zu Hause. Du bist eine echte Weltraum-Heldin!',
 };
+/* Mamas Stimme: fertige Sprachdateien im Ordner ton/ (erzeugt aus texte.json).
+   Falls eine Datei fehlt, springt die eingebaute Stimme des Geräts ein. */
 const SY = window.speechSynthesis || null;
-const VOICE = { v: null, speaking: false, tok: 0, pend: null, last: null, rep: 0, unlocked: false, u: null };
+const VOICE = { v: null, speaking: false, tok: 0, pend: null, last: null, rep: 0, unlocked: false, u: null, src: null, out: null };
 let VGEN = 0;
+const VBUF = {};
+function vbuf(id) {
+  if (!AC) return Promise.reject(new Error('kein Audio'));
+  if (!VBUF[id]) VBUF[id] = fetch('ton/' + id + '.mp3').then(r => { if (!r.ok) throw new Error('fehlt'); return r.arrayBuffer(); })
+    .then(b => new Promise((res, rej) => AC.decodeAudioData(b, res, rej)));
+  VBUF[id].catch(() => { delete VBUF[id]; });
+  return VBUF[id];
+}
 function pickVoice() {
   if (!SY) return;
   let vs = []; try { vs = SY.getVoices().filter(v => /^de([-_]|$)/i.test(v.lang)); } catch (e) {}
-  const bad = /grandpa|grandma|opa|oma|eddy|reed|rocko|markus|yannick|thorsten|stefan|conrad|jonas|male|männ|albert|bahh|bells|boing|bubbles|cellos|jester|organ|trinoids|whisper|zarvox|wobble|superstar|news|junior|ralph|fred|kathy|killian|florian|bernd/i;
-  const good = /anna|helena|petra|marlene|katja|vicki|hedda|sandy|shelley|female|seraphina|amala|elke|louisa|gisela|ingrid|klarissa|maja|tanja|tamara|ingrid|carla/i;
   let best = null, bs = -1e9;
   for (const v of vs) {
     let s = 0;
     if (/premium/i.test(v.name)) s += 8;
-    if (/enhanced|erweitert|natural|neural|online/i.test(v.name)) s += 6;
-    if (good.test(v.name)) s += 4;
-    if (bad.test(v.name)) s -= 20;
+    if (/enhanced|erweitert|natural|neural/i.test(v.name)) s += 6;
+    if (/anna|helena|petra|marlene|katja|vicki|female/i.test(v.name)) s += 4;
     if (/de[-_]DE/i.test(v.lang)) s += 2;
-    if (v.localService) s += 1;
     if (s > bs) { bs = s; best = v; }
   }
   VOICE.v = best;
 }
 if (SY) { pickVoice(); try { SY.addEventListener('voiceschanged', pickVoice); } catch (e) { SY.onvoiceschanged = pickVoice; } }
+try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}  // Ton auch bei Stummschalter
 function voiceUnlock() {
-  if (VOICE.unlocked || !SY) return; VOICE.unlocked = true;
-  try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; u.lang = 'de-DE'; SY.speak(u); } catch (e) {}
+  if (VOICE.unlocked || !AC) return; VOICE.unlocked = true;
+  VOICE.out = AC.createGain(); VOICE.out.gain.value = 1; VOICE.out.connect(AC.destination);
+  Object.keys(LINES).forEach((id, i) => setTimeout(() => vbuf(id).catch(() => {}), i * 50));
 }
-function voiceStop() { VGEN++; VOICE.pend = null; VOICE.speaking = false; VOICE.last = null; try { if (SY) SY.cancel(); } catch (e) {} }
+function voiceHalt() {
+  const s = VOICE.src; VOICE.src = null;
+  if (s) try { s.stop(); } catch (e) {}
+  try { if (SY && (SY.speaking || SY.pending)) SY.cancel(); } catch (e) {}
+}
+function voiceStop() { VGEN++; VOICE.pend = null; VOICE.speaking = false; VOICE.last = null; voiceHalt(); }
+function speakSynth(txt, fin) {
+  if (!SY) return;
+  try {
+    const u = new SpeechSynthesisUtterance(txt);
+    u.lang = 'de-DE'; if (VOICE.v) u.voice = VOICE.v;
+    u.rate = .95; u.pitch = 1.08; u.volume = 1;
+    u.onend = fin; u.onerror = fin; VOICE.u = u;
+    SY.speak(u);
+  } catch (e) {}
+}
 /* say(id, cb, instr): Satz sprechen. cb kommt danach (auch wenn unterbrochen).
    instr = Anweisung, die der Mama-Knopf wiederholt. */
 function say(id, cb, instr) {
   const txt = LINES[id] || id;
   if (instr) { VOICE.last = id; VOICE.rep = 0; }
   if (VOICE.pend) { const p = VOICE.pend; VOICE.pend = null; p(); }
+  voiceHalt();
   const gen = VGEN, tok = ++VOICE.tok; let done = false;
   const fin = () => {
     if (done) return; done = true;
@@ -188,17 +212,16 @@ function say(id, cb, instr) {
     if (cb && gen === VGEN) cb();
   };
   VOICE.pend = fin; VOICE.speaking = true;
-  setTimeout(fin, 2200 + txt.length * 95);
-  if (!SY) return;
-  try {
-    const busy = SY.speaking || SY.pending;
-    SY.cancel();
-    const u = new SpeechSynthesisUtterance(txt);
-    u.lang = 'de-DE'; if (VOICE.v) u.voice = VOICE.v;
-    u.rate = .95; u.pitch = 1.08; u.volume = 1;
-    u.onend = fin; u.onerror = fin; VOICE.u = u;
-    if (busy) setTimeout(() => { if (VOICE.tok === tok) SY.speak(u); }, 60); else SY.speak(u);
-  } catch (e) {}
+  const safety = setTimeout(fin, 2200 + txt.length * 95);
+  vbuf(id).then(buf => {
+    if (done || VOICE.tok !== tok) return;
+    clearTimeout(safety);
+    const s = AC.createBufferSource(); s.buffer = buf; s.connect(VOICE.out || AC.destination);
+    VOICE.src = s;
+    s.onended = () => { if (VOICE.src === s) VOICE.src = null; fin(); };
+    setTimeout(fin, buf.duration * 1000 + 1200);
+    s.start();
+  }).catch(() => { if (!done && VOICE.tok === tok) speakSynth(txt, fin); });
 }
 
 /* ---------------- Farben ---------------- */

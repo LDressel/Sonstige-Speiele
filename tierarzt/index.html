@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tierarzt">
+<meta name="theme-color" content="#CFEDE4">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>Belles Tierarztpraxis</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#CFEDE4;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
+svg#st{display:block;width:100vw;height:100vh;height:100dvh;touch-action:none}
+svg text{font-family:ui-rounded,"SF Pro Rounded","Arial Rounded MT Bold","Nunito","Varela Round",system-ui,sans-serif;font-weight:800}
+.btn{cursor:pointer}
+#turn{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#CFEDE4;font:800 28px ui-rounded,system-ui,sans-serif;color:#3F5F58;text-align:center;padding:30px}
+@media (orientation:portrait) and (max-width:900px){#turn{display:flex}}
+</style>
+</head>
+<body>
+<svg id="st" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="gWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E4F5EF"/><stop offset="1" stop-color="#CBE9DF"/></linearGradient>
+  <linearGradient id="gWain" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FCEBD3"/><stop offset="1" stop-color="#F3D9B6"/></linearGradient>
+  <linearGradient id="gFloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E9BC8A"/><stop offset="1" stop-color="#D49A64"/></linearGradient>
+  <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A9DBFF"/><stop offset="1" stop-color="#E6F6FF"/></linearGradient>
+  <linearGradient id="gDoor" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#EDB479"/><stop offset="1" stop-color="#DC9A5A"/></linearGradient>
+  <linearGradient id="gTable" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#DDEBF0"/></linearGradient>
+  <linearGradient id="gMat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9FD7F0"/><stop offset="1" stop-color="#78C1E3"/></linearGradient>
+  <linearGradient id="gKit" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F58C8C"/><stop offset="1" stop-color="#E2696D"/></linearGradient>
+  <linearGradient id="gCoat" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E6EEF4"/></linearGradient>
+  <linearGradient id="gXray" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1D3A6B"/><stop offset="1" stop-color="#0E2147"/></linearGradient>
+  <linearGradient id="gCard" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFDF7"/><stop offset="1" stop-color="#FFF1DC"/></linearGradient>
+  <radialGradient id="gGlow"><stop offset="0" stop-color="#FFF6B0" stop-opacity="1"/><stop offset="1" stop-color="#FFF6B0" stop-opacity="0"/></radialGradient>
+  <radialGradient id="gEar"><stop offset="0" stop-color="#5A1E2A"/><stop offset=".45" stop-color="#D8607A"/><stop offset="1" stop-color="#F7B9C5"/></radialGradient>
+  <radialGradient id="gEarRed"><stop offset="0" stop-color="#5A0E16"/><stop offset=".45" stop-color="#E0283C"/><stop offset="1" stop-color="#FF7A7A"/></radialGradient>
+  <filter id="sh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#2F4A44" flood-opacity=".22"/></filter>
+  <filter id="shS" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#2F4A44" flood-opacity=".25"/></filter>
+  <clipPath id="clipPop"><circle cx="0" cy="0" r="150"/></clipPath>
+  <clipPath id="clipWin"><rect x="312" y="132" width="216" height="216" rx="18"/></clipPath>
+  <clipPath id="clipDoor"><rect x="64" y="318" width="152" height="462" rx="14"/></clipPath>
+</defs>
+<g id="room"></g>
+<g id="doorL"></g>
+<g id="tableL"></g>
+<g id="patWrap"><g id="pat"></g></g>
+<g id="belleL"></g>
+<g id="clipL"></g>
+<g id="fx"></g>
+<g id="hud"></g>
+<g id="tray"></g>
+<g id="pop"></g>
+<g id="modal"></g>
+<g id="drag" pointer-events="none"></g>
+</svg>
+<div id="turn">Bitte das iPad quer halten 🙂</div>
+<script>
+'use strict';
+/* =========================================================
+   Belles Tierarztpraxis – ein Tablet-Spiel
+   Idee: Lauris Tochter (5). Belle ist Tierärztin, die Tiere kommen zu ihr.
+   Grafik: SVG im Code gezeichnet. Stimme: fertige MP3s im Ordner ton/
+   ========================================================= */
+const SVGNS = 'http://www.w3.org/2000/svg';
+const $ = id => document.getElementById(id);
+const ST = $('st');
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const dist = (x1, y1, x2, y2) => Math.hypot(x2 - x1, y2 - y1);
+const easeIO = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const easeBack = t => { const c = 1.7; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+const FAST = /schnell/.test(location.search);   // nur zum Testen
+function el(tag, attrs, parent, html) {
+  const e = document.createElementNS(SVGNS, tag);
+  if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (html != null) e.innerHTML = html;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function clear(g) { while (g.firstChild) g.removeChild(g.firstChild); }
+
+/* ---------------- Ablauf-Steuerung (abbrechbar) ---------------- */
+let RUN = 0; const ABORT = { abort: true };
+function wait(ms) { const r = RUN; return new Promise((res, rej) => setTimeout(() => r === RUN ? res() : rej(ABORT), FAST ? Math.min(ms, 30) : ms)); }
+function tween(ms, fn, ease = easeIO) {
+  const r = RUN; if (FAST) ms = Math.min(ms, 40);
+  return new Promise((res, rej) => {
+    const t0 = performance.now();
+    function f(now) {
+      if (r !== RUN) return rej(ABORT);
+      const t = Math.min(1, (now - t0) / ms); fn(ease(t));
+      if (t < 1) requestAnimationFrame(f); else res();
+    }
+    requestAnimationFrame(f);
+  });
+}
+function guard(p) { return p.catch(e => { if (e !== ABORT) console.error(e); }); }
+
+/* ---------------- Audio ---------------- */
+const AC = new (window.AudioContext || window.webkitAudioContext)();
+try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}  // auch bei Stummschalter
+const MASTER = AC.createGain(); MASTER.gain.value = 0.9; MASTER.connect(AC.destination);
+const VGAIN = AC.createGain(); VGAIN.gain.value = 1.0; VGAIN.connect(MASTER);
+const SGAIN = AC.createGain(); SGAIN.gain.value = 0.45; SGAIN.connect(MASTER);
+let unlocked = false;
+function unlockAudio() {
+  if (AC.state !== 'running') AC.resume();
+  if (unlocked) return; unlocked = true;
+  try { const b = AC.createBuffer(1, 1, 22050), s = AC.createBufferSource(); s.buffer = b; s.connect(AC.destination); s.start(0); } catch (e) {}
+}
+const BUF = {};
+function getBuf(id) {
+  if (!BUF[id]) BUF[id] = fetch('ton/' + id + '.mp3').then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); })
+    .then(b => new Promise((res, rej) => AC.decodeAudioData(b, res, rej)));
+  return BUF[id];
+}
+fetch('ton/liste.json').then(r => r.json()).then(l => { let i = 0; (function next() { for (let k = 0; k < 6 && i < l.length; k++) getBuf(l[i++]).catch(() => {}); if (i < l.length) setTimeout(next, 60); })(); }).catch(() => {});
+
+const V = { src: null, tok: 0, speaking: false, who: null, last: null, rep: 0 };
+function stopVoice() { V.tok++; const s = V.src; V.src = null; V.speaking = false; if (s) try { s.stop(); } catch (e) {} }
+function say(id, opt = {}) {
+  stopVoice(); const r = RUN, tok = V.tok;
+  if (opt.instr) { V.last = id; V.rep = 0; }
+  V.who = opt.who || 'erz'; V.speaking = true; idle = 0;
+  return new Promise((res, rej) => {
+    const done = () => { if (tok === V.tok) { V.speaking = false; V.src = null; } if (r !== RUN) rej(ABORT); else res(); };
+    if (FAST) { setTimeout(done, 40); return; }
+    getBuf(id).then(buf => {
+      if (tok !== V.tok) return res();
+      const s = AC.createBufferSource(); s.buffer = buf; s.connect(VGAIN); V.src = s;
+      let fin = false; const f = () => { if (fin) return; fin = true; done(); };
+      s.onended = f; setTimeout(f, buf.duration * 1000 + 1500);
+      s.start();
+    }).catch(() => { setTimeout(done, 300); });
+  });
+}
+async function says(ids, opt) { for (const id of ids) await say(id, opt); }
+
+/* Geräusche, synthetisch */
+function tone(f, d, type = 'sine', vol = .5, f2 = null, delay = 0) {
+  const t = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.001, t + d);
+  o.connect(g); g.connect(SGAIN); o.start(t); o.stop(t + d + .05);
+}
+let NOISE = null;
+function noise(d, vol = .3, fq = 800, q = 1, delay = 0, type = 'bandpass') {
+  if (!NOISE) { NOISE = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate); const c = NOISE.getChannelData(0); for (let i = 0; i < c.length; i++) c[i] = Math.random() * 2 - 1; }
+  const t = AC.currentTime + delay, s = AC.createBufferSource(), fl = AC.createBiquadFilter(), g = AC.createGain();
+  s.buffer = NOISE; fl.type = type; fl.frequency.value = fq; fl.Q.value = q;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .02); g.gain.exponentialRampToValueAtTime(.001, t + d);
+  s.connect(fl); fl.connect(g); g.connect(SGAIN); s.start(t); s.stop(t + d + .05);
+}
+const SFX = {
+  pop() { tone(520, .09, 'sine', .4, 880); },
+  pick() { tone(660, .07, 'triangle', .3, 990); },
+  boing() { tone(300, .25, 'sine', .4, 150); tone(310, .25, 'triangle', .15, 160); },
+  ding() { tone(1320, .5, 'sine', .25); tone(1980, .4, 'sine', .1); },
+  bell() { tone(988, .7, 'sine', .3); tone(784, .9, 'sine', .3, null, .35); },
+  yay() { [523, 659, 784, 1047].forEach((f, i) => tone(f, .25, 'triangle', .28, null, i * .09)); },
+  sparkle() { for (let i = 0; i < 6; i++) tone(rnd(1400, 2600), .15, 'sine', .12, null, i * .05); },
+  whoosh() { noise(.35, .25, 1200, .8); },
+  heart() { for (let i = 0; i < 4; i++) { tone(70, .12, 'sine', .9, 50, i * .8); tone(62, .12, 'sine', .7, 45, i * .8 + .22); } },
+  rattle() { for (let i = 0; i < 4; i++) { tone(70, .12, 'sine', .7, 50, i * .8); noise(.5, .25, 500, 3, i * .8 + .1); } },
+  xray() { tone(110, 1.6, 'sawtooth', .06, 140); noise(1.6, .05, 3000, .5); },
+  drip() { tone(900, .12, 'sine', .35, 1700); },
+  rub() { noise(.12, .12, 2500, .7); },
+  gulp() { tone(260, .12, 'sine', .4, 140); tone(240, .12, 'sine', .3, 120, .18); },
+  stick() { tone(420, .06, 'square', .08, 300); tone(700, .1, 'sine', .25, null, .03); },
+  plop() { tone(200, .12, 'sine', .4, 500); },
+  hop() { tone(330, .14, 'sine', .25, 620); },
+  cough() { noise(.16, .25, 600, 1.5); noise(.16, .2, 600, 1.5, .22); },
+};
+
+/* ---------------- Spielinhalt ---------------- */
+const TIERE = {
+  hase:    { fur: '#DCC6AA', dark: '#A88B6C', light: '#F8EFE3', inner: '#F5B5C2', eyes: '#3B2A22' },
+  hund:    { fur: '#E6B276', dark: '#A8733F', light: '#FCEBD5', inner: '#8E5C33', eyes: '#3B2A22' },
+  maus:    { fur: '#C3C4D1', dark: '#8E8FA2', light: '#EEEFF5', inner: '#F6B2C0', eyes: '#2B2B36' },
+  baer:    { fur: '#AE8056', dark: '#77532F', light: '#E5C6A3', inner: '#8B623C', eyes: '#2E2017' },
+  fuchs:   { fur: '#F08E43', dark: '#B9601F', light: '#FFF5EA', inner: '#5B3A2B', eyes: '#2E2017' },
+  schwein: { fur: '#F8BDC5', dark: '#D9848F', light: '#FDE1E5', inner: '#EE9AA6', eyes: '#3A2328' },
+};
+const TIER_IDS = Object.keys(TIERE);
+// Ohr-Position (lokal) für Ohrenspiegel/Tropfen
+const OHR = { hase: [-30, -318], hund: [-74, -208], maus: [-62, -265], baer: [-56, -262], fuchs: [-46, -268], schwein: [-52, -258] };
+const ZIEL = { pfote: [-62, -32], mund: [0, -168], stirn: [0, -248], brust: [0, -98], hals: [0, -134] };
+
+const GERAETE = {
+  lupe:         { buch: 'buch_lupe', ziel: 'pfote' },
+  thermo:       { buch: 'buch_thermo', ziel: 'mund' },
+  stetho:       { buch: 'buch_stetho', ziel: 'brust', neu: 'neu_stetho' },
+  roentgen:     { buch: 'buch_roentgen', ziel: 'brust', neu: 'neu_roentgen' },
+  ohrenspiegel: { buch: 'buch_ohrenspiegel', ziel: 'ohr', neu: 'neu_ohrenspiegel' },
+};
+const GERAET_ORDER = ['lupe', 'thermo', 'stetho', 'roentgen', 'ohrenspiegel'];
+// Befund je Gerät: welche Krankheit wird damit erkannt?
+const BEFUND = {
+  lupe: { splitter: 'befund_lupe_splitter', schramme: 'befund_lupe_schramme', bruch: 'befund_lupe_bruch', _: 'befund_lupe_ok' },
+  thermo: { fieber: 'befund_thermo_fieber', _: 'befund_thermo_ok' },
+  stetho: { husten: 'befund_stetho_husten', _: 'befund_stetho_ok' },
+  roentgen: { bruch: 'befund_roentgen_bruch', _: 'befund_roentgen_ok' },
+  ohrenspiegel: { ohren: 'befund_ohr_ohren', _: 'befund_ohr_ok' },
+};
+const KRANK = {
+  splitter: { geraet: 'lupe', schritte: [{ item: 'pinzette', art: 'ziehen', ziel: 'pfote' }, { item: 'pflaster', art: 'drauf', ziel: 'pfote' }] },
+  schramme: { geraet: 'lupe', schritte: [{ item: 'tupfer', art: 'reiben', ziel: 'pfote', menge: 750 }, { item: 'salbe', art: 'drauf', ziel: 'pfote' }, { item: 'pflaster', art: 'drauf', ziel: 'pfote' }] },
+  fieber:   { geraet: 'thermo', schritte: [{ item: 'fiebersaft', art: 'loeffel', ziel: 'mund' }, { item: 'waschlappen', art: 'drauf', ziel: 'stirn' }] },
+  husten:   { geraet: 'stetho', schritte: [{ item: 'hustensaft', art: 'loeffel', ziel: 'mund' }, { item: 'schal', art: 'drauf', ziel: 'hals' }] },
+  bruch:    { geraet: 'roentgen', schritte: [{ item: 'gips', art: 'reiben', ziel: 'pfote', menge: 1100 }, { item: 'sticker', art: 'drauf', ziel: 'pfote' }] },
+  ohren:    { geraet: 'ohrenspiegel', schritte: [{ item: 'tropfen', art: 'tropfen', ziel: 'ohr', menge: 3 }, { item: 'watte', art: 'drauf', ziel: 'ohr' }] },
+};
+const KRANK_ORDER = ['splitter', 'schramme', 'fieber', 'husten', 'bruch', 'ohren'];
+// Was an welchem Praxistag neu dazukommt
+const FREI = [
+  null,
+  { geraete: ['lupe', 'thermo'], krank: ['splitter', 'schramme', 'fieber'] },
+  { geraete: ['stetho'], krank: ['husten'] },
+  { geraete: ['roentgen'], krank: ['bruch'] },
+  { geraete: ['ohrenspiegel'], krank: ['ohren'] },
+];
+function frei(day) {
+  const g = [], k = [];
+  for (let d = 1; d <= Math.min(day, FREI.length - 1); d++) { g.push(...FREI[d].geraete); k.push(...FREI[d].krank); }
+  return { geraete: g, krank: k };
+}
+function neuAmTag(day) { return day < FREI.length && day > 1 ? FREI[day] : null; }
+function makeDay(day) {
+  const f = frei(day), n = day === 1 ? 3 : day < FREI.length ? 4 : 5, list = [];
+  const neu = neuAmTag(day);
+  let lastA = null, lastK = null;
+  for (let i = 0; i < n; i++) {
+    let k;
+    if (i === 0 && neu) k = neu.krank[0];
+    else if (day === 1) k = ['splitter', 'fieber', 'schramme'][i];
+    else { do { k = pick(f.krank); } while (k === lastK && f.krank.length > 1); }
+    let a; do { a = pick(TIER_IDS); } while (a === lastA);
+    list.push({ a, k }); lastA = a; lastK = k;
+  }
+  return list;
+}
+
+/* ---------------- Spielstand ---------------- */
+const SAVEKEY = 'belle-tierarzt-v1';
+let SAVE = null;
+function newSave() { return { day: 1, pat: 0, list: null, buch: {}, geheilt: 0 }; }
+function save() { try { localStorage.setItem(SAVEKEY, JSON.stringify(SAVE)); } catch (e) {} }
+function loadSave() { try { return JSON.parse(localStorage.getItem(SAVEKEY)); } catch (e) { return null; } }
+
+/* =========================================================
+   GRAFIK
+   ========================================================= */
+function drawRoom() {
+  const g = $('room');
+  let s = '';
+  // Wand
+  s += `<rect x="0" y="0" width="1200" height="900" fill="url(#gWall)"/>`;
+  // Tapetenmuster: kleine Pfoten und Herzchen
+  for (let y = 40; y < 520; y += 90) for (let x = (y / 90 % 2) * 60 + 20; x < 1200; x += 120) {
+    if ((x + y) % 240 < 120) s += `<g transform="translate(${x},${y}) scale(.55)" fill="#B9DED2" opacity=".55">${pawShape()}</g>`;
+    else s += `<path transform="translate(${x},${y}) scale(.5)" d="M0 8 C-14 -6 -10 -18 0 -10 C10 -18 14 -6 0 8Z" fill="#F4C4CC" opacity=".5"/>`;
+  }
+  // Holzverkleidung unten an der Wand
+  s += `<rect x="0" y="520" width="1200" height="150" fill="url(#gWain)"/>`;
+  for (let x = 30; x < 1200; x += 70) s += `<rect x="${x}" y="540" width="44" height="110" rx="8" fill="#FFF4E3" opacity=".55"/>`;
+  s += `<rect x="0" y="512" width="1200" height="16" rx="6" fill="#F1C995"/><rect x="0" y="512" width="1200" height="5" fill="#FFF" opacity=".5"/>`;
+  // Boden
+  s += `<rect x="0" y="662" width="1200" height="238" fill="url(#gFloor)"/>`;
+  for (let y = 662, i = 0; y < 900; y += 40, i++) {
+    s += `<line x1="0" y1="${y}" x2="1200" y2="${y}" stroke="#C88A55" stroke-width="2" opacity=".5"/>`;
+    for (let x = (i % 2) * 90 + 40; x < 1200; x += 180) s += `<line x1="${x}" y1="${y}" x2="${x}" y2="${y + 40}" stroke="#C88A55" stroke-width="2" opacity=".4"/>`;
+  }
+  s += `<rect x="0" y="662" width="1200" height="10" fill="#B9804E" opacity=".35"/>`;
+  // Fenster
+  s += `<g filter="url(#sh)"><rect x="298" y="118" width="244" height="244" rx="26" fill="#FFFFFF"/></g>
+    <g clip-path="url(#clipWin)">
+      <rect x="312" y="132" width="216" height="216" fill="url(#gSky)"/>
+      <circle cx="480" cy="182" r="26" fill="#FFE27A"/><circle cx="480" cy="182" r="38" fill="#FFE27A" opacity=".3"/>
+      <g fill="#FFFFFF" opacity=".95"><ellipse cx="360" cy="178" rx="30" ry="14"/><ellipse cx="385" cy="170" rx="22" ry="15"/></g>
+      <ellipse cx="350" cy="380" rx="160" ry="90" fill="#A7DB8A"/><ellipse cx="500" cy="390" rx="140" ry="85" fill="#8FCF74"/>
+      <rect x="440" y="250" width="12" height="60" rx="4" fill="#A0703F"/>
+      <circle cx="446" cy="240" r="32" fill="#6FBF5C"/><circle cx="430" cy="252" r="22" fill="#7FCB69"/><circle cx="462" cy="250" r="22" fill="#62B04F"/>
+      <circle cx="436" cy="232" r="4" fill="#F26D6D"/><circle cx="458" cy="246" r="4" fill="#F26D6D"/>
+    </g>
+    <rect x="417" y="132" width="8" height="216" fill="#FFFFFF"/><rect x="312" y="236" width="216" height="8" fill="#FFFFFF"/>
+    <rect x="290" y="352" width="260" height="18" rx="9" fill="#F7F7F7"/>
+    <path d="M286 104 Q310 230 296 372 L262 372 Q272 230 262 104Z" fill="#F7B8C2"/><path d="M554 104 Q530 230 544 372 L578 372 Q568 230 578 104Z" fill="#F7B8C2"/>
+    <rect x="250" y="96" width="340" height="12" rx="6" fill="#E9A3AE"/>
+    <g transform="translate(330,330)"><path d="M0 22 L44 22 L40 0 L4 0Z" fill="#F29A6B"/><circle cx="12" cy="-6" r="10" fill="#7CC36A"/><circle cx="26" cy="-12" r="12" fill="#6AB559"/><circle cx="34" cy="-2" r="9" fill="#86CC73"/></g>`;
+  // Lampe
+  s += `<line x1="640" y1="0" x2="640" y2="60" stroke="#8A9A96" stroke-width="4"/>
+    <path d="M598 98 Q640 46 682 98Z" fill="#FFD27A"/><ellipse cx="640" cy="99" rx="44" ry="8" fill="#FFF1C1"/>
+    <ellipse cx="640" cy="160" rx="120" ry="70" fill="url(#gGlow)" opacity=".25"/>`;
+  // Uhr mit Pfote
+  s += `<g transform="translate(780,120)" filter="url(#shS)"><circle r="44" fill="#FFFFFF" stroke="#8FC7B8" stroke-width="8"/>
+    ${[0, 1, 2, 3].map(i => `<circle cx="${Math.sin(i * Math.PI / 2) * 30}" cy="${-Math.cos(i * Math.PI / 2) * 30}" r="4" fill="#8FC7B8"/>`).join('')}
+    <line x1="0" y1="0" x2="0" y2="-24" stroke="#4E6F68" stroke-width="5" stroke-linecap="round"/><line x1="0" y1="0" x2="16" y2="6" stroke="#4E6F68" stroke-width="5" stroke-linecap="round"/><circle r="5" fill="#F2777F"/></g>`;
+  // Regal mit Fläschchen
+  s += `<g filter="url(#shS)"><rect x="880" y="214" width="290" height="16" rx="6" fill="#E7B07A"/></g>
+    <rect x="900" y="230" width="10" height="22" fill="#C98E58"/><rect x="1140" y="230" width="10" height="22" fill="#C98E58"/>
+    ${bottle(920, 214, '#8FD0F2', 1)}${bottle(975, 214, '#F6A6B2', .8)}${bottle(1025, 214, '#B6E39B', 1.1)}${jar(1085, 214)}${bottle(1135, 214, '#FFD27A', .75)}
+    <g filter="url(#shS)"><rect x="880" y="324" width="290" height="16" rx="6" fill="#E7B07A"/></g>
+    ${books(900, 324)}${teddy(1100, 324)}`;
+  // Poster mit Herz
+  s += `<g transform="translate(1060,420) rotate(3)" filter="url(#shS)"><rect x="-62" y="-60" width="124" height="120" rx="10" fill="#FFFDF5"/>
+    <path d="M0 30 C-40 0 -36 -36 0 -14 C36 -36 40 0 0 30Z" fill="#F57F87"/><rect x="-6" y="-14" width="12" height="32" rx="3" fill="#FFF"/><rect x="-16" y="-4" width="32" height="12" rx="3" fill="#FFF"/>
+    <circle cx="0" cy="-58" r="6" fill="#6DB3A2"/></g>`;
+  // Pflanze rechts unten
+  s += `<g transform="translate(1150,700)"><path d="M-34 0 L34 0 L26 70 L-26 70Z" fill="#F2A36B"/><rect x="-38" y="-8" width="76" height="14" rx="6" fill="#E88F55"/>
+    <path d="M0 -6 C-30 -60 -60 -70 -70 -120 C-30 -110 -10 -70 0 -6Z" fill="#6DBF62"/><path d="M0 -6 C20 -70 50 -90 52 -140 C20 -120 0 -80 0 -6Z" fill="#5AAE52"/>
+    <path d="M0 -6 C-6 -60 -20 -100 -8 -150 C10 -110 8 -60 0 -6Z" fill="#7FCC70"/></g>`;
+  g.innerHTML = s;
+}
+function bottle(x, y, c, h = 1) {
+  const H = 60 * h;
+  return `<g transform="translate(${x},${y})"><rect x="-14" y="${-H}" width="28" height="${H}" rx="9" fill="${c}"/><rect x="-7" y="${-H - 12}" width="14" height="14" rx="3" fill="#FFFFFF"/>
+    <rect x="-10" y="${-H * .62}" width="20" height="${H * .36}" rx="4" fill="#FFFFFF" opacity=".85"/><rect x="-2" y="${-H * .58}" width="4" height="${H * .28}" fill="#F57F87"/><rect x="-7" y="${-H * .46}" width="14" height="4" fill="#F57F87"/>
+    <rect x="-9" y="${-H + 6}" width="5" height="${H - 14}" rx="2" fill="#FFFFFF" opacity=".4"/></g>`;
+}
+function jar(x, y) {
+  return `<g transform="translate(${x},${y})"><rect x="-22" y="-46" width="44" height="46" rx="10" fill="#E9F6FA" opacity=".9" stroke="#BFDDE6" stroke-width="3"/>
+    <rect x="-24" y="-54" width="48" height="12" rx="5" fill="#8FC7B8"/>${[[-8, -20, '#F57F87'], [6, -14, '#FFD27A'], [0, -30, '#8FD0F2'], [10, -32, '#B6E39B']].map(([a, b, c]) => `<circle cx="${a}" cy="${b}" r="7" fill="${c}"/>`).join('')}</g>`;
+}
+function books(x, y) {
+  return [['#F57F87', 26, 70], ['#8FD0F2', 22, 62], ['#FFD27A', 28, 74], ['#B6E39B', 20, 58]].map(([c, w, h], i) =>
+    `<rect x="${x + i * 31}" y="${y - h}" width="${w}" height="${h}" rx="4" fill="${c}"/><rect x="${x + i * 31 + 4}" y="${y - h + 12}" width="${w - 8}" height="5" rx="2" fill="#FFF" opacity=".7"/>`).join('');
+}
+function teddy(x, y) {
+  return `<g transform="translate(${x},${y})"><circle cx="-16" cy="-62" r="10" fill="#C89466"/><circle cx="16" cy="-62" r="10" fill="#C89466"/>
+    <ellipse cx="0" cy="-22" rx="24" ry="22" fill="#C89466"/><circle cx="0" cy="-50" r="20" fill="#D6A375"/><ellipse cx="0" cy="-44" rx="9" ry="7" fill="#F3D9BE"/>
+    <circle cx="-7" cy="-54" r="3" fill="#3B2A22"/><circle cx="7" cy="-54" r="3" fill="#3B2A22"/><circle cx="0" cy="-46" r="3" fill="#3B2A22"/>
+    <rect x="-12" y="-28" width="24" height="10" rx="3" fill="#FFF"/><rect x="-3" y="-31" width="6" height="16" rx="2" fill="#F57F87"/><rect x="-8" y="-26" width="16" height="6" rx="2" fill="#F57F87"/></g>`;
+}
+function pawShape() {
+  return `<ellipse cx="0" cy="10" rx="18" ry="15"/><circle cx="-18" cy="-10" r="8"/><circle cx="-6" cy="-20" r="8"/><circle cx="8" cy="-20" r="8"/><circle cx="20" cy="-10" r="8"/>`;
+}
+
+/* Tür: links, öffnet sich für die Patienten */
+let DOOR = null;
+function drawDoor() {
+  const g = $('doorL');
+  g.innerHTML = `
+    <rect x="52" y="306" width="176" height="480" rx="20" fill="#E6CFA9"/>
+    <g clip-path="url(#clipDoor)">
+      <rect x="64" y="318" width="152" height="462" fill="url(#gSky)"/>
+      <ellipse cx="140" cy="820" rx="200" ry="200" fill="#9BD47F"/><circle cx="90" cy="560" r="40" fill="#7CC36A"/><circle cx="190" cy="540" r="50" fill="#6AB559"/>
+      <rect x="64" y="700" width="152" height="80" fill="#D7B48A"/>
+    </g>
+    <g id="doorPanel" filter="url(#shS)">
+      <rect x="64" y="318" width="152" height="462" rx="14" fill="url(#gDoor)"/>
+      <rect x="82" y="470" width="116" height="120" rx="12" fill="none" stroke="#C9864A" stroke-width="5" opacity=".7"/>
+      <rect x="82" y="610" width="116" height="140" rx="12" fill="none" stroke="#C9864A" stroke-width="5" opacity=".7"/>
+      <circle cx="140" cy="395" r="44" fill="#FFFFFF"/><circle cx="140" cy="395" r="36" fill="url(#gSky)"/>
+      <g transform="translate(140,398) scale(.9)" fill="#F57F87">${pawShape()}</g>
+      <circle cx="190" cy="560" r="10" fill="#FFE08A" stroke="#C9864A" stroke-width="3"/>
+    </g>
+    <rect x="228" y="306" width="10" height="480" fill="#D8BC91"/>`;
+  DOOR = $('doorPanel');
+}
+function doorOpen(t) { // 0 zu .. 1 offen
+  const sx = 1 - .86 * t;
+  DOOR.setAttribute('transform', `translate(64,0) scale(${sx},1) translate(-64,0)`);
+}
+
+function drawTable() {
+  $('tableL').innerHTML = `
+    <ellipse cx="600" cy="790" rx="260" ry="22" fill="#B9804E" opacity=".35"/>
+    <rect x="430" y="610" width="24" height="180" rx="8" fill="#B9C9CF"/><rect x="746" y="610" width="24" height="180" rx="8" fill="#B9C9CF"/>
+    <rect x="440" y="720" width="320" height="14" rx="6" fill="#C9D6DB"/>
+    <g filter="url(#sh)"><rect x="380" y="588" width="440" height="34" rx="16" fill="url(#gTable)"/></g>
+    <rect x="400" y="576" width="400" height="22" rx="11" fill="url(#gMat)"/>
+    <rect x="420" y="579" width="360" height="5" rx="3" fill="#FFFFFF" opacity=".55"/>`;
+}
+
+/* ---------- Belle ---------- */
+const BELLE = { x: 1005, y: 788, g: null, tail: null, head: null, eyes: null, bounce: 0, tilt: 0 };
+function belleSVG() {
+  const fur = '#9C99A3', dark = '#46434C', white = '#FFFFFF', pink = '#F4A7B6';
+  return `
+  <ellipse cx="0" cy="0" rx="90" ry="14" fill="#2F4A44" opacity=".18"/>
+  <g class="tail"><path d="M50 -70 C130 -80 150 -170 120 -230" stroke="${fur}" stroke-width="30" fill="none" stroke-linecap="round"/>
+    <path d="M78 -76 l10 -24 M112 -110 l26 -6 M128 -160 l24 6 M124 -205 l22 12" stroke="${dark}" stroke-width="10" stroke-linecap="round"/>
+    <path d="M50 -70 C130 -80 150 -170 120 -230" stroke="${dark}" stroke-width="3" fill="none" opacity=".25"/></g>
+  <ellipse cx="-34" cy="-12" rx="34" ry="18" fill="${white}" stroke="#D5D6DE" stroke-width="3"/>
+  <ellipse cx="34" cy="-12" rx="34" ry="18" fill="${white}" stroke="#D5D6DE" stroke-width="3"/>
+  <rect x="-48" y="-70" width="30" height="58" rx="14" fill="${fur}"/><rect x="18" y="-70" width="30" height="58" rx="14" fill="${fur}"/>
+  <path d="M-44 -46 h22 M22 -46 h22" stroke="${dark}" stroke-width="7" stroke-linecap="round"/>
+  <!-- Kittel -->
+  <path d="M-70 -228 C-92 -170 -100 -110 -96 -54 L96 -54 C100 -110 92 -170 70 -228 C40 -244 -40 -244 -70 -228Z" fill="url(#gCoat)" stroke="#C9D5DE" stroke-width="4"/>
+  <path d="M-22 -236 L0 -150 L22 -236" fill="${fur}"/><path d="M-22 -236 L0 -150 L22 -236" fill="none" stroke="#C9D5DE" stroke-width="4"/>
+  <path d="M0 -150 L0 -56" stroke="#C9D5DE" stroke-width="4"/>
+  <circle cx="-10" cy="-130" r="6" fill="#8FC7B8"/><circle cx="-10" cy="-96" r="6" fill="#8FC7B8"/>
+  <rect x="34" y="-150" width="40" height="40" rx="8" fill="#EEF4F8" stroke="#C9D5DE" stroke-width="3"/>
+  <rect x="42" y="-166" width="7" height="26" rx="3" fill="#F57F87"/><rect x="54" y="-162" width="7" height="22" rx="3" fill="#8FD0F2"/>
+  <g transform="translate(-50,-176)"><rect x="-14" y="-14" width="28" height="28" rx="7" fill="#F57F87"/><rect x="-4" y="-10" width="8" height="20" rx="2" fill="#FFF"/><rect x="-10" y="-4" width="20" height="8" rx="2" fill="#FFF"/></g>
+  <!-- Stethoskop um den Hals -->
+  <path d="M-36 -236 C-50 -180 -30 -150 -6 -146 M36 -236 C50 -180 30 -150 6 -146" stroke="#5E7D96" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <path d="M0 -146 C0 -128 18 -118 28 -112" stroke="#5E7D96" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <circle cx="34" cy="-108" r="12" fill="#C7D2DA" stroke="#7F93A3" stroke-width="4"/>
+  <!-- Arme -->
+  <path d="M68 -214 C104 -180 108 -140 96 -112" stroke="url(#gCoat)" stroke-width="40" fill="none" stroke-linecap="round"/>
+  <path d="M68 -214 C104 -180 108 -140 96 -112" stroke="#C9D5DE" stroke-width="44" fill="none" stroke-linecap="round" opacity=".35"/>
+  <circle cx="94" cy="-100" r="19" fill="${white}" stroke="#D5D6DE" stroke-width="3"/>
+  <path d="M-66 -212 C-96 -196 -110 -176 -118 -160" stroke="#C9D5DE" stroke-width="44" fill="none" stroke-linecap="round" opacity=".35"/>
+  <path d="M-66 -212 C-96 -196 -110 -176 -118 -160" stroke="url(#gCoat)" stroke-width="40" fill="none" stroke-linecap="round"/>
+  <!-- Kopf -->
+  <g class="head">
+    <path d="M-80 -330 L-70 -420 L-18 -372Z" fill="${fur}" stroke="${dark}" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M80 -330 L70 -420 L18 -372Z" fill="${fur}" stroke="${dark}" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M-68 -350 L-64 -398 L-34 -370Z" fill="${pink}"/><path d="M68 -350 L64 -398 L34 -370Z" fill="${pink}"/>
+    <ellipse cx="0" cy="-304" rx="96" ry="84" fill="${fur}" stroke="${dark}" stroke-width="4"/>
+    <path d="M-20 -386 q20 30 0 44 M0 -390 v40 M20 -386 q-20 30 0 44" stroke="${dark}" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <path d="M-96 -300 h26 M-94 -280 h24 M96 -300 h-26 M94 -280 h-24" stroke="${dark}" stroke-width="8" stroke-linecap="round"/>
+    <ellipse cx="0" cy="-262" rx="52" ry="36" fill="${white}"/>
+    <ellipse cx="-30" cy="-252" rx="26" ry="18" fill="${white}"/><ellipse cx="30" cy="-252" rx="26" ry="18" fill="${white}"/>
+    <g class="eyes">
+      <ellipse cx="-38" cy="-308" rx="20" ry="23" fill="#FFFFFF"/><ellipse cx="38" cy="-308" rx="20" ry="23" fill="#FFFFFF"/>
+      <ellipse cx="-36" cy="-306" rx="15" ry="18" fill="#7DB65A"/><ellipse cx="36" cy="-306" rx="15" ry="18" fill="#7DB65A"/>
+      <ellipse cx="-35" cy="-305" rx="7" ry="12" fill="#22201F"/><ellipse cx="35" cy="-305" rx="7" ry="12" fill="#22201F"/>
+      <circle cx="-30" cy="-313" r="5" fill="#FFF"/><circle cx="40" cy="-313" r="5" fill="#FFF"/>
+    </g>
+    <ellipse cx="-62" cy="-270" rx="14" ry="9" fill="${pink}" opacity=".6"/><ellipse cx="62" cy="-270" rx="14" ry="9" fill="${pink}" opacity=".6"/>
+    <path d="M-9 -278 Q0 -284 9 -278 Q4 -268 0 -267 Q-4 -268 -9 -278Z" fill="#F08A9E"/>
+    <path d="M0 -267 v8 M0 -259 q-10 10 -20 2 M0 -259 q10 10 20 2" stroke="#5B4A4E" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M-50 -262 l-48 -8 M-50 -254 l-46 4 M50 -262 l48 -8 M50 -254 l46 4" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+  </g>`;
+}
+function drawBelle() {
+  const g = $('belleL');
+  g.innerHTML = `<g id="belle">${belleSVG()}</g>`;
+  BELLE.g = $('belle'); BELLE.tail = BELLE.g.querySelector('.tail'); BELLE.head = BELLE.g.querySelector('.head'); BELLE.eyes = BELLE.g.querySelector('.eyes');
+}
+
+/* ---------- Klemmbrett (Diagnose) ---------- */
+const CLIP = { x: 884, y: 612, g: null, icons: null, pulse: 0 };
+function drawClip() {
+  const g = $('clipL');
+  g.innerHTML = `<g id="clip" class="btn" transform="translate(${CLIP.x},${CLIP.y}) rotate(-6)">
+    <g class="ci" filter="url(#sh)"><rect x="-62" y="-80" width="124" height="160" rx="12" fill="#D79A5E"/>
+    <rect x="-52" y="-66" width="104" height="138" rx="6" fill="#FFFFFF"/>
+    <rect x="-28" y="-90" width="56" height="26" rx="8" fill="#9AA7AF"/><rect x="-18" y="-84" width="36" height="12" rx="5" fill="#C7D2DA"/>
+    <g transform="translate(0,-36)"><rect x="-6" y="-14" width="12" height="28" rx="3" fill="#F57F87"/><rect x="-14" y="-6" width="28" height="12" rx="3" fill="#F57F87"/></g>
+    <g class="icons"></g></g></g>`;
+  CLIP.g = $('clip'); CLIP.icons = CLIP.g.querySelector('.icons');
+  CLIP.g.addEventListener('pointerdown', e => { e.stopPropagation(); onClip(); });
+}
+function clipReset() { clear(CLIP.icons); CLIP.n = 0; CLIP.pulse = 0; }
+function clipAdd(tool, good) {
+  const i = CLIP.n++, x = -26 + (i % 2) * 52, y = 8 + Math.floor(i / 2) * 34;
+  el('g', { transform: `translate(${x},${y}) scale(.36)` }, CLIP.icons, toolIcon(tool) + (good ? `<circle cx="34" cy="-30" r="16" fill="#F57F87" stroke="#FFF" stroke-width="5"/>` : `<circle cx="34" cy="-30" r="16" fill="#7CC36A" stroke="#FFF" stroke-width="5"/>`));
+}
+
+/* ---------- Tiere ---------- */
+function tierSVG(a) {
+  const c = TIERE[a], o = `stroke="${c.dark}" stroke-width="4" stroke-linejoin="round"`;
+  let tail = '', ears = '', muzzle = '', extra = '', nose = '';
+  switch (a) {
+    case 'hase':
+      tail = `<circle cx="84" cy="-34" r="24" fill="${c.light}" ${o}/>`;
+      ears = `<g><ellipse cx="-30" cy="-318" rx="21" ry="66" fill="${c.fur}" ${o} transform="rotate(-10 -30 -318)"/><ellipse cx="-30" cy="-314" rx="10" ry="48" fill="${c.inner}" transform="rotate(-10 -30 -318)"/></g>
+              <g><ellipse cx="32" cy="-318" rx="21" ry="66" fill="${c.fur}" ${o} transform="rotate(12 32 -318)"/><ellipse cx="32" cy="-314" rx="10" ry="48" fill="${c.inner}" transform="rotate(12 32 -318)"/></g>`;
+      muzzle = `<ellipse cx="0" cy="-178" rx="30" ry="22" fill="${c.light}"/>`;
+      nose = `<ellipse cx="0" cy="-190" rx="8" ry="6" fill="#F08A9E"/>`;
+      break;
+    case 'hund':
+      tail = `<path d="M70 -40 C120 -50 128 -100 108 -130" stroke="${c.fur}" stroke-width="22" fill="none" stroke-linecap="round"/><path d="M70 -40 C120 -50 128 -100 108 -130" stroke="${c.dark}" stroke-width="3" fill="none" opacity=".4"/>`;
+      ears = `<ellipse cx="-74" cy="-200" rx="26" ry="54" fill="${c.inner}" ${o} transform="rotate(18 -74 -230)"/><ellipse cx="74" cy="-200" rx="26" ry="54" fill="${c.inner}" ${o} transform="rotate(-18 74 -230)"/>`;
+      muzzle = `<ellipse cx="0" cy="-176" rx="38" ry="28" fill="${c.light}"/><ellipse cx="34" cy="-238" rx="20" ry="17" fill="${c.dark}" opacity=".35"/>`;
+      nose = `<ellipse cx="0" cy="-192" rx="13" ry="9" fill="#3B2A22"/><ellipse cx="-4" cy="-195" rx="4" ry="2.5" fill="#FFF" opacity=".6"/>`;
+      break;
+    case 'maus':
+      tail = `<path d="M70 -24 C140 -10 150 -80 110 -100 C90 -110 96 -140 120 -150" stroke="${c.inner}" stroke-width="8" fill="none" stroke-linecap="round"/>`;
+      ears = `<circle cx="-62" cy="-265" r="44" fill="${c.fur}" ${o}/><circle cx="-62" cy="-265" r="29" fill="${c.inner}"/><circle cx="62" cy="-265" r="44" fill="${c.fur}" ${o}/><circle cx="62" cy="-265" r="29" fill="${c.inner}"/>`;
+      muzzle = `<ellipse cx="0" cy="-180" rx="28" ry="20" fill="${c.light}"/>`;
+      nose = `<circle cx="0" cy="-190" r="8" fill="#F08A9E"/>`;
+      extra = `<path d="M-30 -182 l-40 -8 M-30 -176 l-40 6 M30 -182 l40 -8 M30 -176 l40 6" stroke="${c.dark}" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>`;
+      break;
+    case 'baer':
+      tail = `<circle cx="78" cy="-30" r="16" fill="${c.fur}" ${o}/>`;
+      ears = `<circle cx="-56" cy="-262" r="26" fill="${c.fur}" ${o}/><circle cx="-56" cy="-262" r="14" fill="${c.light}"/><circle cx="56" cy="-262" r="26" fill="${c.fur}" ${o}/><circle cx="56" cy="-262" r="14" fill="${c.light}"/>`;
+      muzzle = `<ellipse cx="0" cy="-178" rx="36" ry="28" fill="${c.light}"/>`;
+      nose = `<ellipse cx="0" cy="-192" rx="14" ry="10" fill="#3B2A22"/><ellipse cx="-4" cy="-195" rx="4" ry="2.5" fill="#FFF" opacity=".6"/>`;
+      break;
+    case 'fuchs':
+      tail = `<path d="M60 -30 C150 -30 170 -120 120 -170 C150 -110 110 -60 60 -60Z" fill="${c.fur}" ${o}/><path d="M120 -170 C150 -140 140 -110 128 -100 C120 -130 112 -150 120 -170Z" fill="${c.light}"/>`;
+      ears = `<path d="M-74 -232 L-52 -300 L-18 -262Z" fill="${c.fur}" ${o}/><path d="M-64 -246 L-52 -288 L-32 -264Z" fill="${c.inner}"/>
+              <path d="M74 -232 L52 -300 L18 -262Z" fill="${c.fur}" ${o}/><path d="M64 -246 L52 -288 L32 -264Z" fill="${c.inner}"/>`;
+      muzzle = `<path d="M-74 -200 C-50 -150 -20 -150 0 -168 C20 -150 50 -150 74 -200 C50 -180 20 -186 0 -196 C-20 -186 -50 -180 -74 -200Z" fill="${c.light}"/>`;
+      nose = `<ellipse cx="0" cy="-190" rx="11" ry="8" fill="#2E2017"/>`;
+      break;
+    case 'schwein':
+      tail = `<path d="M72 -40 c20 0 26 -20 12 -26 c-12 -4 -16 12 -4 16 c14 4 24 -6 26 -16" stroke="${c.dark}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+      ears = `<path d="M-72 -244 L-52 -292 L-24 -262Z" fill="${c.fur}" ${o}/><path d="M72 -244 L52 -292 L24 -262Z" fill="${c.fur}" ${o}/>`;
+      muzzle = '';
+      nose = `<ellipse cx="0" cy="-184" rx="28" ry="20" fill="${c.inner}" ${o}/><ellipse cx="-9" cy="-184" rx="5" ry="8" fill="${c.dark}"/><ellipse cx="9" cy="-184" rx="5" ry="8" fill="${c.dark}"/>`;
+      break;
+  }
+  return `
+  <ellipse cx="0" cy="4" rx="100" ry="14" fill="#2F4A44" opacity=".18"/>
+  <g class="tail">${tail}</g>
+  <g class="body">
+    <ellipse cx="-56" cy="-42" rx="44" ry="46" fill="${c.fur}" ${o}/><ellipse cx="56" cy="-42" rx="44" ry="46" fill="${c.fur}" ${o}/>
+    <ellipse cx="0" cy="-92" rx="78" ry="96" fill="${c.fur}" ${o}/>
+    <ellipse cx="0" cy="-80" rx="50" ry="66" fill="${c.light}"/>
+    <ellipse cx="-50" cy="-6" rx="34" ry="16" fill="${c.fur}" ${o}/><ellipse cx="50" cy="-6" rx="34" ry="16" fill="${c.fur}" ${o}/>
+    <g class="ov0"></g>
+    <path d="M42 -150 C62 -110 64 -70 54 -40" stroke="${c.dark}" stroke-width="34" fill="none" stroke-linecap="round"/>
+    <path d="M42 -150 C62 -110 64 -70 54 -40" stroke="${c.fur}" stroke-width="27" fill="none" stroke-linecap="round"/>
+    <ellipse cx="54" cy="-32" rx="22" ry="17" fill="${c.fur}" ${o}/>
+    <g class="armR">
+      <path d="M-42 -150 C-62 -110 -66 -70 -62 -42" stroke="${c.dark}" stroke-width="34" fill="none" stroke-linecap="round"/>
+      <path d="M-42 -150 C-62 -110 -66 -70 -62 -42" stroke="${c.fur}" stroke-width="27" fill="none" stroke-linecap="round"/>
+      <g class="pawR"><ellipse cx="-62" cy="-32" rx="23" ry="18" fill="${c.fur}" ${o}/></g>
+    </g>
+    <g class="ovArm"></g>
+  </g>
+  <g class="head">
+    ${ears}
+    <ellipse cx="0" cy="-210" rx="${a === 'baer' ? 82 : 76}" ry="70" fill="${c.fur}" ${o}/>
+    ${muzzle}
+    <g class="eyes">
+      <ellipse cx="-27" cy="-218" rx="12" ry="15" fill="${c.eyes}"/><ellipse cx="27" cy="-218" rx="12" ry="15" fill="${c.eyes}"/>
+      <circle cx="-22" cy="-224" r="5" fill="#FFF"/><circle cx="32" cy="-224" r="5" fill="#FFF"/><circle cx="-31" cy="-212" r="2.2" fill="#FFF" opacity=".8"/><circle cx="23" cy="-212" r="2.2" fill="#FFF" opacity=".8"/>
+    </g>
+    <g class="brows"><path d="M-42 -238 Q-30 -246 -16 -248 M42 -238 Q30 -246 16 -248" stroke="${c.dark}" stroke-width="5" stroke-linecap="round"/></g>
+    <ellipse class="cheek" cx="-48" cy="-190" rx="13" ry="9" fill="#F48A9A" opacity=".45"/><ellipse class="cheek" cx="48" cy="-190" rx="13" ry="9" fill="#F48A9A" opacity=".45"/>
+    ${nose}
+    <path class="mHappy" d="M-14 -168 Q0 -156 14 -168" stroke="#5B3A3A" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+    <path class="mSad" d="M-12 -160 Q0 -170 12 -160" stroke="#5B3A3A" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+    <ellipse class="mOpen" cx="0" cy="-162" rx="10" ry="9" fill="#7A3B44"/>
+    ${extra}
+    <g class="ovHead"></g>
+  </g>
+  <g class="ovTop"></g>`;
+}
+
+/* Patient-Objekt */
+const PS = 1.15;          // Größe des Patienten auf dem Tisch
+const SEAT = [600, 590];
+let P = null;             // aktueller Patient
+function makePatient(a, k) {
+  const g = $('pat');
+  g.innerHTML = tierSVG(a);
+  const q = s => g.querySelector(s);
+  P = {
+    a, k, g, head: q('.head'), eyes: q('.eyes'), brows: q('.brows'), mH: q('.mHappy'), mS: q('.mSad'), mO: q('.mOpen'),
+    cheeks: g.querySelectorAll('.cheek'), tail: q('.tail'), armR: q('.armR'), pawR: q('.pawR'), body: q('.body'),
+    ov0: q('.ov0'), ovArm: q('.ovArm'), ovHead: q('.ovHead'), ovTop: q('.ovTop'),
+    mood: 'sick', x: 140, y: 790, s: .7, hop: 0, cough: 0, coughT: 2, talk: false, sym: null, healed: false,
+    befunde: {}, found: false, step: 0, prog: 0, saidKlemm: false,
+  };
+  setMood('sick');
+  drawSymptoms();
+  placePat();
+}
+function placePat() { $('patWrap').setAttribute('transform', `translate(${P.x},${P.y - P.hop}) scale(${P.s})`); }
+function setMood(m) {
+  P.mood = m;
+  P.brows.style.display = m === 'sick' ? '' : 'none';
+  P.mS.style.display = m === 'sick' ? '' : 'none';
+  P.mH.style.display = m === 'sick' ? 'none' : '';
+  P.mO.style.display = 'none';
+}
+function L2S(lx, ly) { return [SEAT[0] + lx * PS, SEAT[1] + ly * PS]; }  // lokale Patientenkoordinate -> Bühne
+function zielXY(z) { const p = z === 'ohr' ? OHR[P.a] : ZIEL[z]; return L2S(p[0], p[1]); }
+function zielLocal(z) { return z === 'ohr' ? OHR[P.a] : ZIEL[z]; }
+
+/* Sichtbare Krankheitszeichen */
+function drawSymptoms() {
+  clear(P.ovArm); clear(P.ovHead); clear(P.ovTop); clear(P.ov0);
+  P.sym = {};
+  const k = P.k;
+  if (k === 'splitter') {
+    P.sym.splitter = el('g', {}, P.ovArm, `<path d="M-74 -46 L-56 -28" stroke="#8A5A2B" stroke-width="6" stroke-linecap="round"/><path d="M-74 -46 L-62 -34" stroke="#B07A45" stroke-width="3" stroke-linecap="round"/>`);
+    P.sym.rot = el('ellipse', { cx: -58, cy: -28, rx: 9, ry: 6, fill: '#F27A7A', opacity: .55 }, P.ovArm);
+  }
+  if (k === 'schramme') {
+    P.sym.kratzer = el('g', {}, P.ovArm, `<path d="M-76 -40 L-52 -34 M-74 -32 L-50 -26 M-72 -24 L-54 -20" stroke="#E2575E" stroke-width="3.5" stroke-linecap="round"/>`);
+    P.sym.dreck = el('g', {}, P.ovArm, [[-70, -38], [-58, -24], [-50, -36], [-66, -22], [-78, -30]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="${rnd(3, 4.5).toFixed(1)}" fill="#8B6A45"/>`).join(''));
+  }
+  if (k === 'bruch') {
+    P.pawR.setAttribute('transform', 'translate(-62,-32) scale(1.3) translate(62,32)');
+    P.sym.blau = el('ellipse', { cx: -62, cy: -34, rx: 22, ry: 16, fill: '#8E7CC3', opacity: .45 }, P.ovArm);
+  }
+  if (k === 'fieber') {
+    P.cheeks.forEach(c => { c.setAttribute('fill', '#F0505E'); c.setAttribute('opacity', '.75'); });
+    P.sym.schweiss = el('path', { d: 'M62 -262 C56 -250 54 -244 62 -240 C70 -244 68 -250 62 -262Z', fill: '#8FD0F2', stroke: '#5FA9D0', 'stroke-width': 2 }, P.ovHead);
+    P.sym.hitze = el('g', { opacity: .7 }, P.ovTop, `<path d="M-30 -300 q8 -10 0 -20 q-8 -10 0 -20 M0 -306 q8 -10 0 -20 q-8 -10 0 -20 M30 -300 q8 -10 0 -20 q-8 -10 0 -20" stroke="#F58C8C" stroke-width="4" fill="none" stroke-linecap="round"/>`);
+    if (P.a === 'hase') P.sym.hitze.setAttribute('transform', 'translate(0,-70)');
+  }
+  if (k === 'husten') { P.cough = 1; }
+  if (k === 'ohren') {
+    const [ox, oy] = OHR[P.a];
+    P.sym.ohr = el('g', {}, P.ovHead, `<circle cx="${ox}" cy="${oy}" r="16" fill="#F0505E" opacity=".5"/><path d="M${ox - 26} ${oy - 20} l-10 -8 M${ox - 30} ${oy} l-14 0 M${ox - 24} ${oy + 18} l-10 8" stroke="#F0505E" stroke-width="4" stroke-linecap="round"/>`);
+  }
+}
+
+/* ---------- Gerät- und Hilfsmittel-Symbole (um 0,0, ca. 90 groß) ---------- */
+function toolIcon(t) {
+  switch (t) {
+    case 'lupe': return `<rect x="10" y="12" width="16" height="44" rx="8" fill="#F2A35E" stroke="#B86E2E" stroke-width="3" transform="rotate(-45 18 34)"/>
+      <circle cx="-8" cy="-8" r="30" fill="#DDF3FF" stroke="#5E7D96" stroke-width="8"/><path d="M-22 -18 a18 18 0 0 1 14 -10" stroke="#FFF" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+    case 'thermo': return `<g transform="rotate(35)"><rect x="-10" y="-44" width="20" height="70" rx="10" fill="#FFFFFF" stroke="#7F93A3" stroke-width="4"/><circle cx="0" cy="30" r="15" fill="#F2575E" stroke="#7F93A3" stroke-width="4"/>
+      <rect x="-4" y="-20" width="8" height="46" rx="4" fill="#F2575E"/>${[-34, -26, -18, -10].map(y => `<rect x="4" y="${y}" width="5" height="2" fill="#7F93A3"/>`).join('')}</g>`;
+    case 'stetho': return `<path d="M-24 -38 C-30 -4 -14 10 0 10 C14 10 30 -4 24 -38" stroke="#5E7D96" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <circle cx="-24" cy="-40" r="6" fill="#3E5568"/><circle cx="24" cy="-40" r="6" fill="#3E5568"/><path d="M0 10 C0 26 14 34 24 30" stroke="#5E7D96" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <circle cx="30" cy="30" r="15" fill="#C7D2DA" stroke="#7F93A3" stroke-width="5"/><circle cx="30" cy="30" r="6" fill="#FFF"/>`;
+    case 'roentgen': return `<rect x="-38" y="-34" width="76" height="58" rx="10" fill="#7F93A3"/><rect x="-30" y="-27" width="60" height="44" rx="6" fill="url(#gXray)"/>
+      <path d="M-14 -16 h28 M-10 -8 v16 M10 -8 v16" stroke="#EAF4FF" stroke-width="5" stroke-linecap="round"/><circle cx="-14" cy="-16" r="5" fill="#EAF4FF"/><circle cx="14" cy="-16" r="5" fill="#EAF4FF"/>
+      <rect x="-12" y="24" width="24" height="14" rx="3" fill="#7F93A3"/><rect x="-26" y="36" width="52" height="8" rx="4" fill="#5E7D96"/>`;
+    case 'ohrenspiegel': return `<rect x="-12" y="-6" width="24" height="54" rx="10" fill="#5E7D96"/><rect x="-14" y="-14" width="28" height="14" rx="5" fill="#C7D2DA"/>
+      <path d="M-10 -14 L-4 -44 L4 -44 L10 -14Z" fill="#F2F5F7" stroke="#9AA7AF" stroke-width="3"/><circle cx="0" cy="-48" r="6" fill="#FFE27A"/><circle cx="0" cy="-48" r="12" fill="#FFE27A" opacity=".35"/>
+      ${[8, 18, 28].map(y => `<rect x="-8" y="${y}" width="16" height="3" rx="1.5" fill="#3E5568"/>`).join('')}`;
+    case 'pinzette': return `<path d="M-6 -42 L-4 34 M6 -42 L4 34" stroke="#9AA7AF" stroke-width="9" stroke-linecap="round"/><path d="M-6 -42 L-4 34 M6 -42 L4 34" stroke="#E2E8EC" stroke-width="3" stroke-linecap="round"/>
+      <path d="M-7 -42 Q0 -50 7 -42" stroke="#9AA7AF" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+    case 'pflaster': return `<g transform="rotate(-25)"><rect x="-40" y="-15" width="80" height="30" rx="15" fill="#F5D3A8" stroke="#D9A86E" stroke-width="3"/><rect x="-14" y="-12" width="28" height="24" rx="5" fill="#FFF3E2"/>
+      ${[[-28, -5], [-28, 5], [26, -5], [26, 5]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2" fill="#D9A86E"/>`).join('')}</g>`;
+    case 'tupfer': return `<ellipse cx="0" cy="8" rx="34" ry="26" fill="#FFFFFF" stroke="#C9D5DE" stroke-width="4"/><path d="M-20 4 q10 -10 20 0 q10 10 20 0" stroke="#E2E8EC" stroke-width="4" fill="none"/>
+      <path d="M18 -36 C10 -24 8 -18 18 -14 C28 -18 26 -24 18 -36Z" fill="#8FD0F2" stroke="#5FA9D0" stroke-width="3"/>`;
+    case 'salbe': return `<g transform="rotate(-30)"><path d="M-14 -36 L14 -36 L18 30 L-18 30Z" fill="#FFFFFF" stroke="#9AA7AF" stroke-width="4" stroke-linejoin="round"/><rect x="-20" y="26" width="40" height="10" rx="3" fill="#8FC7B8"/>
+      <rect x="-8" y="-48" width="16" height="14" rx="3" fill="#F57F87"/><rect x="-3" y="-20" width="6" height="22" rx="2" fill="#8FC7B8"/><rect x="-11" y="-12" width="22" height="6" rx="2" fill="#8FC7B8"/></g>`;
+    case 'fiebersaft': return `${bottle(-14, 40, '#F6A6B2', .9)}<g transform="translate(18,6) rotate(-30)"><ellipse cx="0" cy="0" rx="14" ry="10" fill="#E2E8EC" stroke="#9AA7AF" stroke-width="3"/><ellipse cx="0" cy="0" rx="9" ry="6" fill="#F57F87"/><rect x="12" y="-3" width="34" height="6" rx="3" fill="#9AA7AF"/></g>`;
+    case 'hustensaft': return `${bottle(-14, 40, '#FFC46B', .9)}<g transform="translate(18,6) rotate(-30)"><ellipse cx="0" cy="0" rx="14" ry="10" fill="#E2E8EC" stroke="#9AA7AF" stroke-width="3"/><ellipse cx="0" cy="0" rx="9" ry="6" fill="#E89A3C"/><rect x="12" y="-3" width="34" height="6" rx="3" fill="#9AA7AF"/></g>`;
+    case 'waschlappen': return `<g transform="rotate(-12)"><rect x="-38" y="-24" width="76" height="48" rx="10" fill="#8FD0F2" stroke="#5FA9D0" stroke-width="4"/>${[-22, -8, 6, 20].map(x => `<line x1="${x}" y1="-20" x2="${x}" y2="20" stroke="#B9E3F7" stroke-width="5"/>`).join('')}
+      <path d="M26 -40 C20 -30 18 -26 26 -22 C34 -26 32 -30 26 -40Z" fill="#DDF3FF" stroke="#5FA9D0" stroke-width="2"/></g>`;
+    case 'schal': return `<path d="M-40 -20 Q0 4 40 -20 L40 0 Q0 24 -40 0Z" fill="#F2575E"/>${[-26, -6, 14, 30].map(x => `<rect x="${x}" y="-14" width="7" height="22" fill="#FFF" transform="rotate(${x / 3} ${x} 0)"/>`).join('')}
+      <path d="M14 6 L8 44 L28 44 L30 6Z" fill="#F2575E"/><rect x="10" y="20" width="20" height="6" fill="#FFF"/><path d="M8 44 v6 M14 44 v6 M20 44 v6 M26 44 v6" stroke="#F2575E" stroke-width="3"/>`;
+    case 'gips': return `<ellipse cx="0" cy="0" rx="30" ry="34" fill="#FFFFFF" stroke="#C9D5DE" stroke-width="4"/><ellipse cx="0" cy="0" rx="11" ry="13" fill="#E2E8EC" stroke="#C9D5DE" stroke-width="3"/>
+      <path d="M26 14 C40 24 44 36 30 44 L-6 40" stroke="#FFFFFF" stroke-width="14" fill="none" stroke-linecap="round"/><path d="M26 14 C40 24 44 36 30 44 L-6 40" stroke="#C9D5DE" stroke-width="3" fill="none" opacity=".6"/>`;
+    case 'sticker': return `<path d="${star(0, 0, 38, 17)}" fill="#FFD84D" stroke="#E8A93A" stroke-width="4" stroke-linejoin="round"/><circle cx="-8" cy="-4" r="3" fill="#7A4B1E"/><circle cx="8" cy="-4" r="3" fill="#7A4B1E"/><path d="M-7 6 q7 6 14 0" stroke="#7A4B1E" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+    case 'tropfen': return `<rect x="-16" y="-8" width="32" height="48" rx="8" fill="#B9E3F7" stroke="#5FA9D0" stroke-width="4"/><rect x="-7" y="-26" width="14" height="20" rx="3" fill="#FFFFFF" stroke="#9AA7AF" stroke-width="3"/>
+      <path d="M0 -26 L0 -40" stroke="#9AA7AF" stroke-width="5" stroke-linecap="round"/><rect x="-10" y="8" width="20" height="18" rx="3" fill="#FFF" opacity=".9"/><path d="M0 11 C-5 17 -5 22 0 22 C5 22 5 17 0 11Z" fill="#5FA9D0"/>`;
+    case 'watte': return `<circle cx="-10" cy="4" r="18" fill="#FFFFFF" stroke="#D5DDE4" stroke-width="3"/><circle cx="10" cy="-4" r="20" fill="#FFFFFF" stroke="#D5DDE4" stroke-width="3"/><circle cx="6" cy="14" r="16" fill="#FFFFFF" stroke="#D5DDE4" stroke-width="3"/><circle cx="2" cy="4" r="14" fill="#FFFFFF"/>`;
+  }
+  return '';
+}
+function star(cx, cy, R, r, n = 5) {
+  let d = '';
+  for (let i = 0; i < n * 2; i++) { const a = -Math.PI / 2 + i * Math.PI / n, rr = i % 2 ? r : R; d += (i ? 'L' : 'M') + (cx + Math.cos(a) * rr).toFixed(1) + ' ' + (cy + Math.sin(a) * rr).toFixed(1); }
+  return d + 'Z';
+}
+
+/* Bild für eine Krankheits-Karte (um 0,0, ca. 200x170) */
+function pawBig(fur = '#E6B276', dark = '#A8733F') {
+  return `<ellipse cx="0" cy="10" rx="70" ry="62" fill="${fur}" stroke="${dark}" stroke-width="5"/>
+    <ellipse cx="0" cy="26" rx="30" ry="24" fill="#F5A9B6"/>${[[-38, -14], [-14, -30], [14, -30], [38, -14]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="11" ry="13" fill="#F5A9B6"/>`).join('')}`;
+}
+function krankBild(k) {
+  switch (k) {
+    case 'splitter': return pawBig() + `<path d="M-46 30 L-6 4" stroke="#8A5A2B" stroke-width="10" stroke-linecap="round"/><path d="M-46 30 L-20 13" stroke="#B07A45" stroke-width="4" stroke-linecap="round"/><circle cx="-8" cy="6" r="14" fill="#F27A7A" opacity=".4"/>`;
+    case 'schramme': return pawBig() + `<path d="M-50 -2 L10 14 M-46 18 L14 34 M-40 38 L4 50" stroke="#E2575E" stroke-width="6" stroke-linecap="round"/>${[[-30, 6], [0, 26], [-16, 40], [20, 18]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="6" fill="#8B6A45"/>`).join('')}`;
+    case 'fieber': return `<circle cx="-20" cy="6" r="60" fill="#F7D2B0" stroke="#D9A473" stroke-width="5"/><circle cx="-40" cy="-6" r="6" fill="#3B2A22"/><circle cx="0" cy="-6" r="6" fill="#3B2A22"/>
+      <ellipse cx="-50" cy="20" rx="12" ry="8" fill="#F0505E" opacity=".8"/><ellipse cx="10" cy="20" rx="12" ry="8" fill="#F0505E" opacity=".8"/><path d="M-30 34 Q-20 26 -10 34" stroke="#5B3A3A" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M22 -50 C14 -36 12 -30 22 -26 C32 -30 30 -36 22 -50Z" fill="#8FD0F2"/>
+      <g transform="translate(64,0)"><rect x="-12" y="-62" width="24" height="96" rx="12" fill="#FFF" stroke="#7F93A3" stroke-width="4"/><circle cx="0" cy="40" r="18" fill="#F2575E" stroke="#7F93A3" stroke-width="4"/><rect x="-5" y="-50" width="10" height="90" rx="5" fill="#F2575E"/></g>`;
+    case 'husten': return `<circle cx="-34" cy="6" r="58" fill="#E6D3F2" stroke="#B49AC9" stroke-width="5"/><path d="M-56 -8 l12 6 M-12 -8 l-12 6" stroke="#3B2A22" stroke-width="5" stroke-linecap="round"/>
+      <ellipse cx="-34" cy="30" rx="12" ry="10" fill="#7A3B44"/>
+      <g fill="#FFFFFF" stroke="#B9C9CF" stroke-width="3"><circle cx="38" cy="24" r="16"/><circle cx="58" cy="8" r="20"/><circle cx="76" cy="28" r="16"/><circle cx="60" cy="38" r="14"/></g>
+      <path d="M30 -20 q8 -6 16 0 M50 -40 q8 -6 16 0" stroke="#B49AC9" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+    case 'bruch': return `<rect x="-96" y="-70" width="192" height="146" rx="16" fill="url(#gXray)"/>
+      <g fill="#EAF4FF"><rect x="-70" y="-14" width="70" height="20" rx="10"/><rect x="8" y="-14" width="56" height="20" rx="10"/><circle cx="-70" cy="-12" r="13"/><circle cx="-70" cy="4" r="13"/><circle cx="64" cy="-12" r="13"/><circle cx="64" cy="4" r="13"/></g>
+      <path d="M0 -20 L6 -8 L-4 2 L4 14" stroke="#F2575E" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+    case 'ohren': return `<path d="M-10 -70 C60 -80 80 20 30 50 C10 62 0 80 -24 72 C-50 64 -40 30 -50 0 C-60 -40 -40 -66 -10 -70Z" fill="#F7D2B0" stroke="#D9A473" stroke-width="5"/>
+      <path d="M-4 -40 C40 -46 46 10 14 24 C-6 32 -20 10 -14 -10" fill="url(#gEarRed)"/><path d="M58 -50 l18 -10 M70 -16 l22 0 M60 16 l18 10" stroke="#F0505E" stroke-width="6" stroke-linecap="round"/>`;
+  }
+  return '';
+}
+
+/* ---------- HUD ---------- */
+const HUD = {};
+function drawHud() {
+  const g = $('hud');
+  g.innerHTML = `
+    <g id="bHome" class="btn" transform="translate(66,62)"><circle r="40" fill="#FFFFFF" filter="url(#shS)"/><path d="M-20 4 L0 -16 L20 4 M-14 -2 V18 H14 V-2" stroke="#4E8C7E" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <g id="dayBadge" transform="translate(600,58)"></g>
+    <g id="bBook" class="btn" transform="translate(1040,62)"><circle r="40" fill="#FFFFFF" filter="url(#shS)"/>
+      <rect x="-22" y="-20" width="44" height="40" rx="6" fill="#F57F87"/><rect x="-16" y="-15" width="32" height="30" rx="3" fill="#FFF5F6"/><path d="M0 8 C-14 -2 -12 -14 0 -6 C12 -14 14 -2 0 8Z" fill="#F57F87"/>
+      <circle id="bookDot" cx="26" cy="-26" r="11" fill="#FFD84D" stroke="#FFF" stroke-width="4" style="display:none"/></g>
+    <g id="bSpeak" class="btn" transform="translate(1134,62)"><circle r="40" fill="#FFFFFF" filter="url(#shS)"/><g id="speakWaves"></g>
+      <path d="M-18 -8 H-8 L6 -20 V20 L-8 8 H-18Z" fill="#4E8C7E" stroke="#4E8C7E" stroke-width="4" stroke-linejoin="round"/>
+      <path class="w1" d="M12 -10 Q20 0 12 10" stroke="#4E8C7E" stroke-width="5" fill="none" stroke-linecap="round"/><path class="w2" d="M18 -18 Q32 0 18 18" stroke="#4E8C7E" stroke-width="5" fill="none" stroke-linecap="round"/></g>`;
+  HUD.home = $('bHome'); HUD.book = $('bBook'); HUD.speak = $('bSpeak'); HUD.day = $('dayBadge'); HUD.bookDot = $('bookDot');
+  HUD.w1 = HUD.speak.querySelector('.w1'); HUD.w2 = HUD.speak.querySelector('.w2');
+  HUD.home.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.pop(); onHome(); });
+  HUD.book.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.pop(); openBook(); });
+  HUD.speak.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.pop(); if (V.last && !MODAL_BUSY) say(V.last); });
+}
+function hudGame(on) { for (const k of ['book', 'speak', 'day']) HUD[k].style.display = on ? '' : 'none'; }
+function drawDayBadge() {
+  if (!SAVE) return;
+  const n = SAVE.list ? SAVE.list.length : 0;
+  let s = `<rect x="${-60 - n * 26}" y="-30" width="${120 + n * 52}" height="60" rx="30" fill="#FFFFFF" filter="url(#shS)"/>
+    <g transform="translate(${-24 - n * 26},0)"><circle r="20" fill="#FFD84D"/>${[0, 1, 2, 3, 4, 5, 6, 7].map(i => { const a = i * Math.PI / 4; return `<line x1="${Math.cos(a) * 24}" y1="${Math.sin(a) * 24}" x2="${Math.cos(a) * 30}" y2="${Math.sin(a) * 30}" stroke="#FFC233" stroke-width="4" stroke-linecap="round"/>`; }).join('')}
+    <text y="8" text-anchor="middle" font-size="22" fill="#9A6A00">${SAVE.day}</text></g>`;
+  for (let i = 0; i < n; i++) {
+    const done = i < SAVE.pat, cur = i === SAVE.pat;
+    s += `<g transform="translate(${20 - n * 26 + i * 52 + 26},4) scale(.7)" fill="${done ? '#F57F87' : cur ? '#FFC2C8' : '#E3ECEA'}">${pawShape()}</g>`;
+  }
+  HUD.day.innerHTML = s;
+}
+
+/* ---------- Arztkoffer (unten) ---------- */
+let TRAY_ITEMS = [], TRAY_HINT = null;
+function drawTray(items, label) {
+  const g = $('tray'); clear(g);
+  TRAY_ITEMS = items;
+  const w = Math.max(360, items.length * 128 + 150), x0 = 600 - w / 2;
+  el('g', { filter: 'url(#sh)' }, g, `<rect x="${x0}" y="786" width="${w}" height="104" rx="30" fill="url(#gKit)"/>`);
+  el('rect', { x: x0 + 8, y: 794, width: w - 16, height: 88, rx: 24, fill: 'none', stroke: '#FFFFFF', 'stroke-width': 3, 'stroke-dasharray': '10 8', opacity: .7 }, g);
+  el('g', { transform: `translate(${x0 + 58},838)` }, g, `<circle r="30" fill="#FFFFFF"/><rect x="-8" y="-20" width="16" height="40" rx="4" fill="#E2696D"/><rect x="-20" y="-8" width="40" height="16" rx="4" fill="#E2696D"/>`);
+  el('rect', { x: 560, y: 774, width: 80, height: 22, rx: 11, fill: '#C9545A' }, g);
+  items.forEach((it, i) => {
+    const x = x0 + 150 + i * 128;
+    const s = el('g', { class: 'btn slot', 'data-item': it, transform: `translate(${x},838)` }, g);
+    el('circle', { r: 50, fill: '#FFFFFF', class: 'slotBg' }, s);
+    el('circle', { r: 50, fill: 'none', stroke: '#FFD84D', 'stroke-width': 8, class: 'slotHi', opacity: 0 }, s);
+    el('g', { transform: 'scale(.82)', class: 'ico' }, s, toolIcon(it));
+    s._x = x; s._y = 838;
+  });
+}
+function traySlot(it) { return $('tray').querySelector(`[data-item="${it}"]`); }
+function trayHint(it) { TRAY_HINT = it; }
+
+/* ---------- Effekte ---------- */
+const PARTS = [];
+function burst(x, y, n = 18, colors = ['#FFD84D', '#F57F87', '#8FD0F2', '#B6E39B', '#FFFFFF'], kind = 'star') {
+  for (let i = 0; i < n; i++) {
+    const a = rnd(0, Math.PI * 2), sp = rnd(160, 420);
+    const e = kind === 'heart' ? el('path', { d: 'M0 8 C-14 -6 -10 -18 0 -10 C10 -18 14 -6 0 8Z', fill: pick(['#F57F87', '#FF9AA8', '#F2575E']) }, $('fx'))
+      : el('path', { d: star(0, 0, rnd(8, 14), rnd(4, 6)), fill: pick(colors) }, $('fx'));
+    PARTS.push({ e, x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 200, life: rnd(.8, 1.4), t: 0, r: rnd(0, 360), vr: rnd(-300, 300), g: kind === 'heart' ? -120 : 600 });
+  }
+}
+function floatHearts(x, y, n = 6) {
+  for (let i = 0; i < n; i++) {
+    const e = el('path', { d: 'M0 8 C-14 -6 -10 -18 0 -10 C10 -18 14 -6 0 8Z', fill: pick(['#F57F87', '#FF9AA8']) }, $('fx'));
+    PARTS.push({ e, x: x + rnd(-60, 60), y: y + rnd(-20, 20), vx: rnd(-20, 20), vy: rnd(-140, -90), life: rnd(1.4, 2.2), t: -i * .15, r: 0, vr: 0, g: 0, sc: rnd(1.2, 2) });
+  }
+}
+function updParts(dt) {
+  for (let i = PARTS.length - 1; i >= 0; i--) {
+    const p = PARTS[i]; p.t += dt;
+    if (p.t < 0) { p.e.setAttribute('opacity', 0); continue; }
+    p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.r += p.vr * dt;
+    const k = p.t / p.life;
+    p.e.setAttribute('transform', `translate(${p.x.toFixed(1)},${p.y.toFixed(1)}) rotate(${p.r.toFixed(0)}) scale(${p.sc || 1})`);
+    p.e.setAttribute('opacity', Math.max(0, 1 - k * k).toFixed(2));
+    if (k >= 1) { p.e.remove(); PARTS.splice(i, 1); }
+  }
+}
+
+/* ---------- Befund-Ansicht (großer Kreis links) ---------- */
+const POP = { x: 230, y: 360 };
+async function showPopup(inner, ms = 0) {
+  const g = $('pop'); clear(g);
+  const w = el('g', { transform: `translate(${POP.x},${POP.y}) scale(0)` }, g);
+  el('circle', { r: 168, fill: '#FFFFFF', filter: 'url(#sh)' }, w);
+  const c = el('g', { 'clip-path': 'url(#clipPop)' }, w, inner);
+  el('circle', { r: 150, fill: 'none', stroke: '#8FC7B8', 'stroke-width': 8 }, w);
+  // kleiner Zeiger zum Patienten
+  el('path', { d: 'M150 30 L210 70 L140 70Z', fill: '#FFFFFF' }, w).parentNode.insertBefore(w.lastChild, w.firstChild);
+  await tween(380, t => w.setAttribute('transform', `translate(${POP.x},${POP.y}) scale(${t})`), easeBack);
+  return c;
+}
+async function hidePopup() {
+  const w = $('pop').firstChild; if (!w) return;
+  await tween(250, t => w.setAttribute('transform', `translate(${POP.x},${POP.y}) scale(${1 - t})`));
+  clear($('pop'));
+}
+
+/* =========================================================
+   SPIELABLAUF
+   ========================================================= */
+let MODE = 'title', idle = 0, MODAL_BUSY = false;
+let CUR = null;  // Wartende Aktionen des aktuellen Patienten
+
+function onHome() {
+  if (MODE === 'title') { location.href = '../'; return; }
+  if (MODE === 'buch') { closeBook(); return; }
+  showTitle();
+}
+
+/* ----- Titel ----- */
+function showTitle() {
+  RUN++; stopVoice(); MODE = 'title'; MODAL_BUSY = false;
+  clear($('pop')); clear($('drag')); clear($('tray')); clear($('fx')); PARTS.length = 0;
+  hudGame(false);
+  $('patWrap').style.display = 'none'; $('clipL').style.display = 'none';
+  setBelle(1005, 788, 1);
+  const m = $('modal'); clear(m);
+  const has = loadSave();
+  m.innerHTML = `<rect x="0" y="0" width="1200" height="900" fill="#FFFFFF" opacity=".35"/>
+    <g transform="translate(600,190)" filter="url(#sh)">
+      <path d="M-420 -70 L420 -70 L390 0 L420 70 L-420 70 L-390 0Z" fill="#F57F87"/>
+      <path d="M-380 -56 L380 -56 L380 56 L-380 56Z" fill="#FF97A0"/>
+      <text y="-6" text-anchor="middle" font-size="66" fill="#FFFFFF" stroke="#C94F5A" stroke-width="10" paint-order="stroke">Belles Tierarztpraxis</text>
+      <g transform="translate(-300,40) scale(.6)" fill="#FFFFFF" opacity=".9">${pawShape()}</g><g transform="translate(300,40) scale(.6)" fill="#FFFFFF" opacity=".9">${pawShape()}</g>
+    </g>
+    <g id="bPlay" class="btn" transform="translate(600,520)"><circle r="96" fill="#5BBF4A" stroke="#FFFFFF" stroke-width="12" filter="url(#sh)"/><path d="M-26 -44 L50 0 L-26 44Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="10" stroke-linejoin="round"/></g>
+    ${has ? `<g id="bReset" class="btn" transform="translate(1134,62)"><circle r="34" fill="#FFFFFF" filter="url(#shS)"/><path d="M14 -12 A18 18 0 1 0 18 6" stroke="#9AA7AF" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M20 -24 L16 -8 L2 -14" stroke="#9AA7AF" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>` : ''}`;
+  const bp = $('bPlay');
+  bp.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.yay(); startGame(); });
+  if (has) {
+    let armed = false; const br = $('bReset');
+    br.addEventListener('pointerdown', e => {
+      e.stopPropagation(); SFX.pop();
+      if (!armed) { armed = true; br.querySelector('circle').setAttribute('fill', '#F57F87'); setTimeout(() => { armed = false; if (br.isConnected) br.querySelector('circle').setAttribute('fill', '#FFFFFF'); }, 3000); return; }
+      try { localStorage.removeItem(SAVEKEY); } catch (er) {} br.remove(); SFX.boing();
+    });
+  }
+  TITLE_PULSE = bp;
+  if (unlocked) guard(say('titel', { instr: true }));
+}
+let TITLE_PULSE = null;
+
+function startGame() {
+  RUN++; stopVoice();
+  SAVE = loadSave() || newSave();
+  if (!SAVE.buch) SAVE.buch = {};
+  clear($('modal')); TITLE_PULSE = null;
+  hudGame(true);
+  guard(mainLoop());
+}
+
+async function mainLoop() {
+  for (;;) {
+    if (!SAVE.list) {
+      SAVE.list = makeDay(SAVE.day); SAVE.pat = 0;
+      // Geräte des Tages ins Buch
+      for (const t of frei(SAVE.day).geraete) SAVE.buch['g_' + t] = SAVE.buch['g_' + t] || 1;
+      save();
+      await dayIntro(SAVE.day);
+    }
+    drawDayBadge();
+    while (SAVE.pat < SAVE.list.length) {
+      await patientFlow(SAVE.list[SAVE.pat]);
+      SAVE.pat++; SAVE.geheilt++; save(); drawDayBadge();
+    }
+    await dayEnd();
+    SAVE.day++; SAVE.list = null; SAVE.pat = 0; save();
+  }
+}
+
+/* ----- Tagesbeginn ----- */
+async function dayIntro(day) {
+  MODE = 'intro'; drawDayBadge();
+  $('patWrap').style.display = 'none'; $('clipL').style.display = 'none';
+  drawTray(day === 1 ? [] : frei(day).geraete.filter(t => !(neuAmTag(day) || { geraete: [] }).geraete.includes(t)));
+  const m = $('modal'); clear(m);
+  const card = el('g', { transform: 'translate(600,430) scale(0)' }, m);
+  card.innerHTML = `<rect x="-260" y="-200" width="520" height="400" rx="40" fill="url(#gCard)" filter="url(#sh)"/>
+    <g transform="translate(0,-40)"><circle r="92" fill="#FFE27A" opacity=".35"/><circle r="66" fill="#FFD84D"/>${[...Array(12)].map((_, i) => { const a = i * Math.PI / 6; return `<line x1="${Math.cos(a) * 76}" y1="${Math.sin(a) * 76}" x2="${Math.cos(a) * 96}" y2="${Math.sin(a) * 96}" stroke="#FFC233" stroke-width="10" stroke-linecap="round"/>`; }).join('')}
+    <circle cx="-22" cy="-8" r="7" fill="#7A4B1E"/><circle cx="22" cy="-8" r="7" fill="#7A4B1E"/><path d="M-22 16 Q0 34 22 16" stroke="#7A4B1E" stroke-width="7" fill="none" stroke-linecap="round"/></g>
+    <text y="120" text-anchor="middle" font-size="58" fill="#5A8A7E">Tag ${day}</text>
+    <g transform="translate(0,170)">${SAVE.list.map((_, i, a) => `<g transform="translate(${(i - (a.length - 1) / 2) * 50},0) scale(.6)" fill="#F57F87">${pawShape()}</g>`).join('')}</g>`;
+  await tween(500, t => card.setAttribute('transform', `translate(600,430) scale(${t})`), easeBack);
+  SFX.ding();
+  await say(day === 1 ? 'tag_1' : 'tag');
+  await wait(300);
+  await tween(300, t => card.setAttribute('transform', `translate(600,430) scale(${1 - t})`));
+  clear(m);
+  const neu = neuAmTag(day);
+  if (day === 1) {
+    drawTray(frei(day).geraete);
+    const tr = $('tray'); await tween(400, t => tr.setAttribute('transform', `translate(0,${(1 - t) * 140})`), easeBack);
+    await say('koffer_1');
+  }
+  if (neu) for (const t of neu.geraete) await revealTool(t);
+}
+async function revealTool(t) {
+  const m = $('modal'); clear(m);
+  el('rect', { x: 0, y: 0, width: 1200, height: 900, fill: '#FFFFFF', opacity: .55 }, m);
+  const g = el('g', { transform: 'translate(600,420) scale(0)' }, m);
+  g.innerHTML = `<g class="rays">${[...Array(12)].map((_, i) => `<path d="M0 0 L${Math.cos(i * Math.PI / 6 - .12) * 300} ${Math.sin(i * Math.PI / 6 - .12) * 300} L${Math.cos(i * Math.PI / 6 + .12) * 300} ${Math.sin(i * Math.PI / 6 + .12) * 300}Z" fill="#FFE27A" opacity=".55"/>`).join('')}</g>
+    <circle r="150" fill="#FFFFFF" filter="url(#sh)"/><g transform="scale(2.6)">${toolIcon(t)}</g>`;
+  REVEAL = g.querySelector('.rays');
+  SFX.sparkle();
+  await tween(600, k => g.setAttribute('transform', `translate(600,420) scale(${k})`), easeBack);
+  burst(600, 420, 26);
+  await say(GERAETE[t].neu);
+  SAVE.buch['g_' + t] = 2; save(); HUD.bookDot.style.display = '';
+  const items = TRAY_ITEMS.concat([t]);
+  drawTray(items);
+  const s = traySlot(t), tx = s._x, ty = s._y; s.style.opacity = 0;
+  await tween(600, k => g.setAttribute('transform', `translate(${lerp(600, tx, k)},${lerp(420, ty, k)}) scale(${lerp(1, .32, k)})`));
+  s.style.opacity = 1; SFX.pop(); clear(m); REVEAL = null;
+}
+let REVEAL = null;
+
+/* ----- Ein Patient ----- */
+async function patientFlow(p) {
+  MODE = 'arrive';
+  clipReset(); $('clipL').style.display = '';
+  drawTray(frei(SAVE.day).geraete);
+  makePatient(p.a, p.k);
+  $('patWrap').style.display = '';
+  P.x = 140; P.y = 788; P.s = .78; P.hop = 0; placePat(); P.g.style.opacity = 0;
+  // Tür auf, Tier kommt herein
+  SFX.bell(); await tween(500, doorOpen);
+  P.g.style.opacity = 1;
+  await walk(140, 788, 410, 788, .78, .92, 1100);
+  doorAnimClose();
+  // Auf den Tisch hüpfen
+  SFX.hop();
+  await tween(650, t => { P.x = lerp(410, SEAT[0], t); P.y = lerp(788, SEAT[1], t); P.s = lerp(.92, PS, t); P.hop = Math.sin(t * Math.PI) * 120; placePat(); }, t => t);
+  P.hop = 0; placePat();
+  await say('kommt_' + p.a);
+  await say(p.a + '_klage_' + p.k, { who: 'tier' });
+  // Untersuchen
+  MODE = 'exam'; CUR = { r: RUN };
+  const first = SAVE.pat === 0;
+  if (first) await say('untersuchen', { instr: true }); else { V.last = 'untersuchen'; V.rep = 0; }
+  await new Promise(res => { CUR.diagnosed = res; });
+  // Behandeln
+  MODE = 'treat';
+  const steps = KRANK[p.k].schritte, items = [...new Set(steps.map(s => s.item))];
+  drawTray(shuffleSome(items));
+  for (let i = 0; i < steps.length; i++) {
+    P.step = i; P.prog = 0; P.stepDone = null;
+    await say('schritt_' + steps[i].item, { instr: true });
+    await new Promise(res => { P.stepDone = res; });
+    SFX.yay(); burst(...zielXY(steps[i].ziel), 14);
+    await say(pick(['lob_1', 'lob_2', 'lob_3', 'lob_4']));
+  }
+  // Gesund!
+  MODE = 'healed'; TRAY_HINT = null;
+  heal();
+  floatHearts(SEAT[0], SEAT[1] - 260, 7);
+  BELLE.bounce = 1; SFX.yay();
+  await say(p.a + '_danke', { who: 'tier' });
+  const neu = !SAVE.buch['k_' + p.k];
+  await cardToBook(p.k);
+  SAVE.buch['k_' + p.k] = neu ? 2 : SAVE.buch['k_' + p.k];
+  if (neu) HUD.bookDot.style.display = '';
+  save();
+  await say(neu ? 'neue_karte' : 'gesund');
+  // Tier geht wieder
+  SFX.hop();
+  await tween(600, t => { P.x = lerp(SEAT[0], 410, t); P.y = lerp(SEAT[1], 788, t); P.s = lerp(PS, .92, t); P.hop = Math.sin(t * Math.PI) * 100; placePat(); }, t => t);
+  P.hop = 0;
+  await tween(450, doorOpen);
+  await walk(410, 788, 140, 788, .92, .78, 900);
+  await tween(250, t => { P.g.style.opacity = 1 - t; });
+  await tween(400, t => doorOpen(1 - t));
+  $('patWrap').style.display = 'none';
+}
+function shuffleSome(a) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; }
+function doorAnimClose() { guard(tween(450, t => doorOpen(1 - t))); }
+async function walk(x1, y1, x2, y2, s1, s2, ms) {
+  await tween(ms, t => { P.x = lerp(x1, x2, t); P.y = lerp(y1, y2, t); P.s = lerp(s1, s2, t); P.hop = Math.abs(Math.sin(t * Math.PI * 4)) * 22; placePat(); }, t => t);
+  P.hop = 0; placePat();
+}
+function heal() {
+  P.healed = true; P.cough = 0;
+  setMood('happy');
+  if (P.sym.schweiss) P.sym.schweiss.remove();
+  if (P.sym.hitze) P.sym.hitze.remove();
+  if (P.sym.ohr) P.sym.ohr.remove();
+  if (P.sym.rot) P.sym.rot.remove();
+  if (P.sym.blau) P.sym.blau.remove();
+  P.cheeks.forEach(c => { c.setAttribute('fill', '#F48A9A'); c.setAttribute('opacity', '.45'); });
+}
+async function cardToBook(k) {
+  const g = el('g', { transform: `translate(600,330) scale(0)` }, $('fx'));
+  g.innerHTML = `<rect x="-100" y="-120" width="200" height="240" rx="22" fill="url(#gCard)" stroke="#F57F87" stroke-width="6"/><g transform="translate(0,-10) scale(.75)">${krankBild(k)}</g>`;
+  SFX.sparkle();
+  await tween(450, t => g.setAttribute('transform', `translate(600,330) scale(${t * .9})`), easeBack);
+  await wait(700);
+  SFX.whoosh();
+  await tween(650, t => g.setAttribute('transform', `translate(${lerp(600, 1040, t)},${lerp(330, 62, t)}) scale(${lerp(.9, .12, t)}) rotate(${t * 20})`));
+  g.remove(); SFX.pop(); burst(1040, 62, 10);
+}
+
+/* ----- Feierabend ----- */
+async function dayEnd() {
+  MODE = 'end';
+  clear($('tray')); $('clipL').style.display = 'none';
+  const m = $('modal'); clear(m);
+  el('rect', { x: 0, y: 0, width: 1200, height: 900, fill: '#2C3C78', opacity: .45 }, m);
+  const card = el('g', { transform: 'translate(600,420) scale(0)' }, m);
+  card.innerHTML = `<rect x="-280" y="-230" width="560" height="460" rx="40" fill="#24306A" filter="url(#sh)"/>
+    ${[...Array(14)].map(() => `<path d="${star(rnd(-250, 250), rnd(-200, 40), rnd(6, 12), rnd(3, 5))}" fill="#FFE27A" opacity="${rnd(.5, 1).toFixed(2)}"/>`).join('')}
+    <g transform="translate(-160,-110)"><circle r="62" fill="#FFE9A8"/><circle cx="30" cy="-16" r="55" fill="#24306A"/></g>
+    <g transform="translate(40,200) scale(.62)">${belleSVG()}</g>`;
+  BELLE.bounce = 1;
+  await tween(500, t => card.setAttribute('transform', `translate(600,420) scale(${t})`), easeBack);
+  burst(600, 300, 30);
+  await say('feierabend');
+  const next = SAVE.day + 1, neu = neuAmTag(next);
+  const b = el('g', { class: 'btn', transform: 'translate(600,720) scale(0)' }, m, `<circle r="74" fill="#5BBF4A" stroke="#FFFFFF" stroke-width="10" filter="url(#sh)"/><path d="M-20 -34 L38 0 L-20 34Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="8" stroke-linejoin="round"/>`);
+  await tween(400, t => b.setAttribute('transform', `translate(600,720) scale(${t})`), easeBack);
+  TITLE_PULSE = b;
+  const r = RUN;
+  const pressed = new Promise(res => b.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.yay(); res(); }));
+  say(neu ? 'morgen_neu' : 'morgen', { instr: true }).catch(() => {});
+  await pressed; if (r !== RUN) throw ABORT;
+  TITLE_PULSE = null; stopVoice(); clear(m);
+}
+
+/* =========================================================
+   UNTERSUCHEN
+   ========================================================= */
+function onClip() {
+  if (MODE !== 'exam' || !CUR) return;
+  SFX.pop();
+  if (!CLIP.n) { say('untersuchen', { instr: true }); wiggle(CLIP.g); return; }
+  guard(openDiagnose());
+}
+function wiggle(g) { const t0 = g.getAttribute('transform'); guard(tween(400, t => g.setAttribute('transform', t0 + ` rotate(${Math.sin(t * Math.PI * 4) * 6})`)).then(() => g.setAttribute('transform', t0))); }
+
+async function runExam(tool, fromX, fromY) {
+  MODE = 'busy';
+  const dz = P.k, z = GERAETE[tool].ziel, [tx, ty] = zielXY(z);
+  // Gerät fliegt an seine Stelle
+  const gh = el('g', {}, $('drag'), `<g transform="scale(1.05)">${toolIcon(tool)}</g>`);
+  await tween(350, t => gh.setAttribute('transform', `translate(${lerp(fromX, tx + 20, t)},${lerp(fromY, ty - 10, t)})`));
+  const key = BEFUND[tool][dz] || BEFUND[tool]._;
+  const good = !!BEFUND[tool][dz];
+  if (tool === 'roentgen') { gh.remove(); await xrayScan(); }
+  else if (tool === 'stetho') { (good ? SFX.rattle : SFX.heart)(); }
+  else if (tool === 'thermo') { SFX.pick(); }
+  else SFX.pick();
+  const c = await showPopup(befundBild(tool, good));
+  if (tool === 'thermo') animThermo(c, good);
+  if (tool === 'stetho') animStetho(c, good);
+  await say(key);
+  await wait(400);
+  if (gh.isConnected) gh.remove();
+  await hidePopup();
+  if (!P.befunde[tool]) { P.befunde[tool] = 1; clipAdd(tool, good); SFX.pop(); }
+  if (good) {
+    P.found = true; CLIP.pulse = 1;
+    if (!P.saidKlemm) { P.saidKlemm = true; MODE = 'exam'; await say('klemmbrett', { instr: true }); }
+  } else if (!P.found) {
+    MODE = 'exam'; V.last = 'noch_ein_geraet'; V.rep = 0;
+    await wait(500); if (MODE === 'exam' && !V.speaking) await say('noch_ein_geraet', { instr: true });
+  }
+  if (MODE === 'busy') MODE = 'exam';
+}
+async function xrayScan() {
+  SFX.xray();
+  const g = el('g', {}, $('fx'));
+  const top = SEAT[1] - 380, bot = SEAT[1] + 10;
+  const scr = el('rect', { x: SEAT[0] - 150, y: top, width: 300, height: bot - top, rx: 24, fill: '#1D3A6B', opacity: 0 }, g);
+  const line = el('rect', { x: SEAT[0] - 160, y: top, width: 320, height: 10, rx: 5, fill: '#8FF0FF', opacity: .9 }, g);
+  await tween(250, t => scr.setAttribute('opacity', .45 * t));
+  await tween(1100, t => line.setAttribute('y', lerp(top, bot, t)));
+  await tween(250, t => { scr.setAttribute('opacity', .45 * (1 - t)); line.setAttribute('opacity', .9 * (1 - t)); });
+  g.remove();
+}
+function befundBild(tool, good) {
+  const c = TIERE[P.a];
+  const fur = `<rect x="-160" y="-160" width="320" height="320" fill="${c.fur}"/>` + [...Array(40)].map(() => `<path d="M${rnd(-150, 150).toFixed(0)} ${rnd(-150, 150).toFixed(0)} q6 -10 12 0" stroke="${c.dark}" stroke-width="3" fill="none" opacity=".25"/>`).join('');
+  switch (tool) {
+    case 'lupe': {
+      let s = fur;
+      if (P.k === 'splitter') s += `<path d="M-90 70 L30 -30" stroke="#8A5A2B" stroke-width="22" stroke-linecap="round"/><path d="M-90 70 L-20 12" stroke="#B07A45" stroke-width="8" stroke-linecap="round"/><circle cx="34" cy="-34" r="34" fill="#F27A7A" opacity=".35"/>`;
+      else if (P.k === 'schramme') s += `<path d="M-100 -40 L80 0 M-90 20 L90 60 M-70 80 L50 110" stroke="#E2575E" stroke-width="12" stroke-linecap="round"/>${[[-40, -10], [20, 30], [-60, 50], [50, -10], [0, 80], [-20, 10]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="${rnd(9, 14).toFixed(0)}" fill="#8B6A45"/>`).join('')}`;
+      else if (P.k === 'bruch') s += `<ellipse cx="0" cy="0" rx="120" ry="100" fill="#8E7CC3" opacity=".4"/><path d="M-130 -40 Q0 -80 130 -40 M-130 60 Q0 100 130 60" stroke="${c.dark}" stroke-width="6" fill="none" opacity=".5"/>`;
+      else s += `<g transform="translate(0,20) scale(1.6)" fill="${c.light}" opacity=".6">${pawShape()}</g>`;
+      return s + `<circle r="150" fill="#DDF3FF" opacity=".15"/><path d="M-110 -60 a130 130 0 0 1 60 -70" stroke="#FFF" stroke-width="14" fill="none" stroke-linecap="round" opacity=".7"/>`;
+    }
+    case 'thermo':
+      return `<rect x="-160" y="-160" width="320" height="320" fill="${good ? '#FFE8E6' : '#E8F8E4'}"/>
+        <g transform="rotate(0)"><rect x="-30" y="-130" width="60" height="210" rx="30" fill="#FFFFFF" stroke="#7F93A3" stroke-width="8"/><circle cx="0" cy="96" r="44" fill="${good ? '#F2575E' : '#5BBF4A'}" stroke="#7F93A3" stroke-width="8"/>
+        <rect class="tLiq" x="-13" y="80" width="26" height="10" rx="13" fill="${good ? '#F2575E' : '#5BBF4A'}"/>
+        ${[-100, -80, -60, -40, -20, 0, 20, 40].map(y => `<rect x="34" y="${y}" width="${y % 40 === 0 ? 30 : 18}" height="5" rx="2" fill="#7F93A3"/>`).join('')}
+        <rect x="-14" y="-118" width="10" height="190" rx="5" fill="#FFF" opacity=".6"/></g>`;
+    case 'stetho':
+      return `<rect x="-160" y="-160" width="320" height="320" fill="#FDEFF1"/>
+        <g class="sHeart"><path d="M0 60 C-90 0 -70 -80 0 -34 C70 -80 90 0 0 60Z" fill="#F57F87"/><path d="M-36 -26 a30 30 0 0 1 24 -12" stroke="#FFF" stroke-width="8" fill="none" stroke-linecap="round" opacity=".7"/></g>
+        <g class="sWave" opacity=".8">${good ? `<path d="M-140 110 q20 -30 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0" stroke="#B49AC9" stroke-width="8" fill="none"/>${[[-90, 90], [-20, 120], [50, 95], [100, 125]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="10" fill="none" stroke="#B49AC9" stroke-width="5"/>`).join('')}`
+          : `<path d="M-140 110 h60 l15 -30 l20 60 l15 -30 h60 l15 -30 l20 60 l15 -30 h40" stroke="#5BBF4A" stroke-width="8" fill="none" stroke-linejoin="round"/>`}</g>`;
+    case 'roentgen': {
+      const bones = `<g fill="#EAF4FF"><rect x="-26" y="-150" width="52" height="160" rx="24"/><ellipse cx="0" cy="40" rx="62" ry="40"/>${[[-48, 90], [-17, 106], [17, 106], [48, 90]].map(([x, y]) => `<rect x="${x - 11}" y="${y - 24}" width="22" height="48" rx="11"/>`).join('')}</g>`;
+      return `<rect x="-160" y="-160" width="320" height="320" fill="url(#gXray)"/>
+        <path d="M-90 -160 C-80 -40 -110 60 -70 160 L70 160 C110 60 80 -40 90 -160Z" fill="#5C7FB8" opacity=".35"/>${bones}
+        ${good ? `<path d="M-34 -70 L-8 -60 L-20 -46 L6 -36 L-4 -24 L30 -14" stroke="#F2575E" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="0" cy="-44" r="60" fill="none" stroke="#FFD84D" stroke-width="6" stroke-dasharray="14 10"/>` : ''}`;
+    }
+    case 'ohrenspiegel':
+      return `<rect x="-160" y="-160" width="320" height="320" fill="#2E1A1F"/>
+        <circle r="130" fill="${good ? 'url(#gEarRed)' : 'url(#gEar)'}"/><circle r="40" fill="${good ? '#5A0E16' : '#5A1E2A'}" opacity=".8"/>
+        <circle cx="-50" cy="-60" r="40" fill="#FFF8D0" opacity=".25"/>${good ? `<path d="M-80 30 q20 -10 40 0 M30 60 q20 -10 40 0 M40 -60 q16 -10 32 0" stroke="#FFB0B0" stroke-width="6" fill="none" stroke-linecap="round"/>` : ''}`;
+  }
+  return '';
+}
+function animThermo(c, good) {
+  const l = c.querySelector('.tLiq'); if (!l) return;
+  guard(tween(1500, t => { const h = (good ? 190 : 110) * t + 10; l.setAttribute('y', 90 - h); l.setAttribute('height', h); }));
+}
+function animStetho(c, good) {
+  const h = c.querySelector('.sHeart'), r = RUN;
+  const t0 = performance.now();
+  (function f() {
+    if (r !== RUN || !h.isConnected) return;
+    const t = (performance.now() - t0) / 800 % 1, k = 1 + (t < .15 ? Math.sin(t / .15 * Math.PI) * .12 : t > .27 && t < .42 ? Math.sin((t - .27) / .15 * Math.PI) * .08 : 0);
+    h.setAttribute('transform', `scale(${k})`); requestAnimationFrame(f);
+  })();
+}
+
+/* ----- Diagnose-Karten ----- */
+async function openDiagnose() {
+  MODE = 'diag'; MODAL_BUSY = false;
+  const m = $('modal'); clear(m);
+  const bg = el('rect', { x: 0, y: 0, width: 1200, height: 900, fill: '#2F4A44', opacity: 0 }, m);
+  const unl = frei(SAVE.day).krank;
+  let opts = shuffleSome(unl.filter(k => k !== P.k)).slice(0, 2); opts.push(P.k); opts = shuffleSome(opts);
+  const n = opts.length, W = 300, gap = 40, x0 = 600 - ((n - 1) * (W + gap)) / 2;
+  const cards = opts.map((k, i) => {
+    const g = el('g', { class: 'btn', transform: `translate(${x0 + i * (W + gap)},470) scale(0)` }, m);
+    g.innerHTML = `<g class="hl" opacity="0"><rect x="-166" y="-216" width="332" height="432" rx="44" fill="#FFD84D"/></g>
+      <rect x="-150" y="-200" width="300" height="400" rx="34" fill="url(#gCard)" filter="url(#sh)"/>
+      <g transform="translate(0,-30)">${krankBild(k)}</g>
+      <text y="160" text-anchor="middle" font-size="34" fill="#5A8A7E">${{ splitter: 'Splitter', schramme: 'Schramme', fieber: 'Fieber', husten: 'Husten', bruch: 'Knochenbruch', ohren: 'Ohrenentzündung' }[k]}</text>`;
+    g._k = k; g._x = x0 + i * (W + gap);
+    g.addEventListener('pointerdown', e => { e.stopPropagation(); chooseCard(g, cards); });
+    return g;
+  });
+  // Schließen
+  const x = el('g', { class: 'btn', transform: 'translate(1110,150)' }, m, `<circle r="40" fill="#FFFFFF" filter="url(#shS)"/><path d="M-14 -14 L14 14 M14 -14 L-14 14" stroke="#9AA7AF" stroke-width="8" stroke-linecap="round"/>`);
+  x.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.pop(); closeDiagnose(); });
+  const my = DIAG = { cards, chosen: false, r: RUN };
+  const alive = () => DIAG === my && !my.chosen && MODE === 'diag';
+  await tween(250, t => bg.setAttribute('opacity', .45 * t));
+  for (const c of cards) { if (!alive()) return; await tween(260, t => c.setAttribute('transform', `translate(${c._x},470) scale(${t})`), easeBack); }
+  if (!alive()) return;
+  await say('diagnose', { instr: true });
+  for (const c of cards) {
+    if (!alive()) return;
+    c.querySelector('.hl').setAttribute('opacity', 1);
+    await say('karte_' + c._k);
+    c.querySelector('.hl').setAttribute('opacity', 0);
+    if (!alive()) return;
+    await wait(150);
+  }
+}
+let DIAG = null;
+async function chooseCard(g, cards) {
+  if (!DIAG || DIAG.chosen || MODE !== 'diag') return;
+  DIAG.chosen = true; stopVoice();
+  cards.forEach(c => c.querySelector('.hl').setAttribute('opacity', 0));
+  if (g._k === P.k) {
+    g.querySelector('.hl').setAttribute('opacity', 1);
+    SFX.yay(); burst(g._x, 470, 24); BELLE.bounce = 1;
+    await guard(tween(300, t => g.setAttribute('transform', `translate(${g._x},470) scale(${1 + .08 * Math.sin(t * Math.PI)})`)));
+    await guard(say('richtig_' + P.k));
+    clear($('modal')); DIAG = null;
+    CLIP.pulse = 0; clipReset();
+    if (CUR && CUR.diagnosed) CUR.diagnosed();
+  } else {
+    SFX.boing();
+    const t0 = g.getAttribute('transform');
+    await guard(tween(500, t => g.setAttribute('transform', `translate(${g._x + Math.sin(t * Math.PI * 6) * 14 * (1 - t)},470)`)));
+    g.setAttribute('transform', t0);
+    await guard(say('falsch', { instr: true }));
+    closeDiagnose();
+  }
+}
+function closeDiagnose() { stopVoice(); clear($('modal')); DIAG = null; if (MODE === 'diag') MODE = 'exam'; V.last = 'untersuchen'; }
+
+/* =========================================================
+   BEHANDELN
+   ========================================================= */
+function curStep() { return KRANK[P.k].schritte[P.step]; }
+function stepOk() { if (P.stepDone) { const f = P.stepDone; P.stepDone = null; TRAY_HINT = null; f(); } }
+function placeTreat(item) {
+  // Sichtbares Ergebnis am Tier
+  const z = curStep().ziel, [lx, ly] = zielLocal(z);
+  const host = z === 'pfote' ? P.ovArm : z === 'ohr' || z === 'stirn' || z === 'mund' ? P.ovHead : P.ovTop;
+  switch (item) {
+    case 'pflaster': el('g', { transform: `translate(${lx},${ly}) rotate(-28) scale(.42)` }, host, toolIcon('pflaster')); break;
+    case 'salbe': el('g', {}, host, `<ellipse cx="${lx}" cy="${ly}" rx="17" ry="11" fill="#FFFFFF" opacity=".85"/><ellipse cx="${lx - 5}" cy="${ly - 3}" rx="5" ry="3" fill="#FFF"/>`); break;
+    case 'waschlappen': el('g', { transform: `translate(${lx},${ly + 6}) scale(.85,.6)` }, host, `<rect x="-44" y="-20" width="88" height="40" rx="12" fill="#8FD0F2" stroke="#5FA9D0" stroke-width="4"/>${[-26, -10, 6, 22].map(x => `<line x1="${x}" y1="-16" x2="${x}" y2="16" stroke="#B9E3F7" stroke-width="5"/>`).join('')}`); break;
+    case 'schal': el('g', {}, P.ovTop, `<path d="M-62 -146 Q0 -112 62 -146 L64 -124 Q0 -88 -64 -124Z" fill="#F2575E" stroke="#C93E45" stroke-width="3"/>
+        ${[-44, -20, 4, 28, 50].map(x => `<rect x="${x}" y="${-140 + Math.abs(x) * .12}" width="9" height="24" fill="#FFF" opacity=".95"/>`).join('')}
+        <path d="M24 -118 L16 -60 L42 -58 L46 -118Z" fill="#F2575E" stroke="#C93E45" stroke-width="3"/><rect x="18" y="-92" width="26" height="8" fill="#FFF"/>`); break;
+    case 'sticker': el('g', { transform: `translate(${lx + 2},${ly - 22}) scale(.42)` }, P.ovArm, toolIcon('sticker')); break;
+    case 'watte': el('g', { transform: `translate(${lx},${ly}) scale(.42)` }, host, toolIcon('watte')); break;
+  }
+}
+
+/* Zieh-Steuerung */
+let DRAG = null;
+function svgPt(e) { const pt = ST.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(ST.getScreenCTM().inverse()); }
+ST.addEventListener('pointerdown', unlockAudio, true);
+['touchend', 'click'].forEach(ev => document.addEventListener(ev, unlockAudio, true));
+ST.addEventListener('pointerdown', e => {
+  e.preventDefault(); idle = 0;
+  if (MODE === 'title' && !V.speaking && !TITLE_SAID) { TITLE_SAID = true; guard(say('titel', { instr: true })); }
+  if (MODE === 'tropfen') { tropfenTap(); return; }
+  const slot = e.target.closest && e.target.closest('.slot');
+  if (!slot || DRAG) return;
+  if (MODE !== 'exam' && MODE !== 'treat') return;
+  const it = slot.getAttribute('data-item'), p = svgPt(e);
+  SFX.pick();
+  const gh = el('g', { transform: `translate(${p.x},${p.y}) scale(1.1)` }, $('drag'), `<g transform="translate(0,-10)">${toolIcon(it)}</g>`);
+  slot.querySelector('.ico').style.opacity = .25;
+  DRAG = { it, gh, slot, x: p.x, y: p.y, sx: slot._x, sy: slot._y, grab: false, pid: e.pointerId, lastRub: 0 };
+  try { ST.setPointerCapture(e.pointerId); } catch (er) {}
+});
+ST.addEventListener('pointermove', e => {
+  if (!DRAG || e.pointerId !== DRAG.pid) return;
+  const p = svgPt(e), dx = p.x - DRAG.x, dy = p.y - DRAG.y;
+  DRAG.x = p.x; DRAG.y = p.y; idle = 0;
+  DRAG.gh.setAttribute('transform', `translate(${p.x},${p.y}) scale(1.1)`);
+  if (MODE !== 'treat' || !P || !P.stepDone) return;
+  const st = curStep(); if (st.item !== DRAG.it) return;
+  const [tx, ty] = zielXY(st.ziel);
+  if (st.art === 'reiben') {
+    if (dist(p.x, p.y, tx, ty) < 95) {
+      P.prog += Math.hypot(dx, dy); rubVisual(st.item, clamp(P.prog / st.menge, 0, 1));
+      const now = performance.now(); if (now - DRAG.lastRub > 120) { DRAG.lastRub = now; SFX.rub(); }
+      if (P.prog >= st.menge) { endDrag(true); stepOk(); }
+    }
+  } else if (st.art === 'ziehen') {
+    const tip = [p.x, p.y + 36];
+    if (!DRAG.grab && dist(tip[0], tip[1], tx, ty) < 55) { DRAG.grab = true; SFX.pick(); P.sym.splitter.style.display = 'none'; DRAG.spl = el('g', {}, DRAG.gh, `<path d="M-12 26 L6 44" stroke="#8A5A2B" stroke-width="7" stroke-linecap="round"/>`); }
+    if (DRAG.grab && dist(tip[0], tip[1], tx, ty) > 130) {
+      SFX.plop(); P.sym.splitter.remove(); if (P.sym.rot) P.sym.rot.setAttribute('opacity', .3);
+      flyAway(DRAG.gh); DRAG.gh = null; endDrag(true); stepOk();
+    }
+  }
+});
+function endUp(e) {
+  if (!DRAG || e.pointerId !== DRAG.pid) return;
+  const p = svgPt(e);
+  resolveDrop(p.x, p.y);
+}
+ST.addEventListener('pointerup', endUp);
+ST.addEventListener('pointercancel', e => { if (DRAG && e.pointerId === DRAG.pid) endDrag(false); });
+let TITLE_SAID = false;
+
+function endDrag(keep) {
+  if (!DRAG) return;
+  const d = DRAG; DRAG = null;
+  if (d.slot && d.slot.isConnected) d.slot.querySelector('.ico').style.opacity = 1;
+  if (!d.gh) return;
+  if (keep) { d.gh.remove(); return; }
+  const fx = d.x, fy = d.y, g = d.gh;
+  guard(tween(250, t => g.setAttribute('transform', `translate(${lerp(fx, d.sx, t)},${lerp(fy, d.sy, t)}) scale(${lerp(1.1, .82, t)})`)).then(() => g.remove()));
+  setTimeout(() => { if (g.isConnected) g.remove(); }, 600);
+}
+function flyAway(g) {
+  const tr = g.getAttribute('transform'), m = /translate\(([-\d.]+),([-\d.]+)\)/.exec(tr), x = +m[1], y = +m[2];
+  guard(tween(400, t => { g.setAttribute('transform', `translate(${x + t * 60},${y - t * 80}) scale(1.1)`); g.setAttribute('opacity', 1 - t); }).then(() => g.remove()));
+}
+function nearPatient(x, y) { return dist(x, y, SEAT[0], SEAT[1] - 140 * PS) < 210; }
+
+function resolveDrop(x, y) {
+  const d = DRAG; if (!d) return;
+  if (MODE === 'exam') {
+    if (GERAETE[d.it] && nearPatient(x, y)) { endDrag(true); guard(runExam(d.it, x, y)); }
+    else endDrag(false);
+    return;
+  }
+  if (MODE !== 'treat' || !P.stepDone) { endDrag(false); return; }
+  const st = curStep();
+  const [tx, ty] = zielXY(st.ziel);
+  if (d.it !== st.item) {
+    endDrag(false);
+    if (nearPatient(x, y)) { SFX.boing(); TRAY_HINT = st.item; guard(say('schritt_' + st.item, { instr: true })); }
+    return;
+  }
+  if (st.art === 'reiben') { endDrag(false); if (P.prog > 0) { if (!V.speaking) guard(say('weiter_reiben')); } return; }
+  if (st.art === 'ziehen') {
+    if (d.grab) { P.sym.splitter.style.display = ''; endDrag(false); guard(say('weiter_ziehen')); }
+    else endDrag(false);
+    return;
+  }
+  const d0 = dist(x, y, tx, ty);
+  const near = st.art === 'drauf'
+    ? d0 < 120 || (['stirn', 'hals', 'mund'].includes(st.ziel) && nearPatient(x, y))
+    : d0 < 140 || nearPatient(x, y);
+  if (!near) { endDrag(false); return; }
+  const g = d.gh; d.gh = null; endDrag(true);
+  if (st.art === 'drauf') { guard(dropOn(g, x, y, tx, ty, st.item)); }
+  else if (st.art === 'loeffel') { guard(spoon(g, x, y, tx, ty)); }
+  else if (st.art === 'tropfen') { guard(dockDropper(g, x, y, tx, ty)); }
+}
+async function dropOn(g, x, y, tx, ty, item) {
+  MODE = 'busy';
+  await tween(220, t => g.setAttribute('transform', `translate(${lerp(x, tx, t)},${lerp(y, ty, t)}) scale(${lerp(1.1, .45, t)})`));
+  g.remove(); placeTreat(item); SFX.stick();
+  MODE = 'treat'; stepOk();
+}
+async function spoon(g, x, y, tx, ty) {
+  MODE = 'busy';
+  await tween(300, t => g.setAttribute('transform', `translate(${lerp(x, tx - 30, t)},${lerp(y, ty + 10, t)}) scale(1.1)`));
+  P.mO.style.display = ''; P.mH.style.display = 'none'; P.mS.style.display = 'none';
+  SFX.gulp();
+  await tween(500, t => g.setAttribute('opacity', 1 - t));
+  g.remove();
+  P.mO.style.display = 'none'; setMood(P.mood);
+  await say(P.a + '_mmm', { who: 'tier' });
+  if (P.k === 'fieber') { if (P.sym.hitze) P.sym.hitze.setAttribute('opacity', .3); }
+  if (P.k === 'husten') P.cough = .3;
+  MODE = 'treat'; stepOk();
+}
+let DROPPER = null;
+async function dockDropper(g, x, y, tx, ty) {
+  MODE = 'busy';
+  await tween(250, t => g.setAttribute('transform', `translate(${lerp(x, tx - 10, t)},${lerp(y, ty - 70, t)}) scale(1.1) rotate(${-30 * t})`));
+  $('fx').appendChild(g);
+  DROPPER = { g, x: tx - 10, y: ty - 70, n: 0, tx, ty };
+  MODE = 'tropfen';
+  await say('tippen_tropfen');
+}
+function tropfenTap() {
+  const d = DROPPER; if (!d || d.busy) return;
+  d.busy = true; d.n++;
+  const drop = el('path', { d: 'M0 -8 C-6 0 -6 6 0 6 C6 6 6 0 0 -8Z', fill: '#5FA9D0' }, $('fx'));
+  SFX.drip();
+  guard(tween(380, t => { drop.setAttribute('transform', `translate(${d.tx - 4},${lerp(d.y + 34, d.ty, t)})`); d.g.setAttribute('transform', `translate(${d.x},${d.y}) scale(${1.1 - Math.sin(t * Math.PI) * .08}) rotate(-30)`); }, t => t * t).then(() => {
+    drop.remove(); d.busy = false;
+    burst(d.tx, d.ty, 4, ['#8FD0F2', '#FFFFFF']);
+    if (d.n >= curStep().menge) {
+      d.g.remove(); DROPPER = null;
+      if (P.sym.ohr) P.sym.ohr.setAttribute('opacity', .4);
+      MODE = 'treat'; stepOk();
+    }
+  }));
+}
+function rubVisual(item, k) {
+  if (item === 'tupfer' && P.sym.dreck) { P.sym.dreck.setAttribute('opacity', 1 - k); P.sym.kratzer.setAttribute('opacity', 1 - k * .5); }
+  if (item === 'gips') {
+    if (!P.gips) P.gips = el('g', {}, P.ovArm, `<path d="M-48 -112 C-64 -90 -68 -64 -64 -42" stroke="#FFFFFF" stroke-width="40" fill="none" stroke-linecap="round"/>
+      <ellipse cx="-62" cy="-34" rx="30" ry="23" fill="#FFFFFF" stroke="#D5DDE4" stroke-width="4"/>
+      ${[-100, -84, -68, -52].map(y => `<path d="M-84 ${y} q20 8 40 -2" stroke="#D5DDE4" stroke-width="3" fill="none"/>`).join('')}`);
+    P.gips.setAttribute('opacity', (.15 + .85 * k).toFixed(2));
+    if (k >= 1 && P.sym.blau) P.sym.blau.remove();
+  }
+}
+
+/* =========================================================
+   PATIENTENBUCH
+   ========================================================= */
+let BOOK_PREV = null;
+function openBook() {
+  if (!SAVE || (MODE !== 'exam' && MODE !== 'treat') || DRAG) return;
+  BOOK_PREV = MODE; MODE = 'buch'; HUD.bookDot.style.display = 'none';
+  stopVoice();
+  const m = $('modal'); clear(m);
+  el('rect', { x: 0, y: 0, width: 1200, height: 900, fill: '#2F4A44', opacity: .5 }, m);
+  const b = el('g', {}, m);
+  b.innerHTML = `<rect x="70" y="120" width="1060" height="700" rx="40" fill="#F57F87" filter="url(#sh)"/><rect x="92" y="140" width="1016" height="660" rx="28" fill="#FFF8EE"/>
+    <line x1="600" y1="150" x2="600" y2="790" stroke="#F2D5C2" stroke-width="6"/>`;
+  const entries = KRANK_ORDER.map(k => ({ id: 'k_' + k, k, art: 'k' })).concat(GERAET_ORDER.map(t => ({ id: 'g_' + t, k: t, art: 'g' })));
+  entries.forEach((en, i) => {
+    const col = i < 6 ? i % 3 : (i - 6) % 3, row = i < 6 ? Math.floor(i / 3) : Math.floor((i - 6) / 3);
+    const x = (i < 6 ? 186 : 696) + col * 160, y = 316 + row * 262;
+    const have = SAVE.buch[en.id], neu = have === 2;
+    const g = el('g', { class: 'btn', transform: `translate(${x},${y})` }, m);
+    g.innerHTML = `<rect x="-72" y="-110" width="144" height="220" rx="22" fill="${have ? '#FFFFFF' : '#ECE7E0'}" stroke="${neu ? '#FFD84D' : '#E9D9C9'}" stroke-width="${neu ? 8 : 4}"/>
+      ${have ? `<g transform="translate(0,-4) scale(${en.art === 'k' ? .62 : 1.2})">${en.art === 'k' ? krankBild(en.k) : toolIcon(en.k)}</g>` : `<text y="26" text-anchor="middle" font-size="80" fill="#CFC6BB">?</text>`}`;
+    g.addEventListener('pointerdown', e => {
+      e.stopPropagation(); SFX.pop();
+      if (!have) { guard(say('buch_zu')); return; }
+      if (SAVE.buch[en.id] === 2) { SAVE.buch[en.id] = 1; save(); g.querySelector('rect').setAttribute('stroke', '#E9D9C9'); g.querySelector('rect').setAttribute('stroke-width', 4); }
+      m.querySelectorAll('.bookHl').forEach(n => n.remove());
+      el('rect', { class: 'bookHl', x: -80, y: -118, width: 160, height: 236, rx: 26, fill: 'none', stroke: '#5BBF4A', 'stroke-width': 8 }, g);
+      guard(say(en.art === 'k' ? 'buch_' + en.k : GERAETE[en.k].buch));
+    });
+  });
+  const x = el('g', { class: 'btn', transform: 'translate(1110,150)' }, m, `<circle r="40" fill="#FFFFFF" filter="url(#shS)"/><path d="M-14 -14 L14 14 M14 -14 L-14 14" stroke="#9AA7AF" stroke-width="8" stroke-linecap="round"/>`);
+  x.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.pop(); closeBook(); });
+  BOOK_VLAST = V.last;
+  guard(say('buch_auf'));
+}
+let BOOK_VLAST = null;
+function closeBook() {
+  stopVoice(); clear($('modal'));
+  MODE = BOOK_PREV || 'exam'; V.last = BOOK_VLAST;
+  if (MODE === 'diag') MODE = 'exam';  // Karten wurden durchs Buch geschlossen
+  if (MODE === 'end' || MODE === 'intro' || MODE === 'arrive') { /* läuft weiter */ }
+}
+
+/* =========================================================
+   ANIMATION (Blinzeln, Atmen, Schwanz, Hinweise)
+   ========================================================= */
+function setBelle(x, y, s) { BELLE.x = x; BELLE.y = y; BELLE.s = s; }
+let last = performance.now(), TIME = 0, blinkT = 2, pBlinkT = 3, talkT = 0;
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now; TIME += dt; idle += dt;
+  // Belle
+  if (BELLE.g) {
+    BELLE.bounce = Math.max(0, BELLE.bounce - dt * 1.6);
+    const by = -Math.abs(Math.sin(BELLE.bounce * Math.PI * 2)) * 40 * BELLE.bounce;
+    const br = 1 + Math.sin(TIME * 2) * .008;
+    BELLE.g.setAttribute('transform', `translate(${BELLE.x},${BELLE.y + by}) scale(${BELLE.s || 1},${(BELLE.s || 1) * br})`);
+    BELLE.tail.setAttribute('transform', `rotate(${Math.sin(TIME * 1.6) * 6} 50 -70)`);
+    BELLE.head.setAttribute('transform', `rotate(${Math.sin(TIME * .9) * 2} 0 -230)`);
+    blinkT -= dt; const bl = blinkT < 0 ? .1 : 1; if (blinkT < -.13) blinkT = rnd(2, 5);
+    BELLE.eyes.setAttribute('transform', `translate(0,-307) scale(1,${bl}) translate(0,307)`);
+  }
+  // Patient
+  if (P && P.g.isConnected && $('patWrap').style.display !== 'none') {
+    let hj = 0;
+    if (P.cough > 0) { P.coughT -= dt * (P.cough > .5 ? 1 : .35); if (P.coughT < 0) { P.coughT = rnd(2.5, 4); coughPuff(); } const c = P.coughT > 2.3 ? Math.sin((P.coughT - 2.3) * 20) * 6 : 0; hj = c; }
+    const br = Math.sin(TIME * 2.4) * .012;
+    P.body.setAttribute('transform', `translate(0,-10) scale(1,${1 + br}) translate(0,10)`);
+    P.head.setAttribute('transform', `translate(0,${hj + Math.sin(TIME * 2.4) * 1.5}) rotate(${P.mood === 'sick' ? -4 + Math.sin(TIME) * 1.5 : Math.sin(TIME * 3) * 4} 0 -150)`);
+    P.tail.setAttribute('transform', `rotate(${Math.sin(TIME * (P.mood === 'happy' ? 8 : 1.5)) * (P.mood === 'happy' ? 10 : 3)} 60 -40)`);
+    pBlinkT -= dt; const pb = pBlinkT < 0 ? .12 : (P.mood === 'sick' && P.k === 'fieber' && !P.healed ? .6 : 1); if (pBlinkT < -.13) pBlinkT = rnd(2, 4.5);
+    P.eyes.setAttribute('transform', `translate(0,-218) scale(1,${pb}) translate(0,218)`);
+    if (P.k === 'splitter' || P.k === 'schramme' || P.k === 'bruch') P.armR.setAttribute('transform', P.healed ? '' : `translate(0,${-6 + Math.sin(TIME * 3) * 2})`);
+    // Sprechen
+    const talking = V.speaking && V.who === 'tier';
+    talkT += dt;
+    if (talking) { const o = Math.sin(talkT * 22) > 0; P.mO.style.display = o ? '' : 'none'; P.mH.style.display = o || P.mood === 'sick' ? 'none' : ''; P.mS.style.display = o || P.mood !== 'sick' ? 'none' : ''; P.talk = true; }
+    else if (P.talk) { P.talk = false; setMood(P.mood); }
+  }
+  // Klemmbrett pulsiert
+  if (CLIP.g) { const k = CLIP.pulse ? 1 + Math.sin(TIME * 6) * .05 : 1; CLIP.g.setAttribute('transform', `translate(${CLIP.x},${CLIP.y}) rotate(${-6 + (CLIP.pulse ? Math.sin(TIME * 6) * 2 : 0)}) scale(${k})`); }
+  // Lautsprecher-Wellen
+  if (HUD.w1) { const on = V.speaking && V.who !== 'tier'; HUD.w1.setAttribute('opacity', on ? (.5 + .5 * Math.sin(TIME * 12)).toFixed(2) : 1); HUD.w2.setAttribute('opacity', on ? (.5 + .5 * Math.sin(TIME * 12 + 1.5)).toFixed(2) : 1); }
+  // Titel-Knopf
+  if (TITLE_PULSE && TITLE_PULSE.isConnected) { const k = 1 + Math.sin(TIME * 4) * .05; const tr = TITLE_PULSE.getAttribute('transform').replace(/ scale\([^)]*\)/, ''); TITLE_PULSE.setAttribute('transform', tr + ` scale(${k})`); }
+  if (REVEAL) REVEAL.setAttribute('transform', `rotate(${TIME * 20})`);
+  // Hinweis im Koffer
+  const hint = (MODE === 'treat' && idle > 8 && P && P.stepDone) ? curStep().item : TRAY_HINT;
+  $('tray').querySelectorAll('.slot').forEach(s => { const on = s.getAttribute('data-item') === hint; s.querySelector('.slotHi').setAttribute('opacity', on ? (.6 + .4 * Math.sin(TIME * 8)).toFixed(2) : 0); });
+  // Automatisch wiederholen
+  if ((MODE === 'exam' || MODE === 'treat' || MODE === 'diag' || MODE === 'tropfen') && !V.speaking && idle > 15 && V.last && V.rep < 2) { V.rep++; idle = 0; guard(say(V.last)); }
+  updParts(dt);
+  requestAnimationFrame(frame);
+}
+function coughPuff() {
+  const [x, y] = L2S(34, -160); SFX.cough();
+  for (let i = 0; i < 3; i++) {
+    const e = el('circle', { r: rnd(10, 18), fill: '#FFFFFF', stroke: '#C9D5DE', 'stroke-width': 3 }, $('fx'));
+    PARTS.push({ e, x: x + i * 10, y: y + rnd(-6, 6), vx: rnd(60, 120), vy: rnd(-30, 10), life: .9, t: -i * .08, r: 0, vr: 0, g: 0 });
+  }
+}
+
+/* ---------------- Start ---------------- */
+drawRoom(); drawDoor(); doorOpen(0); drawTable(); drawBelle(); drawClip(); drawHud();
+showTitle();
+requestAnimationFrame(frame);
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+/* Test-Zugang (nur für automatische Tests) */
+window.__T = {
+  get mode() { return MODE; }, get save() { return SAVE; }, get P() { return P; }, get V() { return V; },
+  zielXY, frei, KRANK, SEAT, PS, GERAETE, get step() { return P && P.stepDone ? curStep() : null; },
+  cards() { return [...document.querySelectorAll('#modal g.btn')].filter(g => g._k).map(g => [g._k, g._x, 470]); },
+  slotXY(it) { const s = traySlot(it); return s ? [s._x, s._y] : null; },
+};
+</script>
+</body>
+</html>

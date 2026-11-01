@@ -61,9 +61,46 @@ Die schwarze Katze **Mitzi** (mit weißem Hals) fliegt mit ihrer eigenen Rakete 
 7. Wieder zu Hause.
 
 ### Für Eltern
-- Mama erklärt alles mit der eingebauten Stimme des iPads. Der rosa Herz-Knopf oben rechts wiederholt die letzte Anweisung,
-  nach längerem Warten wiederholt sie sich auch von selbst.
-- Schönere Stimme: iPad-Einstellungen → Bedienungshilfen → Gesprochene Inhalte → Stimmen → Deutsch →
-  eine Frauenstimme mit „(Premium)“ oder „(Erweitert)“ laden (z. B. Anna). Das Spiel nimmt automatisch die beste deutsche Frauenstimme.
-- Ist der Stummschalter an oder der Ton leise, hört man Mama nicht.
+- Mama erklärt alles mit fertigen Sprachdateien (`mitzi/ton/`, erzeugt aus `mitzi/texte.json`). Der rosa Herz-Knopf oben rechts
+  wiederholt die letzte Anweisung, nach längerem Warten wiederholt sie sich auch von selbst.
+- Ist der Ton leise, hört man Mama nicht.
 - Kein Game Over, keine Werbung, keine Daten werden gesendet. Der Spielstand wird nach jedem Abschnitt gespeichert.
+
+## Belles Tierarztpraxis (`tierarzt/`)
+
+Das dritte Spiel – die Idee kommt wieder von meiner Tochter: Die Katze **Belle** ist Tierärztin.
+Jeden Tag kommen kranke Tiere in ihre Praxis, und Belle (also das Kind) findet heraus, was ihnen fehlt.
+
+**Spielen:** `https://ldressel.github.io/Sonstige-Speiele/tierarzt/`
+
+### Ablauf eines Patienten
+1. Ein Tier kommt durch die Tür, hüpft auf den Behandlungstisch und erzählt, was ihm wehtut.
+2. **Untersuchen:** Ein Gerät aus dem roten Arztkoffer auf das Tier ziehen. Im großen Kreis sieht man, was das Gerät zeigt.
+   Jeder Befund landet auf Belles Klemmbrett (rot = da stimmt was nicht, grün = alles gut).
+3. **Diagnose:** Aufs Klemmbrett tippen und die richtige Karte auswählen. Falsch geraten ist nicht schlimm – dann noch mal untersuchen.
+4. **Behandeln:** Die Hilfsmittel in der richtigen Reihenfolge benutzen (ziehen, reiben, tropfen …).
+5. Das Tier ist gesund, bedankt sich und seine Karte kommt ins **Patientenbuch** (Herz-Buch oben rechts).
+   Dort erklärt die Stimme jede Krankheit und jedes Gerät kindgerecht.
+
+### Neue Geräte und Krankheiten
+| Tag | Neues Gerät | Neue Krankheit | Behandlung |
+|---|---|---|---|
+| 1 | Lupe, Thermometer | Splitter, Schramme, Fieber | Pinzette + Pflaster · Tupfer + Salbe + Pflaster · Fiebersaft + Waschlappen |
+| 2 | Stethoskop | Husten | Hustensaft + Schal |
+| 3 | Röntgengerät | Knochenbruch | Gips wickeln + Sticker |
+| 4 | Ohrenspiegel | Ohrenentzündung | Ohrentropfen + Watte |
+| ab 5 | – | alles gemischt | |
+
+Neue Krankheiten kommen in `tierarzt/index.html` in die Listen `KRANK`, `BEFUND` und `FREI`,
+die Sprechtexte in `tierarzt/texte.json` (danach Sprachdateien neu erzeugen, siehe unten).
+
+### Für Eltern
+- Die Stimme kommt aus fertigen Sprachdateien (`tierarzt/ton/`), nicht mehr aus der Vorlesestimme des iPads.
+  Der Lautsprecher-Knopf oben rechts wiederholt die letzte Anweisung.
+- Kein Game Over, keine Werbung, keine Daten werden gesendet. Der Spielstand wird nach jedem Patienten gespeichert.
+- Auf dem Titelbild setzt der kleine Pfeil-Knopf oben rechts das Spiel zurück (zweimal tippen).
+
+## Sprachdateien erzeugen (`werkzeuge/sprache/`)
+
+Alle Sprechtexte stehen in der `texte.json` des jeweiligen Spiels. Daraus macht `erzeuge.py` MP3s
+mit „Stimme B“ (freundliche Frauenstimme, offline erzeugt). Anleitung: `werkzeuge/sprache/LIESMICH.md`.
