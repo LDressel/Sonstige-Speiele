@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mitzi">
+<meta name="theme-color" content="#1D1A4D">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>Die erste Katze im Weltraum: Mitzi</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#0A0D2B;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
+canvas{display:block;touch-action:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+'use strict';
+/* =========================================================
+   Die erste Katze im Weltraum: Mitzi – ein Tablet-Spiel
+   Idee und Geschichte: Lauris Tochter (5) · HTML5 Canvas
+   Mama spricht über die eingebaute Stimme des Geräts.
+   ========================================================= */
+const W = 1200, H = 900;
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+let DPR = 1, S = 1, OX = 0, OY = 0, VW = 0, VH = 0;
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  VW = window.innerWidth; VH = window.innerHeight;
+  cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);
+  cv.style.width = VW + 'px'; cv.style.height = VH + 'px';
+  S = Math.min(VW / W, VH / H); OX = (VW - W * S) / 2; OY = (VH - H * S) / 2;
+}
+addEventListener('resize', resize); resize();
+
+const FONT = 'ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", "Nunito", "Varela Round", system-ui, sans-serif';
+const rnd = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const dist = (x1, y1, x2, y2) => Math.hypot(x2 - x1, y2 - y1);
+const easeIO = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+function segDist(p, a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y, l = dx * dx + dy * dy || 1;
+  const t = clamp(((p.x - a.x) * dx + (p.y - a.y) * dy) / l, 0, 1);
+  return dist(p.x, p.y, a.x + t * dx, a.y + t * dy);
+}
+let TIME = 0, idle = 0;
+
+/* ---------------- Audio (alles synthetisch, offline) ---------------- */
+let AC = null, MASTER = null, NOISE = null;
+function audioInit() {
+  try {
+    if (!AC) { AC = new (window.AudioContext || window.webkitAudioContext)(); MASTER = AC.createGain(); MASTER.gain.value = 0.8; MASTER.connect(AC.destination); }
+    if (AC.state === 'suspended') AC.resume();
+  } catch (e) {}
+}
+function env(g, t0, a, d, vol) { g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + a); g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + d); }
+function tone(f1, f2, dur, type = 'sine', vol = 0.2, delay = 0) {
+  if (!AC) return;
+  const t0 = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.setValueAtTime(f1, t0); o.frequency.exponentialRampToValueAtTime(Math.max(20, f2), t0 + dur);
+  env(g, t0, Math.min(0.02, dur / 4), dur, vol); o.connect(g); g.connect(MASTER); o.start(t0); o.stop(t0 + dur + 0.05);
+}
+function noiseBuf() {
+  if (NOISE) return NOISE;
+  const b = AC.createBuffer(1, AC.sampleRate, AC.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  return NOISE = b;
+}
+function noise(dur, vol, freq, ftype = 'lowpass', delay = 0, q = 1) {
+  if (!AC) return;
+  const t0 = AC.currentTime + delay, s = AC.createBufferSource(); s.buffer = noiseBuf();
+  const f = AC.createBiquadFilter(); f.type = ftype; f.frequency.value = freq; f.Q.value = q;
+  const g = AC.createGain(); env(g, t0, 0.01, dur, vol);
+  s.connect(f); f.connect(g); g.connect(MASTER); s.start(t0); s.stop(t0 + dur + 0.05);
+}
+function meow(p = 1, delay = 0, vol = 0.3) {
+  if (!AC) return;
+  const t0 = AC.currentTime + delay, o = AC.createOscillator(), f = AC.createBiquadFilter(), g = AC.createGain();
+  o.type = 'sawtooth'; f.type = 'bandpass'; f.Q.value = 3;
+  o.frequency.setValueAtTime(480 * p, t0); o.frequency.linearRampToValueAtTime(720 * p, t0 + .15); o.frequency.linearRampToValueAtTime(520 * p, t0 + .5);
+  f.frequency.setValueAtTime(900 * p, t0); f.frequency.linearRampToValueAtTime(1900 * p, t0 + .15); f.frequency.linearRampToValueAtTime(1000 * p, t0 + .5);
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + .05); g.gain.setValueAtTime(vol, t0 + .3); g.gain.exponentialRampToValueAtTime(0.0001, t0 + .55);
+  o.connect(f); f.connect(g); g.connect(MASTER); o.start(t0); o.stop(t0 + .6);
+}
+
+const SFX = {
+  meow: () => meow(1 + rnd(-.08, .08)),
+  bellMeow: () => { meow(1.45, 0, .2); meow(1.6, .25, .18); },
+  hop: () => tone(320, 640, .12, 'sine', .12),
+  land: () => tone(180, 110, .08, 'sine', .12),
+  pop: () => tone(500, 1300, .09, 'sine', .18),
+  ding: (k = 0) => { const f = 660 * Math.pow(1.19, k); tone(f, f, .2, 'sine', .14); tone(f * 2, f * 2, .14, 'sine', .05, .03); },
+  twinkle: () => [1319, 1568, 2093, 2637].forEach((f, i) => tone(f, f, .14, 'sine', .08, i * .06)),
+  bonk: () => { tone(220, 70, .25, 'square', .1); noise(.25, .45, 600); },
+  oh: () => { tone(300, 500, .15, 'triangle', .15); tone(500, 350, .25, 'triangle', .15, .15); },
+  whoosh: () => noise(.45, .3, 700, 'bandpass', 0, .8),
+  ufo: () => { for (let i = 0; i < 8; i++) tone(500, 900, .18, 'sine', .06, i * .2); },
+  zap: () => { for (let i = 0; i < 10; i++) tone(1200 - i * 60, 1500 - i * 60, .1, 'triangle', .05, i * .12); },
+  laugh: () => [700, 620, 720, 600].forEach((f, i) => tone(f, f * 1.3, .09, 'square', .045, i * .13)),
+  beep: hi => tone(hi ? 1320 : 880, hi ? 1320 : 880, hi ? .5 : .18, 'sine', .16),
+  rumble: () => noise(3, .45, 160),
+  clink: () => { tone(2200, 1800, .06, 'triangle', .07); tone(2600, 2200, .05, 'triangle', .06, .05); },
+  click: () => { noise(.05, .5, 2500, 'bandpass', 0, 2); tone(600, 300, .06, 'square', .06); },
+  net: () => noise(.35, .3, 1200, 'bandpass', 0, 2),
+  pull: () => tone(300, 560, .15, 'triangle', .13),
+  boing: () => { tone(220, 480, .14, 'sine', .2); tone(480, 220, .18, 'sine', .18, .14); },
+  jingle: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, f * 1.01, .22, 'triangle', .14, i * .09)),
+  fanfare: () => [523, 659, 784, 659, 784, 1047].forEach((f, i) => tone(f, f, .25, 'triangle', .15, i * .15)),
+};
+
+/* ---------------- Mamas Stimme (eingebaute Sprachausgabe) ---------------- */
+const LINES = {
+  intro1: 'Oh nein! Der freche Alien hat Bell geschnappt!',
+  intro2: 'Er bringt sie auf den Mars. Hilf Mitzi, Bell zu retten!',
+  tapMitzi: 'Tipp auf Mitzi. Dann steigt sie in ihre Rakete.',
+  button: 'Drück auf den roten Knopf!',
+  count: 'Drei. Zwei. Eins. Los!',
+  stars: 'Sammle fünf Sterne für eine Sternenkette! Tipp die Sterne an.',
+  steer: 'Achtung, Meteoriten! Schieb die Rakete mit dem Finger weg.',
+  lost: 'Oh, ein Stern ist rausgefallen! Schnell, fang ihn wieder ein!',
+  n1: 'Eins!', n2: 'Zwei!', n3: 'Drei!', n4: 'Vier!', n5: 'Fünf!',
+  toMars: 'Super, fünf Sterne! Jetzt fliegen wir zum Mars.',
+  chain: 'Wir sind auf dem Mars! Mach aus den Sternen eine Kette. Fahr mit dem Finger von Stern zu Stern.',
+  chainDone: 'Toll! Jetzt hat Mitzi eine Sternenkette.',
+  alien: 'Pass auf! Der freche Alien versteckt sich hinter den Steinen. Wenn er rausguckt, tipp ihn ganz schnell an!',
+  hit1: 'Treffer!', hit2: 'Super, noch einmal!', hit3: 'Juhu! Jetzt ist er ganz schwindelig!',
+  miss: 'Zu langsam! Probier es nochmal.',
+  net: 'Achtung, ein Netz! Tipp auf Mitzi, dann springt sie hoch!',
+  jump: 'Gut gesprungen!',
+  caught: 'Oh nein, Mitzi ist im Netz! Tipp ganz schnell immer wieder auf Mitzi!',
+  free: 'Geschafft, Mitzi ist frei!',
+  wrap: 'Jetzt fessel ihn mit der Sternenkette! Mal mit dem Finger Kreise um den Alien.',
+  throw: 'Und jetzt wirf ihn ins Weltall! Wisch ganz schnell nach oben.',
+  unwrap: 'Hol dir die Sterne zurück! Tipp sie an.',
+  bye: 'Tschüss, frecher Alien! Du hast ihn besiegt!',
+  hook: 'Bell ist ganz unten in der Grube. Zieh die Sternenkette zu Bell runter.',
+  pull: 'Bell hält sich fest! Jetzt zieh sie hoch. Wisch immer wieder nach oben.',
+  slip: 'Nicht aufhören, sonst rutscht Bell wieder runter!',
+  saved: 'Juhu, Bell ist gerettet! Schnell, ab in die Rakete!',
+  back: 'Jetzt fliegen wir nach Hause. Gib die Sterne zurück in den Himmel. Tipp auf die leeren Sternenplätze.',
+  home: 'Fast geschafft! Da ist schon die Erde.',
+  end: 'Super gemacht! Mitzi und Bell sind wieder zu Hause. Du bist eine echte Weltraum-Heldin!',
+};
+const SY = window.speechSynthesis || null;
+const VOICE = { v: null, speaking: false, tok: 0, pend: null, last: null, rep: 0, unlocked: false, u: null };
+let VGEN = 0;
+function pickVoice() {
+  if (!SY) return;
+  let vs = []; try { vs = SY.getVoices().filter(v => /^de([-_]|$)/i.test(v.lang)); } catch (e) {}
+  const bad = /grandpa|grandma|opa|oma|eddy|reed|rocko|markus|yannick|thorsten|stefan|conrad|jonas|male|männ|albert|bahh|bells|boing|bubbles|cellos|jester|organ|trinoids|whisper|zarvox|wobble|superstar|news|junior|ralph|fred|kathy|killian|florian|bernd/i;
+  const good = /anna|helena|petra|marlene|katja|vicki|hedda|sandy|shelley|female|seraphina|amala|elke|louisa|gisela|ingrid|klarissa|maja|tanja|tamara|ingrid|carla/i;
+  let best = null, bs = -1e9;
+  for (const v of vs) {
+    let s = 0;
+    if (/premium/i.test(v.name)) s += 8;
+    if (/enhanced|erweitert|natural|neural|online/i.test(v.name)) s += 6;
+    if (good.test(v.name)) s += 4;
+    if (bad.test(v.name)) s -= 20;
+    if (/de[-_]DE/i.test(v.lang)) s += 2;
+    if (v.localService) s += 1;
+    if (s > bs) { bs = s; best = v; }
+  }
+  VOICE.v = best;
+}
+if (SY) { pickVoice(); try { SY.addEventListener('voiceschanged', pickVoice); } catch (e) { SY.onvoiceschanged = pickVoice; } }
+function voiceUnlock() {
+  if (VOICE.unlocked || !SY) return; VOICE.unlocked = true;
+  try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; u.lang = 'de-DE'; SY.speak(u); } catch (e) {}
+}
+function voiceStop() { VGEN++; VOICE.pend = null; VOICE.speaking = false; VOICE.last = null; try { if (SY) SY.cancel(); } catch (e) {} }
+/* say(id, cb, instr): Satz sprechen. cb kommt danach (auch wenn unterbrochen).
+   instr = Anweisung, die der Mama-Knopf wiederholt. */
+function say(id, cb, instr) {
+  const txt = LINES[id] || id;
+  if (instr) { VOICE.last = id; VOICE.rep = 0; }
+  if (VOICE.pend) { const p = VOICE.pend; VOICE.pend = null; p(); }
+  const gen = VGEN, tok = ++VOICE.tok; let done = false;
+  const fin = () => {
+    if (done) return; done = true;
+    if (VOICE.tok === tok) { VOICE.speaking = false; VOICE.pend = null; }
+    if (cb && gen === VGEN) cb();
+  };
+  VOICE.pend = fin; VOICE.speaking = true;
+  setTimeout(fin, 2200 + txt.length * 95);
+  if (!SY) return;
+  try {
+    const busy = SY.speaking || SY.pending;
+    SY.cancel();
+    const u = new SpeechSynthesisUtterance(txt);
+    u.lang = 'de-DE'; if (VOICE.v) u.voice = VOICE.v;
+    u.rate = .95; u.pitch = 1.08; u.volume = 1;
+    u.onend = fin; u.onerror = fin; VOICE.u = u;
+    if (busy) setTimeout(() => { if (VOICE.tok === tok) SY.speak(u); }, 60); else SY.speak(u);
+  } catch (e) {}
+}
+
+/* ---------------- Farben ---------------- */
+const MITZI = { b: '#2B262D', bib: '#FFFFFF', eye: '#F5C842', ear: '#F4A3B4', line: '#7D7388', nose: '#F28AA0', feat: '#D8D0DE', whisk: '#E9E4EE' };
+const BELL = { b: '#8E8B90', paw: '#FFFFFF', bib: '#B9B6BB', muzzle: '#FFFFFF', eye: '#7CC456', ear: '#F4A3B4', line: '#3E3A40', nose: '#E9788F', feat: '#2E2A30', whisk: '#F4F2F6', stripes: '#2E2A30', tabby: true, bell: true };
+const GOLD = '#FFD54A', GOLDD = '#C98A12';
+
+/* ---------------- Spielstand ---------------- */
+const SAVEKEY = 'mitzi-spielstand-1';
+function saveGame(idx) { try { localStorage.setItem(SAVEKEY, JSON.stringify({ idx })); } catch (e) {} }
+function loadSave() { try { return JSON.parse(localStorage.getItem(SAVEKEY)); } catch (e) { return null; } }
+function clearSave() { try { localStorage.removeItem(SAVEKEY); } catch (e) {} }
+
+/* ---------------- Katzen ---------------- */
+function headFront(pal, R, o = {}) {
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  const lw = Math.max(1.5, R * .085);
+  for (const sx of [-1, 1]) {
+    ctx.beginPath(); ctx.moveTo(sx * R * .92, -R * .3); ctx.lineTo(sx * R * .8, -R * 1.22); ctx.lineTo(sx * R * .18, -R * .8); ctx.closePath(); fs(pal.b); st(pal.line, lw);
+    ctx.beginPath(); ctx.moveTo(sx * R * .76, -R * .42); ctx.lineTo(sx * R * .72, -R * 1.0); ctx.lineTo(sx * R * .34, -R * .76); ctx.closePath(); fs(pal.ear);
+  }
+  ell(0, 0, R, R * .9); fs(pal.b);
+  if (pal.stripes) {
+    ctx.beginPath(); ctx.moveTo(0, -R * .86); ctx.lineTo(0, -R * .55); ctx.moveTo(-R * .26, -R * .82); ctx.lineTo(-R * .2, -R * .58); ctx.moveTo(R * .26, -R * .82); ctx.lineTo(R * .2, -R * .58);
+    st(pal.stripes, lw * 1.4);
+  }
+  if (pal.tabby) { ctx.beginPath(); for (const sx of [-1, 1]) { ctx.moveTo(sx * R, R * .05); ctx.lineTo(sx * R * .66, R * .1); ctx.moveTo(sx * R * .96, R * .3); ctx.lineTo(sx * R * .64, R * .28); } st(pal.stripes, lw * 1.3); }
+  if (pal.muzzle) { ell(0, R * .36, R * .44, R * .32); fs(pal.muzzle); }
+  ell(0, 0, R, R * .9); st(pal.line, lw);
+  const ex = R * .38, ey = -R * .08;
+  for (const sx of [-1, 1]) {
+    if (o.blink || o.happy) {
+      ctx.beginPath();
+      if (o.happy) ctx.arc(sx * ex, ey + R * .1, R * .16, 1.15 * Math.PI, 1.85 * Math.PI);
+      else ctx.arc(sx * ex, ey - R * .04, R * .16, .15 * Math.PI, .85 * Math.PI);
+      st(pal.feat, lw);
+    } else {
+      ell(sx * ex, ey, R * .19, R * .23); fs(pal.eye);
+      ell(sx * ex + (o.lx || 0) * R * .06, ey + (o.ly || 0) * R * .07, R * .1, R * .18); fs('#141014');
+      circ(sx * ex + R * .07, ey - R * .09, R * .065); fs('#fff');
+    }
+  }
+  ctx.beginPath(); ctx.moveTo(-R * .1, R * .2); ctx.lineTo(R * .1, R * .2); ctx.lineTo(0, R * .32); ctx.closePath(); fs(pal.nose);
+  ctx.beginPath(); ctx.moveTo(0, R * .32); ctx.quadraticCurveTo(-R * .06, R * .46, -R * .2, R * .42); ctx.moveTo(0, R * .32); ctx.quadraticCurveTo(R * .06, R * .46, R * .2, R * .42);
+  st(pal.feat, lw * .8);
+  ell(-R * .62, R * .28, R * .16, R * .1); fs('rgba(255,130,160,.4)'); ell(R * .62, R * .28, R * .16, R * .1); fs('rgba(255,130,160,.4)');
+  if (R > 15) {
+    ctx.beginPath();
+    for (const sx of [-1, 1]) { ctx.moveTo(sx * R * .45, R * .28); ctx.lineTo(sx * R * 1.15, R * .18); ctx.moveTo(sx * R * .45, R * .36); ctx.lineTo(sx * R * 1.15, R * .42); }
+    st(pal.whisk, Math.max(1, R * .04));
+  }
+}
+/* sitzende Katze, Ursprung = Boden zwischen den Pfoten, ca. 170 hoch */
+function sitCat(x, y, s, pal, o = {}) {
+  const al = o.alpha == null ? 1 : o.alpha; if (al <= .01) return;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(o.rot || 0); const sq = o.sq || 0;
+  ctx.scale(s * (o.face || 1) * (1 + sq * .15), s * (1 - sq * .15)); ctx.globalAlpha = al;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  const tw = Math.sin(TIME * 2.5 + (o.ph || 0));
+  ctx.beginPath(); ctx.moveTo(24, -14); ctx.quadraticCurveTo(84, -16, 70 + tw * 6, -80 + tw * 8); st(pal.line, 20); st(pal.b, 13);
+  if (pal.tabby) { ctx.save(); ctx.beginPath(); ctx.moveTo(24, -14); ctx.quadraticCurveTo(84, -16, 70 + tw * 6, -80 + tw * 8); ctx.setLineDash([6, 12]); st(pal.stripes, 13); ctx.restore(); }
+  ell(0, -52, 44, 52); fs(pal.b);
+  ctx.save(); ell(0, -52, 44, 52); ctx.clip(); ell(0, -82, 26, 40); fs(pal.bib);
+  if (pal.tabby) { ctx.beginPath(); for (const sx of [-1, 1]) for (let i = 0; i < 3; i++) { const yy = -78 + i * 22; ctx.moveTo(sx * 46, yy); ctx.quadraticCurveTo(sx * 30, yy + 4, sx * 22, yy + 12); } st(pal.stripes, 6); }
+  ctx.restore();
+  ell(0, -52, 44, 52); st(pal.line, 4);
+  ell(-17, -7, 14, 9); fs(pal.paw || pal.b); st(pal.line, 3.5);
+  if (o.pawUp) { ell(32, -84, 11, 15, -.4); fs(pal.paw || pal.b); st(pal.line, 3.5); }
+  else { ell(17, -7, 14, 9); fs(pal.paw || pal.b); st(pal.line, 3.5); }
+  if (pal.bell) { ctx.beginPath(); ctx.ellipse(0, -90, 28, 9, 0, .1 * Math.PI, .9 * Math.PI); st('#3F86D6', 6); circ(0, -80, 7); fs('#F4C542'); st('#A8790B', 2.5); }
+  ctx.save(); ctx.translate(0, -118); headFront(pal, 40, o); ctx.restore();
+  ctx.restore();
+}
+function mkCat(x, y, pal, s = 1) { return { x, y, s, pal, face: 1, alpha: 1, sq: 0, rot: 0, anim: null, blinkT: 0, blinkCd: rnd(1, 4), pawUp: false, happy: false, lx: 0, ly: 0, jy: 0, ph: rnd(0, 6), net: false }; }
+function hop(c, tx, ty, h, dur, cb, s1) {
+  if (Math.abs(tx - c.x) > 2) c.face = tx > c.x ? 1 : -1;
+  c.anim = { x0: c.x, y0: c.y, s0: c.s, s1: s1 == null ? c.s : s1, tx, ty, h, dur, t: 0, cb }; SFX.hop();
+}
+function updCat(c, dt) {
+  c.blinkCd -= dt; c.blinkT -= dt; if (c.blinkCd < 0) { c.blinkT = .15; c.blinkCd = rnd(2, 5); }
+  c.sq = Math.max(0, c.sq - dt * 4);
+  const a = c.anim; if (!a) return;
+  a.t += dt; const k = Math.min(1, a.t / a.dur);
+  c.x = lerp(a.x0, a.tx, k); c.y = lerp(a.y0, a.ty, k) - Math.sin(Math.PI * k) * a.h; c.s = lerp(a.s0, a.s1, k);
+  if (k >= 1) { c.anim = null; c.sq = 1; SFX.land(); if (a.cb) a.cb(); }
+}
+function drawCat(c) {
+  sitCat(c.x, c.y - c.jy, c.s, c.pal, { face: c.face, alpha: c.alpha, sq: c.sq, rot: c.rot, blink: c.blinkT > 0, pawUp: c.pawUp, happy: c.happy, lx: c.lx, ly: c.ly, ph: c.ph });
+  if (c.net) drawNet(c.x, c.y - c.jy - 75 * c.s, 92 * c.s, Math.sin(TIME * 3) * .1);
+}
+const pawOf = c => ({ x: c.x + 32 * c.s * c.face, y: c.y - c.jy - 84 * c.s });
+
+/* ---------------- Rakete ---------------- */
+/* Ursprung = Mitte, zeigt bei rot=0 nach oben; Flossen enden bei +122 */
+function drawRocket(x, y, rot, s, o = {}) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(s, s); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  if (o.fire) {
+    const f = 1 + Math.sin(TIME * 40) * .12 + (o.big ? .6 : 0);
+    ctx.beginPath(); ctx.moveTo(-28, 114); ctx.quadraticCurveTo(0, 114 + 150 * f, 28, 114); ctx.closePath(); fs('rgba(255,120,40,.92)');
+    ctx.beginPath(); ctx.moveTo(-16, 114); ctx.quadraticCurveTo(0, 114 + 95 * f, 16, 114); ctx.closePath(); fs('#FFE27A');
+  }
+  poly([-44, 20, -92, 104, -88, 122, -44, 96]); fs('#E2483D'); st(OUT, 5);
+  poly([44, 20, 92, 104, 88, 122, 44, 96]); fs('#E2483D'); st(OUT, 5);
+  rr(-27, 96, 54, 22, 6); fs('#8D97A6'); st(OUT, 5);
+  const body = () => { ctx.beginPath(); ctx.moveTo(-46, 100); ctx.lineTo(-46, -30); ctx.bezierCurveTo(-46, -95, -18, -128, 0, -142); ctx.bezierCurveTo(18, -128, 46, -95, 46, -30); ctx.lineTo(46, 100); ctx.closePath(); };
+  body(); fs('#F7F3EE');
+  ctx.save(); body(); ctx.clip();
+  ctx.fillStyle = '#E2483D'; ctx.fillRect(-60, -160, 120, 72);
+  ctx.fillStyle = '#F2C94C'; ctx.fillRect(-60, 48, 120, 16);
+  ctx.fillStyle = 'rgba(0,0,0,.08)'; ctx.fillRect(20, -160, 40, 280);
+  ctx.restore();
+  body(); st(OUT, 5);
+  rr(-7, 44, 14, 78, 7); fs('#C7372E'); st(OUT, 4);
+  circ(0, -28, 34); fs('#1E3558');
+  ctx.save(); circ(0, -28, 31); ctx.clip(); ctx.translate(0, -28); ctx.rotate(-rot);
+  const bl = Math.sin(TIME * .9) > .96;
+  if (o.mitzi && o.bell) { ctx.save(); ctx.translate(-11, 9); headFront(MITZI, 16, { blink: bl }); ctx.restore(); ctx.save(); ctx.translate(13, 13); headFront(BELL, 13, {}); ctx.restore(); }
+  else if (o.mitzi) { ctx.save(); ctx.translate(0, 8); headFront(MITZI, 20, { blink: bl }); ctx.restore(); }
+  ctx.restore();
+  ctx.beginPath(); ctx.arc(-4, -34, 20, 3.5, 4.6); st('rgba(255,255,255,.5)', 5);
+  circ(0, -28, 34); st('#9AA7B5', 8); circ(0, -28, 38); st(OUT, 3);
+  ctx.restore();
+}
+const winOf = (x, y, rot, s) => ({ x: x + Math.sin(rot) * 28 * s, y: y - Math.cos(rot) * 28 * s });
+
+/* ---------------- Alien, Ufo, Netz ---------------- */
+function drawAlien(x, y, s, o = {}) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(o.rot || 0); ctx.scale(s, s); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  const G1 = '#7DDB5A', G2 = '#4FA83A', L = '#2E5E22';
+  const bob = Math.sin(TIME * 4) * 3;
+  rr(-32, -28, 24, 30, 10); fs(G2); st(L, 4); rr(8, -28, 24, 30, 10); fs(G2); st(L, 4);
+  const up = o.armUp ? 1 : 0, wave = o.wave ? Math.sin(TIME * 10) * .5 : 0;
+  ctx.save(); ctx.translate(-44, -78); ctx.rotate(.5 + up * 2.2 + (o.wave ? 2.1 + wave : 0)); rr(-10, -6, 20, 46, 10); fs(G1); st(L, 4); ctx.restore();
+  ctx.save(); ctx.translate(44, -78); ctx.rotate(-.5 - up * 2.2); rr(-10, -6, 20, 46, 10); fs(G1); st(L, 4); ctx.restore();
+  ell(0, -80, 52, 62); fs(G1); st(L, 5);
+  ell(0, -60, 32, 32); fs('#A8EC8A');
+  circ(-34, -48, 5); fs(G2); circ(36, -44, 6); fs(G2); circ(28, -60, 3.5); fs(G2);
+  for (const sx of [-1, 1]) {
+    ctx.beginPath(); ctx.moveTo(sx * 18, -136); ctx.quadraticCurveTo(sx * 26, -162, sx * 40, -172 + bob); st(L, 5);
+    circ(sx * 40, -175 + bob, 9); fs('#FF6FB0'); st(L, 3);
+  }
+  const eyes = [[-25, -100, 13], [0, -114, 17], [25, -100, 13]];
+  for (const [ex, ey, er] of eyes) {
+    circ(ex, ey, er); fs('#fff'); st(L, 3);
+    if (o.dizzy) {
+      ctx.beginPath(); for (let a = 0; a < 12; a += .4) { const rr2 = er * .8 * (a / 12); ctx.lineTo(ex + Math.cos(a + TIME * 6) * rr2, ey + Math.sin(a + TIME * 6) * rr2); } st('#333', 2.5);
+    } else {
+      const lx = (o.lx || 0) * er * .35;
+      circ(ex + lx, ey + 2, er * .52); fs('#222'); circ(ex + lx - er * .15, ey - er * .15, er * .18); fs('#fff');
+    }
+  }
+  if (o.laugh) { ell(0, -72, 20, 14); fs('#3a1a2a'); ell(0, -66, 10, 6); fs('#FF7A9A'); }
+  else if (o.sad) { ctx.beginPath(); ctx.arc(0, -60, 16, 1.2 * Math.PI, 1.8 * Math.PI); st(L, 4); }
+  else { ctx.beginPath(); ctx.arc(0, -82, 20, .15 * Math.PI, .85 * Math.PI); st(L, 4); rr(4, -64, 8, 8, 2); fs('#fff'); }
+  if (o.wrap > 0) {
+    const n = Math.ceil(o.wrap * 4 - .001);
+    for (let i = 0; i < n; i++) {
+      const yy = -36 - i * 26;
+      ctx.save(); ctx.beginPath(); ctx.ellipse(0, yy, 58, 12, 0, 0, Math.PI * 2); ctx.setLineDash([10, 6]); st(GOLDD, 9); st('#FFE07A', 4.5); ctx.restore();
+      starPath(i % 2 ? 22 : -22, yy + 9, 12, 6); fs(GOLD); st(GOLDD, 2.5);
+    }
+  }
+  if (o.dizzy) for (let i = 0; i < 3; i++) { const a = TIME * 3 + i * 2.1; starPath(Math.cos(a) * 52, -190 + Math.sin(a) * 12, 11, 5); fs(GOLD); st(GOLDD, 2); }
+  ctx.restore();
+}
+function drawUFO(x, y, s, o = {}) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(Math.sin(TIME * 3) * .06); ctx.scale(s, s); ctx.lineJoin = 'round';
+  if (o.beam) { ctx.save(); ctx.globalAlpha = .3 + .12 * Math.sin(TIME * 12); poly([-40, 20, 40, 20, 120, o.beam / s, -120, o.beam / s]); fs('#D8FF7A'); ctx.restore(); }
+  ctx.save(); ctx.beginPath(); ctx.arc(0, -10, 58, Math.PI, 0); ctx.closePath(); ctx.clip();
+  ctx.fillStyle = 'rgba(170,230,255,.5)'; ctx.fillRect(-60, -72, 120, 64);
+  circ(o.bell ? -14 : 0, -22, 24); fs('#7DDB5A'); st('#2E5E22', 3);
+  [[-8, -28], [0, -32], [8, -28]].forEach(([ex, ey]) => { circ((o.bell ? -14 : 0) + ex, ey, 5); fs('#fff'); circ((o.bell ? -14 : 0) + ex, ey + 1, 2.5); fs('#222'); });
+  if (o.bell) { ctx.save(); ctx.translate(22, -16); headFront(BELL, 15, { ly: -1 }); ctx.restore(); }
+  ctx.restore();
+  ctx.beginPath(); ctx.arc(0, -10, 58, Math.PI, 0); st('#E8F7FF', 4);
+  ell(0, 0, 122, 30); fs('#B8C2CF'); st('#4A5566', 5);
+  ell(0, -6, 92, 12); fs('#D7DEE7');
+  for (let i = -3; i <= 3; i++) { circ(i * 30, 12, 7); fs(Math.floor(TIME * 6 + i) % 2 ? '#FFE27A' : '#FF6FB0'); }
+  ctx.restore();
+}
+function drawNet(x, y, r, rot = 0) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+  ctx.save(); circ(0, 0, r); ctx.clip(); ctx.beginPath();
+  for (let i = -r * 2; i <= r * 2; i += 18) { ctx.moveTo(i - r, -r); ctx.lineTo(i + r, r); ctx.moveTo(i + r, -r); ctx.lineTo(i - r, r); }
+  st('rgba(200,255,170,.9)', 3); ctx.restore();
+  circ(0, 0, r); st('#4FA83A', 6);
+  ctx.restore();
+}
+
+/* ---------------- Sterne, Meteoriten, Kette ---------------- */
+function drawStar(x, y, R, o = {}) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(o.rot || 0); ctx.globalAlpha = o.alpha == null ? 1 : o.alpha;
+  if (o.glow !== false) {
+    const g = ctx.createRadialGradient(0, 0, R * .3, 0, 0, R * 1.6), c = o.lost ? '255,150,130' : '255,225,110';
+    g.addColorStop(0, `rgba(${c},.55)`); g.addColorStop(1, `rgba(${c},0)`); ctx.fillStyle = g; circ(0, 0, R * 1.6); ctx.fill();
+  }
+  starPath(0, 0, R, R * .52); fs(GOLD); ctx.lineJoin = 'round'; st('#D9961A', Math.max(2, R * .11));
+  if (R >= 16) {
+    circ(-R * .2, -R * .05, R * .075); fs('#6B3D0A'); circ(R * .2, -R * .05, R * .075); fs('#6B3D0A');
+    ctx.beginPath();
+    if (o.lost) ctx.arc(0, R * .3, R * .14, 1.15 * Math.PI, 1.85 * Math.PI); else ctx.arc(0, R * .08, R * .16, .15 * Math.PI, .85 * Math.PI);
+    st('#6B3D0A', Math.max(1.5, R * .06));
+    circ(-R * .34, R * .12, R * .08); fs('rgba(255,120,120,.45)'); circ(R * .34, R * .12, R * .08); fs('rgba(255,120,120,.45)');
+  }
+  ctx.restore();
+}
+function drawEmpty(x, y, R, ph = 0) {
+  const k = (Math.sin(TIME * 4 + ph) + 1) / 2;
+  circ(x, y, R * 1.35 + k * 6); fs(`rgba(255,230,120,${.1 + .14 * k})`);
+  ctx.save(); starPath(x, y, R, R * .5); ctx.setLineDash([8, 6]); ctx.lineDashOffset = -TIME * 20; ctx.lineJoin = 'round'; st('rgba(255,240,180,.95)', 4); ctx.restore();
+}
+function mkMeteor(x, y, vx, vy, r) { return { x, y, vx, vy, r, rot: rnd(0, 6), vr: rnd(-2, 2), sh: Array.from({ length: 10 }, () => rnd(.82, 1.08)) }; }
+function drawMeteor(m) {
+  ctx.save(); ctx.translate(m.x, m.y);
+  ctx.save(); ctx.rotate(Math.atan2(-m.vy, -m.vx));
+  for (let i = 3; i >= 1; i--) { ell(m.r * (.5 + i * .55), 0, m.r * (.8 + i * .45), m.r * (.78 - i * .15)); fs(`rgba(255,${110 + i * 35},60,${.1 + (3 - i) * .1})`); }
+  ctx.restore();
+  ctx.rotate(m.rot); ctx.beginPath();
+  for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2, r = m.r * m.sh[i]; ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
+  ctx.closePath(); fs('#8E7E72'); ctx.lineJoin = 'round'; st('#4A3D35', 5);
+  circ(-m.r * .3, -m.r * .2, m.r * .22); fs('#6E6058'); circ(m.r * .35, m.r * .25, m.r * .15); fs('#6E6058'); circ(m.r * .1, m.r * .45, m.r * .09); fs('#6E6058');
+  ctx.restore();
+}
+function chainLine(x1, y1, x2, y2, w = 1) {
+  const d = dist(x1, y1, x2, y2), n = Math.max(1, Math.floor(d / (16 * w))), a = Math.atan2(y2 - y1, x2 - x1);
+  for (let i = 0; i < n; i++) {
+    const k = (i + .5) / n; ctx.save(); ctx.translate(lerp(x1, x2, k), lerp(y1, y2, k)); ctx.rotate(a);
+    ell(0, 0, 11 * w, (i % 2 ? 3.5 : 6.5) * w); st(GOLDD, 5 * w); st('#FFE07A', 2.4 * w); ctx.restore();
+  }
+}
+function chainCoil(x, y) {
+  for (let i = 0; i < 3; i++) { ctx.save(); ctx.beginPath(); ctx.ellipse(x, y + i * 5, 24 - i * 3, 13 - i * 2, 0, 0, Math.PI * 2); ctx.setLineDash([8, 5]); st(GOLDD, 7); st('#FFE07A', 3); ctx.restore(); }
+  drawStar(x + 18, y - 12, 15, { glow: false });
+}
+
+/* ---------------- Hintergründe ---------------- */
+const BGS = []; for (let i = 0; i < 110; i++) BGS.push({ x: rnd(0, W + 40), y: rnd(0, H), r: rnd(.8, 2.6), sp: rnd(.25, 1), ph: rnd(0, 6) });
+const NEB = [[300, 250, 260, '120,80,200'], [900, 650, 320, '40,140,200'], [1100, 150, 200, '200,80,160']];
+function spaceBg(off) {
+  const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0A0D2B'); g.addColorStop(1, '#1D1A4D');
+  ctx.fillStyle = g; ctx.fillRect(-700, -700, W + 1400, H + 1400);
+  for (const [nx, ny, nr, c] of NEB) {
+    const x = ((nx - off * .1) % (W + 700) + W + 700) % (W + 700) - 350;
+    const rg = ctx.createRadialGradient(x, ny, 0, x, ny, nr); rg.addColorStop(0, `rgba(${c},.28)`); rg.addColorStop(1, `rgba(${c},0)`);
+    ctx.fillStyle = rg; ctx.fillRect(x - nr, ny - nr, nr * 2, nr * 2);
+  }
+  for (const s of BGS) { const x = ((s.x - off * s.sp) % (W + 40) + W + 40) % (W + 40) - 20; circ(x, s.y, s.r * (.8 + .3 * Math.sin(TIME * 3 + s.ph))); fs(`rgba(255,255,255,${.5 + .4 * s.sp})`); }
+}
+function drawEarth(x, y, r) {
+  ctx.save(); circ(x, y, r); fs('#3D8BE0'); ctx.clip();
+  ctx.fillStyle = '#5BBF4A';
+  [[-.35, -.3, .38, .26], [.3, .15, .3, .4], [-.1, .55, .4, .2], [.5, -.5, .22, .16], [-.7, .35, .2, .3]].forEach(([a, b, c, d]) => { ell(x + a * r, y + b * r, c * r, d * r, .4); ctx.fill(); });
+  ctx.fillStyle = 'rgba(255,255,255,.75)';
+  [[-.5, .05, .3, .07], [.1, -.62, .35, .07], [.35, .62, .3, .06]].forEach(([a, b, c, d]) => { ell(x + a * r, y + b * r, c * r, d * r); ctx.fill(); });
+  const g = ctx.createRadialGradient(x - r * .4, y - r * .4, r * .2, x, y, r * 1.1); g.addColorStop(0, 'rgba(255,255,255,.15)'); g.addColorStop(1, 'rgba(10,20,60,.35)');
+  ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  ctx.restore(); circ(x, y, r); st('rgba(170,220,255,.7)', Math.max(2, r * .03));
+}
+function drawMars(x, y, r) {
+  ctx.save(); circ(x, y, r); fs('#D9643A'); ctx.clip();
+  ctx.fillStyle = '#B84C2A';
+  [[-.3, -.2, .18], [.35, .25, .24], [-.1, .5, .12], [.4, -.45, .1], [-.6, .25, .14]].forEach(([a, b, c]) => { circ(x + a * r, y + b * r, c * r); ctx.fill(); });
+  ctx.fillStyle = '#E98A5C'; ell(x - r * .1, y - r * .6, r * .5, r * .12); ctx.fill();
+  const g = ctx.createRadialGradient(x - r * .4, y - r * .4, r * .2, x, y, r * 1.1); g.addColorStop(0, 'rgba(255,255,255,.15)'); g.addColorStop(1, 'rgba(60,10,0,.35)');
+  ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  ctx.restore(); circ(x, y, r); st('rgba(255,190,150,.7)', Math.max(2, r * .03));
+}
+function gardenBg(GY) {
+  const g = ctx.createLinearGradient(0, 0, 0, GY); g.addColorStop(0, '#0E1236'); g.addColorStop(1, '#3B3F86');
+  ctx.fillStyle = g; ctx.fillRect(-700, -700, W + 1400, GY + 700);
+  for (const s of BGS) if (s.y < GY - 200) { circ(s.x, s.y, s.r * (.8 + .3 * Math.sin(TIME * 3 + s.ph))); fs('rgba(255,255,255,.75)'); }
+  circ(1080, 130, 46); fs('#FFF4C8'); circ(1066, 120, 9); fs('#F1E3A8'); circ(1094, 146, 6); fs('#F1E3A8');
+  ctx.beginPath(); ctx.moveTo(-700, GY - 40); ctx.quadraticCurveTo(300, GY - 170, 700, GY - 60); ctx.quadraticCurveTo(1000, GY - 130, W + 700, GY - 50); ctx.lineTo(W + 700, GY); ctx.lineTo(-700, GY); ctx.closePath(); fs('#24345A');
+  rr(-260, GY - 330, 420, 340, 0); fs('#C9B08A'); st(OUT, 5);
+  poly([-300, GY - 320, 200, GY - 320, -50, GY - 470]); fs('#8C4A3A'); st(OUT, 5);
+  rr(40, GY - 260, 90, 90, 8); fs('#FFD86B'); st(OUT, 5); ctx.beginPath(); ctx.moveTo(85, GY - 260); ctx.lineTo(85, GY - 170); ctx.moveTo(40, GY - 215); ctx.lineTo(130, GY - 215); st(OUT, 4);
+  ctx.fillStyle = '#2F6A3E'; ctx.fillRect(-700, GY, W + 1400, H - GY + 700);
+  ctx.fillStyle = '#3C7F4B'; for (let x = -40; x < W + 40; x += 46) { poly([x, GY + 2, x + 10, GY - 16, x + 18, GY + 2]); ctx.fill(); }
+}
+const MDOTS = []; for (let i = 0; i < 26; i++) MDOTS.push({ x: rnd(-100, W + 100), k: rnd(0, 1), r: rnd(10, 46), p: Math.random() < .4 });
+function marsSky(HZ) {
+  const g = ctx.createLinearGradient(0, 0, 0, HZ); g.addColorStop(0, '#F3C49E'); g.addColorStop(1, '#F8DCC0');
+  ctx.fillStyle = g; ctx.fillRect(-700, -700, W + 1400, HZ + 700);
+  circ(230, 120, 38); fs('rgba(255,252,236,.9)');
+  drawEarth(1060, 130, 30);
+  ctx.beginPath(); ctx.moveTo(-700, HZ); ctx.lineTo(-700, HZ - 60); ctx.quadraticCurveTo(150, HZ - 150, 420, HZ - 50); ctx.quadraticCurveTo(700, HZ - 160, 980, HZ - 70); ctx.quadraticCurveTo(1150, HZ - 120, W + 700, HZ - 40); ctx.lineTo(W + 700, HZ); ctx.closePath(); fs('#D98A62');
+}
+function marsBg(HZ) {
+  marsSky(HZ);
+  const g = ctx.createLinearGradient(0, HZ, 0, H); g.addColorStop(0, '#DE7E50'); g.addColorStop(1, '#C25E34');
+  ctx.fillStyle = g; ctx.fillRect(-700, HZ, W + 1400, H - HZ + 700);
+  for (const d of MDOTS) {
+    const y = lerp(HZ + 20, H + 20, d.k), sc = lerp(.5, 1.2, d.k);
+    if (d.p) { ell(d.x, y, d.r * .4 * sc, d.r * .28 * sc); fs('#A8502E'); }
+    else { ell(d.x, y, d.r * sc, d.r * .3 * sc); fs('#B9592F'); ell(d.x, y - d.r * .06 * sc, d.r * .8 * sc, d.r * .2 * sc); fs('#A44A26'); }
+  }
+}
+function drawRock(r) {
+  ell(r.x, r.y, r.w * .55, 14); fs('rgba(90,30,10,.25)');
+  ctx.beginPath(); ctx.moveTo(r.x - r.w * .5, r.y); ctx.quadraticCurveTo(r.x - r.w * .58, r.y - r.h * .8, r.x - r.w * .2, r.y - r.h);
+  ctx.quadraticCurveTo(r.x + r.w * .1, r.y - r.h * 1.12, r.x + r.w * .32, r.y - r.h * .9); ctx.quadraticCurveTo(r.x + r.w * .6, r.y - r.h * .6, r.x + r.w * .5, r.y); ctx.closePath();
+  fs('#A9553A'); ctx.lineJoin = 'round'; st('#6E321F', 5);
+  ell(r.x - r.w * .2, r.y - r.h * .7, r.w * .16, r.h * .1, -.4); fs('rgba(255,200,170,.35)');
+  circ(r.x + r.w * .18, r.y - r.h * .35, r.w * .07); fs('#8E4430');
+}
+
+/* ---------------- Knöpfe ---------------- */
+function hubBtn() {
+  circ(64, 64, 44); fs('rgba(255,255,255,.85)'); st(OUT, 4);
+  [[-14, -14], [14, -14], [-14, 14], [14, 14]].forEach(([dx, dy], i) => { rr(64 + dx - 11, 64 + dy - 11, 22, 22, 6); fs(['#5BBF4A', '#3F86D6', '#E0533A', '#F5C04A'][i]); });
+}
+function playBtn(x, y, k = 1) { ctx.save(); ctx.translate(x, y); ctx.scale(k, k); circ(0, 0, 72); fs('#5BBF4A'); st('#2F6E25', 7); poly([-20, -32, -20, 32, 34, 0]); fs('#fff'); ctx.restore(); }
+function contBtn(x, y) { circ(x, y, 72); fs('#F29E38'); st('#9A5A12', 7); starPath(x - 10, y, 26, 12); fs('#fff'); poly([x + 22, y - 22, x + 22, y + 22, x + 46, y]); fs('#fff'); }
+
+/* ---------------- Zeichen-Helfer ---------------- */
+/* ---------------- Zeichen-Helfer ---------------- */
+const OUT = '#3a2e2a';
+function rr(x, y, w, h, r) {
+  r = Math.max(0, Math.min(r, w / 2, h / 2)); ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function ell(x, y, rx, ry, rot = 0) { ctx.beginPath(); ctx.ellipse(x, y, Math.max(.1, rx), Math.max(.1, ry), rot, 0, Math.PI * 2); }
+function circ(x, y, r) { ctx.beginPath(); ctx.arc(x, y, Math.max(.1, r), 0, Math.PI * 2); }
+function fs(c) { ctx.fillStyle = c; ctx.fill(); }
+function st(c, w) { ctx.strokeStyle = c; ctx.lineWidth = w; ctx.stroke(); }
+function poly(pts) { ctx.beginPath(); ctx.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i + 1]); ctx.closePath(); }
+function starPath(x, y, R, r, n = 5) {
+  ctx.beginPath();
+  for (let i = 0; i < n * 2; i++) { const a = -Math.PI / 2 + i * Math.PI / n, rad = i % 2 ? r : R; ctx.lineTo(x + Math.cos(a) * rad, y + Math.sin(a) * rad); }
+  ctx.closePath();
+}
+function heartPath(x, y, s) {
+  ctx.beginPath(); ctx.moveTo(x, y + s * .35);
+  ctx.bezierCurveTo(x - s * .9, y - s * .25, x - s * .35, y - s * .95, x, y - s * .35);
+  ctx.bezierCurveTo(x + s * .35, y - s * .95, x + s * .9, y - s * .25, x, y + s * .35); ctx.closePath();
+}
+function text(t, x, y, size, col = '#fff', stroke = null, sw = 8, align = 'center') {
+  ctx.font = `bold ${size}px ${FONT}`; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  if (stroke) { ctx.lineJoin = 'round'; ctx.strokeStyle = stroke; ctx.lineWidth = sw; ctx.strokeText(t, x, y); }
+  ctx.fillStyle = col; ctx.fillText(t, x, y);
+}
+
+
+/* ---------------- Timer, Partikel ---------------- */
+/* ---------------- Timer, Partikel, Laub ---------------- */
+let TIMERS = [];
+function after(t, fn) { TIMERS.push({ t, fn }); }
+function updTimers(dt) {
+  const due = [];
+  for (const tm of TIMERS) { tm.t -= dt; if (tm.t <= 0) due.push(tm); }
+  if (due.length) { TIMERS = TIMERS.filter(t => t.t > 0); due.forEach(t => t.fn()); }
+}
+let PARTS = [];
+function burst(x, y, n, cols, o = {}) {
+  for (let i = 0; i < n; i++) {
+    const a = rnd(0, Math.PI * 2), sp = rnd(.3, 1) * (o.sp || 250);
+    PARTS.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - (o.up || 120), g: o.g != null ? o.g : 600, life: 0, max: rnd(.6, 1) * (o.life || 1),
+      r: rnd(o.r0 || 5, o.r1 || 11), col: cols[i % cols.length], type: o.type || 'dot', rot: rnd(0, 6), vr: rnd(-6, 6) });
+  }
+}
+function updParts(dt) {
+  for (const p of PARTS) {
+    p.life += dt; p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+    if (p.type !== 'dot' && p.type !== 'star') p.vx *= 1 - 1.5 * dt;
+  }
+  PARTS = PARTS.filter(p => p.life < p.max);
+}
+function drawParts() {
+  for (const p of PARTS) {
+    const k = 1 - p.life / p.max;
+    ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, k * 1.5)); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+    if (p.type === 'dot') { circ(0, 0, p.r); fs(p.col); }
+    else if (p.type === 'leaf') { ell(0, 0, p.r * 1.4, p.r * .7); fs(p.col); }
+    else if (p.type === 'star') { starPath(0, 0, p.r * 1.6, p.r * .7); fs(p.col); }
+    else if (p.type === 'heart') { ctx.rotate(-p.rot); heartPath(0, 0, p.r * 2.2); fs(p.col); }
+    else if (p.type === 'smoke') { ctx.globalAlpha *= .7; circ(0, 0, p.r * (1 + (1 - k) * 2)); fs(p.col); }
+    else if (p.type === 'bubble') { circ(0, 0, p.r); st('rgba(255,255,255,.95)', 3); circ(-p.r * .3, -p.r * .3, p.r * .25); fs('#fff'); }
+    ctx.restore();
+  }
+}
+const hearts = (x, y, n = 6) => burst(x, y, n, ['#FF6B8B', '#FF9EB3', '#FF4F7B'], { type: 'heart', sp: 160, up: 160, g: -40, r0: 8, r1: 13, life: 1.4 });
+const stars = (x, y, n = 12) => burst(x, y, n, ['#FFD54A', '#FFF3B0', '#FFFFFF'], { type: 'star', sp: 320, up: 80, g: 300, r0: 6, r1: 11 });
+
+/* ---------------- Tipp-Hilfe (Hand + Leuchtring) ---------------- */
+let HINT = null;
+function setHint(h) { HINT = h; idle = 0; }
+function pulse(x, y, r) { const k = (Math.sin(TIME * 5) + 1) / 2; circ(x, y, r * (.9 + .15 * k)); st(`rgba(255,213,74,${.45 + .5 * k})`, 9); }
+function drawHand(x, y, sc = 1) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(-.35); ctx.scale(sc, sc); ctx.lineJoin = 'round';
+  rr(-26, 36, 68, 62, 24); fs('#fff'); st(OUT, 4);
+  rr(-42, 52, 30, 22, 11); fs('#fff'); st(OUT, 4);
+  rr(-14, -2, 28, 70, 14); fs('#fff'); st(OUT, 4);
+  rr(-11, 40, 22, 24, 6); fs('#fff');
+  ctx.restore();
+}
+function drawHint() {
+  const h = HINT; if (!h) return;
+  const delay = h.delay != null ? h.delay : 1.6, show = idle > delay;
+  if (h.type === 'tap') { pulse(h.x, h.y, h.r || 70); if (show) drawHand(h.x + 6, h.y + 14 + Math.abs(Math.sin(TIME * 4)) * 18); }
+  else if (h.type === 'drag' || h.type === 'swipe') {
+    if (h.type === 'drag' && h.ringStart !== false) pulse(h.x1, h.y1, 60);
+    if (h.type === 'drag') pulse(h.x2, h.y2, 55);
+    if (h.ringStart !== false || show) {
+    ctx.save(); ctx.setLineDash([14, 14]); ctx.lineDashOffset = -TIME * 40; ctx.beginPath(); ctx.moveTo(h.x1, h.y1); ctx.lineTo(h.x2, h.y2); st('rgba(255,213,74,.9)', 7); ctx.restore();
+    }
+    if (show) { const k = easeIO(Math.min(1, ((TIME * .6) % 1) * 1.3)); drawHand(lerp(h.x1, h.x2, k) + 6, lerp(h.y1, h.y2, k) + 14); }
+  } else if (h.type === 'circle') {
+    pulse(h.x, h.y, h.r);
+    if (show) { const a = TIME * 2.5; drawHand(h.x + Math.cos(a) * h.r + 6, h.y + Math.sin(a) * h.r + 14); }
+  }
+}
+
+/* =========================================================
+   SZENEN
+   ========================================================= */
+const SCENES = {};
+
+/* ---------- Titelbild ---------- */
+SCENES.title = () => {
+  const sv = loadSave(); const hasSave = sv && sv.idx > 1 && sv.idx < FLOW.length - 1;
+  const bPlay = { x: hasSave ? 470 : 600, y: 800 }, bCont = { x: 730, y: 800 };
+  let wob = 0;
+  const RP = () => ({ x: 600 + Math.sin(TIME * 1.3) * 10, y: 500 + Math.sin(TIME * 1.7) * 14 });
+  return {
+    hud: false,
+    update(dt) { wob = Math.max(0, wob - dt * 1.5); },
+    draw() {
+      spaceBg(TIME * 25);
+      drawEarth(120, 930, 300); drawMars(1070, 330, 64);
+      drawStar(250, 330, 24, { rot: Math.sin(TIME * 2) * .2 }); drawStar(930, 600, 20, { rot: Math.sin(TIME * 2 + 1) * .2 });
+      const r = RP();
+      drawRocket(r.x, r.y, .22 + Math.sin(TIME * 1.1) * .05 + Math.sin(TIME * 25) * wob * .2, 1.05, { fire: true, mitzi: true });
+      text('Die erste Katze im Weltraum', 600, 86, 50, '#FFF6E8', '#2A2357', 11);
+      ctx.save(); ctx.translate(600, 190); ctx.rotate(Math.sin(TIME * 1.5) * .03); text('Mitzi', 0, 0, 128, GOLD, '#2A2357', 20); ctx.restore();
+      hubBtn();
+      playBtn(bPlay.x, bPlay.y, 1 + Math.sin(TIME * 4) * .05);
+      if (hasSave) {
+        text('Neu', bPlay.x, bPlay.y + 92, 28, '#fff', '#2A2357', 6);
+        contBtn(bCont.x, bCont.y); text('Weiter', bCont.x, bCont.y + 92, 28, '#fff', '#2A2357', 6);
+      }
+    },
+    down(p) {
+      const r = RP();
+      if (dist(p.x, p.y, 64, 64) < 60) { SFX.pop(); location.href = '../'; }
+      else if (dist(p.x, p.y, bPlay.x, bPlay.y) < 90) { SFX.pop(); clearSave(); goto(1); }
+      else if (hasSave && dist(p.x, p.y, bCont.x, bCont.y) < 90) { SFX.pop(); goto(sv.idx); }
+      else if (dist(p.x, p.y, r.x, r.y) < 150) { SFX.meow(); wob = 1; stars(r.x, r.y - 40, 10); }
+    },
+  };
+};
+
+/* ---------- Zuhause: Der Alien holt Bell, Mitzi startet ---------- */
+SCENES.intro = () => {
+  const GY = 770, RS = 1.1;
+  const mitzi = mkCat(360, GY, MITZI), bell = mkCat(560, GY, BELL); bell.face = -1;
+  const R = { x: 990, y: GY - 122 * RS, mitzi: false, fire: false, vy: 0 };
+  const ufo = { x: 1400, y: -150, beam: 0, bell: false };
+  const btn = { x: 770, y: 640, press: 0, show: false };
+  const yarn = { x: 460, y: GY - 16 };
+  let phase = 'play', t = 0, ut = 0, i1 = false, i2 = false, ct = 0, num = 3, launched = false, angry = false;
+  const S = {
+    update(dt) {
+      t += dt; updCat(mitzi, dt); updCat(bell, dt); btn.press = Math.max(0, btn.press - dt * 2);
+      if (phase === 'play') {
+        const w = Math.sin(t * 2.4);
+        yarn.x = 460 + w * 42; yarn.y = GY - 16 - Math.abs(Math.cos(t * 2.4)) * 50;
+        mitzi.pawUp = w < -.7; bell.pawUp = w > .7;
+        if (t > 1.8) { phase = 'ufo'; ut = 0; SFX.ufo(); mitzi.pawUp = bell.pawUp = false; }
+      } else if (phase === 'ufo') {
+        ut += dt;
+        if (ut < 2) { const k = easeIO(ut / 2); ufo.x = lerp(1400, bell.x, k); ufo.y = lerp(-150, 330, k); }
+        else if (ut < 3.8) {
+          if (!ufo.beam) { ufo.beam = 1; SFX.zap(); SFX.bellMeow(); say('intro1', () => { i1 = true; }); mitzi.ly = -1; bell.ly = -1; }
+          const k = clamp((ut - 2.3) / 1.4, 0, 1);
+          bell.y = lerp(GY, ufo.y + 40, easeIO(k)); bell.s = lerp(1, .35, k); bell.alpha = k > .85 ? 1 - (k - .85) / .15 : 1;
+        } else {
+          if (ufo.beam) { ufo.beam = 0; ufo.bell = true; bell.alpha = 0; SFX.laugh(); }
+          if (ut > 4.3) { ufo.x += 950 * dt; ufo.y -= 480 * dt; }
+          if (ut > 4.7 && !angry) { angry = true; mitzi.ly = 0; hop(mitzi, mitzi.x, GY, 70, .45); }
+          if (ut > 5.2 && i1 && !i2) {
+            i2 = true;
+            say('intro2', () => { phase = 'tap'; say('tapMitzi', null, true); setHint({ type: 'tap', x: mitzi.x, y: mitzi.y - 90, r: 100 }); });
+          }
+        }
+      } else if (phase === 'count') {
+        const prev = num; ct += dt; num = ct < 1 ? 3 : ct < 2 ? 2 : ct < 3 ? 1 : 0;
+        if (num !== prev) SFX.beep(num === 0);
+        if (ct > 1.6 && !R.fire) { R.fire = true; SFX.rumble(); }
+        if (ct > 1.6 && Math.random() < .5) burst(R.x + rnd(-60, 60), GY - 10, 1, ['#DDD', '#BBB', '#EEE'], { type: 'smoke', sp: 140, up: 20, g: -20, r0: 16, r1: 30, life: 1.4 });
+        if (ct > 3) { R.vy -= 700 * dt; R.y += R.vy * dt; }
+        if (ct > 5 && !launched) { launched = true; next(); }
+      }
+    },
+    draw() {
+      gardenBg(GY);
+      rr(R.x - 120, GY - 14, 240, 26, 8); fs('#7A8492'); st(OUT, 4);
+      if (btn.show) {
+        rr(btn.x - 12, btn.y, 24, GY - btn.y, 6); fs('#8A94A2'); st(OUT, 3);
+        rr(btn.x - 64, btn.y - 22, 128, 52, 16); fs('#596273'); st(OUT, 4);
+        ell(btn.x, btn.y - 24 + btn.press * 10, 46, 28); fs('#E63B3B'); st('#7A1414', 5);
+        ell(btn.x - 14, btn.y - 34 + btn.press * 10, 14, 7); fs('rgba(255,255,255,.6)');
+      }
+      drawRocket(R.x + (R.fire && ct < 3.5 ? rnd(-3, 3) : 0), R.y, 0, RS, { fire: R.fire, mitzi: R.mitzi, big: ct > 3 });
+      circ(yarn.x, yarn.y, 16); fs('#FF6FA0'); st('#A83260', 3);
+      ctx.beginPath(); ctx.arc(yarn.x, yarn.y, 10, .3, 2.4); ctx.moveTo(yarn.x - 12, yarn.y - 4); ctx.lineTo(yarn.x + 12, yarn.y + 6); st('#A83260', 2.5);
+      drawCat(bell); drawCat(mitzi);
+      if (ufo.x < 1500 && ufo.y > -300) drawUFO(ufo.x, ufo.y, 1, { beam: ufo.beam ? GY - ufo.y : 0, bell: ufo.bell });
+      if (phase === 'count' && ct < 4) {
+        const k = ct % 1; ctx.save(); ctx.translate(600, 330); ctx.scale(1.4 - k * .4, 1.4 - k * .4);
+        text(num ? '' + num : 'Los!', 0, 0, 170, GOLD, '#2A2357', 18); ctx.restore();
+      }
+    },
+    down(p) {
+      if (phase === 'tap' && dist(p.x, p.y, mitzi.x, mitzi.y - 90) < 130 && !mitzi.anim) {
+        HINT = null; phase = 'board'; SFX.meow();
+        const w = winOf(R.x, R.y, 0, RS);
+        hop(mitzi, 860, GY, 90, .55, () => hop(mitzi, w.x, w.y + 45, 160, .7, () => {
+          mitzi.alpha = 0; R.mitzi = true; SFX.pop(); stars(w.x, w.y, 12);
+          after(.6, () => { phase = 'button'; btn.show = true; say('button', null, true); setHint({ type: 'tap', x: btn.x, y: btn.y - 24, r: 80 }); });
+        }, .4));
+      } else if (phase === 'button' && dist(p.x, p.y, btn.x, btn.y - 20) < 100) {
+        HINT = null; btn.press = 1; SFX.click(); phase = 'count'; ct = 0; num = 3; SFX.beep(false); say('count');
+      } else if (dist(p.x, p.y, mitzi.x, mitzi.y - 90) < 110 && mitzi.alpha > .5 && !mitzi.anim) { SFX.meow(); mitzi.sq = 1; }
+    },
+  };
+  return S;
+};
+
+/* ---------- Flug durchs Weltall (hin: Sterne sammeln, zurück: Sterne zurückgeben) ---------- */
+SCENES.flight = f => {
+  const back = f.dir === 'back', WANT = 5, RSC = .72;
+  const R = { x: 250, y: 460, tx: 250, ty: 460, wob: 0, inv: 0, tilt: 0 };
+  let have = back ? 5 : 0, ret = 0, t = 0, done = false, d2 = 0, left = false, steer = null, lastP = null;
+  let FREE = [], METS = [], WARN = [], SOCK = [], FLYS = [], RESP = [];
+  let tStar = 1, tMet = back ? 3 : 0, tSock = 2.4, metOn = back, steerSaid = back, lostN = 0, tipDone = back, sockTip = !back, introDone = false;
+  const slot = i => ({ x: 600 + (i - 2) * 80, y: 58 });
+  const flying = () => FLYS.filter(q => q.to === 'slot').length;
+  function addStar(o = {}) {
+    const s = Object.assign({ x: 1270, y: rnd(150, 780), vx: -rnd(170, 240), vy: 0, wave: Math.random() < .45 ? rnd(40, 90) : 0, ph: rnd(0, 6), lost: false }, o);
+    s.by = s.y; FREE.push(s);
+  }
+  function spawnWarn() { WARN.push({ y: rnd(120, 800), t: .85, r: rnd(34, 64), vx: -rnd(290, 430) * (back ? 1.1 : 1), vy: rnd(-70, 70) }); }
+  function finish() {
+    done = true; d2 = 0; HINT = null; R.inv = 99; SFX.fanfare();
+    say(back ? 'n5' : 'n5', () => say(back ? 'home' : 'toMars'));
+  }
+  function hitRocket(m) {
+    R.wob = 1; R.inv = 1.7; SFX.bonk();
+    burst(m.x, m.y, 10, ['#8E7E72', '#6E6058', '#B9A99B'], { sp: 260, up: 0, g: 0, r0: 5, r1: 11, life: .8 });
+    if (have > 0) {
+      have--; const dir = R.y > 450 ? -1 : 1;
+      FREE.push({ lost: true, x: R.x, y: R.y, by: R.y, vx: -rnd(40, 90), vy: dir * rnd(110, 170), wave: 0, ph: 0 });
+      if (lostN < 2) say('lost'); else SFX.oh(); lostN++;
+    } else SFX.oh();
+  }
+  function collect(s) {
+    FLYS.push({ to: 'slot', idx: have + flying(), x0: s.x, y0: s.y, t: 0 }); SFX.pop();
+    if (!tipDone) { tipDone = true; HINT = null; metOn = true; tMet = 2.2; }
+  }
+  function place(s) {
+    have--; s.tg = true; FLYS.push({ to: 'sock', sock: s, x0: R.x, y0: R.y, t: 0 }); SFX.pop();
+    if (!sockTip) { sockTip = true; HINT = null; }
+  }
+  return {
+    slots: true,
+    init() { say(back ? 'back' : 'stars', () => { introDone = true; }, true); },
+    update(dt) {
+      t += dt;
+      const oy = R.y;
+      R.x += (R.tx - R.x) * Math.min(1, dt * 12); R.y += (R.ty - R.y) * Math.min(1, dt * 12);
+      R.tilt = lerp(R.tilt, clamp((R.y - oy) / Math.max(dt, .001) * .0012, -.35, .35), Math.min(1, dt * 8));
+      R.wob = Math.max(0, R.wob - dt * .9); R.inv -= dt;
+      if (done) {
+        d2 += dt; R.tx = lerp(R.tx, 560, Math.min(1, dt * 1.5)); R.ty = lerp(R.ty, 450, Math.min(1, dt * 1.5));
+        if (!left && ((d2 > 4.8 && !VOICE.speaking) || d2 > 9)) { left = true; next(); }
+      }
+      if (!back && !done) { tStar -= dt; if (tStar <= 0) { tStar = rnd(1.3, 1.9); if (FREE.filter(s => !s.lost).length < 3) addStar(); } }
+      if (back && !done) {
+        tSock -= dt;
+        if (tSock <= 0) { tSock = rnd(1.9, 2.6); if (SOCK.filter(s => !s.filled && !s.tg).length < 2 && have > 0) SOCK.push({ x: 1270, y: rnd(160, 740), vx: -rnd(120, 160), filled: false, tg: false, ph: rnd(0, 6) }); }
+      }
+      if (metOn && !done && (introDone || back || t > 6)) {
+        tMet -= dt;
+        if (tMet <= 0) {
+          const prog = back ? ret / 5 : have / 5;
+          tMet = back ? lerp(1.35, .8, prog) : lerp(1.9, 1.0, prog);
+          spawnWarn(); if (Math.random() < (back ? .35 : .2)) spawnWarn();
+          if (!steerSaid) {
+            steerSaid = true; say('steer');
+            setHint({ type: 'drag', x1: R.x, y1: R.y, x2: R.x, y2: R.y + (R.y > 450 ? -230 : 230), delay: 0 });
+            after(3, () => { if (HINT && HINT.type === 'drag') HINT = null; });
+          }
+        }
+      }
+      for (const w of WARN) { w.t -= dt; if (w.t <= 0) METS.push(mkMeteor(1300, w.y, w.vx, w.vy, w.r)); }
+      WARN = WARN.filter(w => w.t > 0);
+      for (const m of METS) {
+        m.x += m.vx * dt; m.y += m.vy * dt; m.rot += m.vr * dt;
+        if ((m.y < 70 && m.vy < 0) || (m.y > 840 && m.vy > 0)) m.vy *= -1;
+        if (R.inv <= 0 && !m.gone) {
+          for (const cx of [R.x + 38, R.x - 38]) if (dist(m.x, m.y, cx, R.y) < m.r * .85 + 34) { m.gone = true; hitRocket(m); break; }
+        }
+      }
+      METS = METS.filter(m => !m.gone && m.x > -160);
+      for (const s of FREE) {
+        if (s.lost) { s.x += s.vx * dt; s.y += s.vy * dt; s.vy *= 1 - .5 * dt; if ((s.y < 110 && s.vy < 0) || (s.y > 830 && s.vy > 0)) s.vy *= -1; }
+        else { s.x += s.vx * dt; s.y = s.by + Math.sin(t * 2.2 + s.ph) * s.wave; }
+        if (s.x < -70) { s.gone = true; if (back) RESP.push(1.6); }
+      }
+      FREE = FREE.filter(s => !s.gone);
+      for (let i = 0; i < RESP.length; i++) { RESP[i] -= dt; if (RESP[i] <= 0) addStar({ wave: 0, vx: -170 }); }
+      RESP = RESP.filter(r => r > 0);
+      for (const s of SOCK) s.x += s.vx * dt;
+      SOCK = SOCK.filter(s => s.x > -90 || (s.tg && !s.filled));
+      for (const q of FLYS) {
+        q.t += dt / .55;
+        if (q.t >= 1 && !q.done) {
+          q.done = true;
+          if (q.to === 'slot') {
+            have++; SFX.ding(have); stars(slot(have - 1).x, slot(have - 1).y, 8);
+            if (!back) { if (have >= WANT) finish(); else say('n' + have); }
+          } else {
+            q.sock.filled = true; ret++; SFX.twinkle(); stars(q.sock.x, q.sock.y, 14);
+            if (ret >= WANT) finish(); else say('n' + ret);
+          }
+        }
+      }
+      FLYS = FLYS.filter(q => !q.done);
+      if (!tipDone) { const s = FREE.find(s => !s.lost && s.x < 1120 && s.x > 120); HINT = s ? { type: 'tap', x: s.x, y: s.y, r: 60, delay: .4 } : null; }
+      if (!sockTip) { const s = SOCK.find(s => !s.filled && !s.tg && s.x < 1120 && s.x > 120); HINT = s ? { type: 'tap', x: s.x, y: s.y, r: 60, delay: .4 } : null; }
+    },
+    draw() {
+      spaceBg(t * 110);
+      const px = 150 - t * 35; if (px > -400) (back ? drawMars : drawEarth)(px, 860, 250);
+      if (done) { const k = easeIO(clamp(d2 / 4, 0, 1)); (back ? drawEarth : drawMars)(lerp(1550, 1080, k), 450, lerp(90, 430, k)); }
+      for (const s of SOCK) { if (s.filled) { ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(TIME); for (let i = 0; i < 8; i++) { ctx.rotate(Math.PI / 4); rr(-3, 42, 6, 22, 3); fs('rgba(255,240,170,.7)'); } ctx.restore(); drawStar(s.x, s.y, 34); } else drawEmpty(s.x, s.y, 34, s.ph); }
+      for (const s of FREE) drawStar(s.x, s.y, 34, { rot: Math.sin(t * 3 + s.ph) * .15, lost: s.lost });
+      for (const m of METS) drawMeteor(m);
+      for (const w of WARN) {
+        const k = (Math.sin(TIME * 18) + 1) / 2; ctx.save(); ctx.translate(1150, w.y); ctx.globalAlpha = .6 + .4 * k;
+        poly([0, -34, 32, 24, -32, 24]); fs('#FF5A3C'); ctx.lineJoin = 'round'; st('#fff', 5); text('!', 0, 6, 38, '#fff'); ctx.restore();
+      }
+      ctx.save(); if (R.inv > 0 && R.inv < 50 && Math.floor(R.inv * 10) % 2) ctx.globalAlpha = .55;
+      drawRocket(R.x, R.y, Math.PI / 2 + R.tilt + Math.sin(TIME * 22) * R.wob * .4, RSC, { fire: true, mitzi: true, bell: back });
+      ctx.restore();
+      for (const q of FLYS) {
+        const tp = q.to === 'slot' ? slot(q.idx) : q.sock, k = easeIO(Math.min(1, q.t));
+        drawStar(lerp(q.x0, tp.x, k), lerp(q.y0, tp.y, k) - Math.sin(Math.PI * k) * 80, lerp(34, q.to === 'slot' ? 25 : 34, k));
+      }
+      for (let i = 0; i < 5; i++) {
+        const s = slot(i); circ(s.x, s.y, 34); fs('rgba(255,255,255,.16)');
+        if (i < have) drawStar(s.x, s.y, 25, { glow: false });
+        else { ctx.save(); starPath(s.x, s.y, 25, 12); ctx.setLineDash([6, 5]); st('rgba(255,255,255,.7)', 3); ctx.restore(); }
+      }
+    },
+    down(p, id) {
+      if (done) return;
+      let best = null, bd = 85;
+      for (const s of FREE) { const d = dist(p.x, p.y, s.x, s.y); if (d < bd) { bd = d; best = s; } }
+      if (best && (back || have + flying() < WANT)) { FREE.splice(FREE.indexOf(best), 1); collect(best); return; }
+      if (back) for (const s of SOCK) if (!s.filled && !s.tg && dist(p.x, p.y, s.x, s.y) < 85) { if (have > 0) place(s); else SFX.oh(); return; }
+      if (steer == null) { steer = id; lastP = p; }
+    },
+    move(p, id) {
+      if (id !== steer || done) return;
+      R.tx = clamp(R.tx + (p.x - lastP.x) * 1.25, 130, 780); R.ty = clamp(R.ty + (p.y - lastP.y) * 1.25, 140, 810); lastP = p;
+    },
+    up(p, id) { if (id === steer) steer = null; },
+    get dbg() { return { R, have, ret, FREE, METS, SOCK, done }; },
+  };
+};
+
+/* ---------- Mars: Landung und Sternenkette bauen ---------- */
+SCENES.chain = () => {
+  const HZ = 470, GY = 790, RS = .95;
+  const RG = GY - 122 * RS;
+  const R = { x: 190, y: -350, fire: true, inR: true };
+  const mitzi = mkCat(190, GY, MITZI); mitzi.alpha = 0;
+  const POS = [[520, 600], [700, 410], [930, 560], [770, 730], [1070, 360]];
+  const ST = POS.map(([hx, hy]) => ({ hx, hy, k: -1, linked: false, ph: rnd(0, 6) }));
+  let phase = 'land', lt = 0, chain = [], drag = false, finger = null, gather = 0, flash = 0, left = false;
+  const home = s => ({ x: s.hx + Math.sin(TIME * 1.3 + s.ph) * 7, y: s.hy + Math.cos(TIME * 1.1 + s.ph) * 7 });
+  function pos(s) {
+    const w = winOf(R.x, R.y, 0, RS);
+    if (s.k < 1) { const k = easeIO(Math.max(0, s.k)); const h = home(s); return { x: lerp(w.x, h.x, k), y: lerp(w.y, h.y, k) - Math.sin(Math.PI * k) * 200 }; }
+    const h = home(s);
+    if (phase === 'done' && gather > .9) { const k = easeIO(Math.min(1, (gather - .9) / .9)); const pw = pawOf(mitzi); return { x: lerp(h.x, pw.x, k), y: lerp(h.y, pw.y, k), sc: 1 - k * .6 }; }
+    return h;
+  }
+  function nearestUnlinked(p, r) { let b = null, bd = r; for (const s of ST) if (!s.linked && s.k >= 1) { const q = pos(s), d = dist(p.x, p.y, q.x, q.y); if (d < bd) { bd = d; b = s; } } return b; }
+  function hintNext() {
+    if (phase !== 'link') return;
+    const from = chain.length ? chain[chain.length - 1] : ST[0];
+    let to = null, bd = 1e9; for (const s of ST) if (!s.linked && s !== from) { const d = dist(s.hx, s.hy, from.hx, from.hy); if (d < bd) { bd = d; to = s; } }
+    if (to) setHint({ type: 'drag', x1: from.hx, y1: from.hy, x2: to.hx, y2: to.hy });
+  }
+  function link(s) {
+    s.linked = true; chain.push(s); SFX.ding(chain.length); const q = pos(s); stars(q.x, q.y, 8);
+    if (chain.length >= 5) { phase = 'done'; drag = false; finger = null; HINT = null; SFX.jingle(); say('n5', () => say('chainDone')); mitzi.pawUp = true; }
+    else { say('n' + chain.length); hintNext(); }
+  }
+  return {
+    update(dt) {
+      updCat(mitzi, dt); flash = Math.max(0, flash - dt * 2);
+      if (phase === 'land') {
+        lt += dt; const k = Math.min(1, lt / 2.4); R.y = lerp(-350, RG, 1 - Math.pow(1 - k, 3));
+        if (k >= 1) {
+          phase = 'out'; R.fire = false; SFX.land();
+          burst(R.x, GY, 16, ['#E8A27A', '#D98A62', '#F4C3A0'], { type: 'smoke', sp: 220, up: 40, g: -10, r0: 14, r1: 26, life: 1.2 });
+          after(.5, () => { const w = winOf(R.x, R.y, 0, RS); R.inR = false; mitzi.alpha = 1; mitzi.x = w.x; mitzi.y = w.y + 45; mitzi.s = .4; hop(mitzi, 340, GY, 120, .7, null, 1); });
+          ST.forEach((s, i) => after(1.4 + i * .25, () => { s.k = 0; SFX.pop(); }));
+          after(1.4 + 5 * .25 + .8, () => { phase = 'link'; say('chain', null, true); hintNext(); });
+        }
+      }
+      for (const s of ST) if (s.k >= 0 && s.k < 1) s.k = Math.min(1, s.k + dt / .7);
+      if (phase === 'done') { gather += dt; if (gather > 3.4 && !left) { left = true; next(); } }
+    },
+    draw() {
+      marsBg(HZ);
+      ell(R.x, GY, 130, 18); fs('rgba(90,30,10,.25)');
+      drawRocket(R.x, R.y, 0, RS, { fire: R.fire, mitzi: R.inR, big: phase === 'land' });
+      const showChain = !(phase === 'done' && gather > .9);
+      if (showChain) for (let i = 1; i < chain.length; i++) { const a = pos(chain[i - 1]), b = pos(chain[i]); chainLine(a.x, a.y, b.x, b.y); }
+      if (drag && finger && chain.length) {
+        const a = pos(chain[chain.length - 1]); ctx.save(); ctx.setLineDash([12, 10]); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(finger.x, finger.y); st('rgba(255,236,150,.95)', 6); ctx.restore();
+      }
+      if (flash > 0 && chain.length) { const a = pos(chain[chain.length - 1]); circ(a.x, a.y, 60 + (1 - flash) * 30); st(`rgba(255,255,255,${flash})`, 8); }
+      drawCat(mitzi);
+      if (phase === 'done' && gather > 1.8) { const pw = pawOf(mitzi); chainCoil(pw.x, pw.y + 6); }
+      else for (const s of ST) if (s.k >= 0) { const q = pos(s); drawStar(q.x, q.y, (s.linked ? 40 : 36) * (q.sc || 1), { rot: Math.sin(TIME * 2 + s.ph) * .12 }); }
+    },
+    down(p) {
+      if (phase !== 'link') return;
+      if (!chain.length) { const s = nearestUnlinked(p, 85); if (s) { drag = true; finger = p; link(s); } return; }
+      const L = pos(chain[chain.length - 1]);
+      if (dist(p.x, p.y, L.x, L.y) < 95) { drag = true; finger = p; }
+      else { flash = 1; SFX.boing(); }
+    },
+    move(p) { if (!drag || phase !== 'link') return; finger = p; const s = nearestUnlinked(p, 62); if (s) link(s); },
+    up() { drag = false; finger = null; },
+    get dbg() { return { ST: ST.map(pos), chain: chain.length, phase }; },
+  };
+};
+
+/* ---------- Mars: Kampf gegen den frechen Alien ---------- */
+SCENES.alien = () => {
+  const HZ = 460, GY = 800;
+  const mitzi = mkCat(180, GY, MITZI); mitzi.pawUp = true;
+  const ROCKS = [{ x: 470, y: 640, w: 170, h: 130 }, { x: 770, y: 590, w: 190, h: 150 }, { x: 1060, y: 650, w: 170, h: 130 }];
+  const PIT = { x: 640, y: 812, rx: 190, ry: 44 };
+  const A = { rock: 1, dy: 1, st: 'wait', t: 1, hits: 0, x: 780, y: 700, s: 1, rot: 0, vy: 0, wrap: 0, laugh: 0, mode: 'peek' };
+  let phase = 'intro', t = 0, peeks = 0, misses = 0, nets = 0, net = null, caught = 0, jump = null, shot = null;
+  let netSaid = false, jumpSaid = false, wrapP = 0, wrapQ = 0, lastA = null, swipe = null, outT = 0, ox = 0, oy = 0, spT = 0, spaceOn = false, SPS = [], FL = [], byeT = 0, byeDone = false, left = false, meowT = 3;
+  const feetY = r => lerp(r.y - r.h + 22, r.y + 150, A.dy);
+  const center = () => ({ x: A.x, y: A.y - 80 * A.s });
+  function head() { const r = ROCKS[A.rock]; return { x: r.x, y: feetY(r) - 104 * A.s }; }
+  function spPos(s) { const c = center(); const a = s.a + TIME * .7; return { x: c.x + Math.cos(a) * 100, y: c.y + Math.sin(a) * 74 }; }
+  function hit() {
+    const h = head(); shot = { t: 0, x: h.x, y: h.y }; SFX.whoosh(); mitzi.sq = .6;
+    A.st = 'bonk'; A.t = .9; A.hits++;
+    after(.22, () => { SFX.bonk(); stars(h.x, h.y, 14); say(A.hits === 1 ? 'hit1' : A.hits === 2 ? 'hit2' : 'hit3'); });
+  }
+  function throwNet() {
+    const r = ROCKS[A.rock]; nets++;
+    net = { x0: r.x - 40, y0: feetY(r) - 120, t: 0, dur: nets === 1 ? 2.0 : 1.4, done: false, miss: false, x: r.x, y: feetY(r) - 120, rot: 0, vx: 0, vy: 0 };
+    SFX.net();
+  }
+  function freeMitzi() {
+    mitzi.net = false; burst(mitzi.x, mitzi.y - 80, 12, ['#7DDB5A', '#A8EC8A', '#fff'], { sp: 300 }); SFX.boing(); say('free');
+    VOICE.last = 'alien'; HINT = null; A.st = 'down'; A.t = .25; A.laugh = 0;
+  }
+  function launch() { phase = 'fly'; A.vy = -1700; SFX.whoosh(); HINT = null; mitzi.sq = 1; swipe = null; }
+  return {
+    init() { say('alien', () => { if (phase === 'intro') { phase = 'fight'; A.st = 'wait'; A.t = .4; } }, true); },
+    update(dt) {
+      t += dt; updCat(mitzi, dt); A.laugh = Math.max(0, A.laugh - dt);
+      meowT -= dt; if (meowT <= 0 && (phase === 'intro' || phase === 'fight')) { meowT = rnd(5, 8); SFX.bellMeow(); }
+      if (jump) { jump.t += dt; const k = Math.min(1, jump.t / .9); mitzi.jy = Math.sin(Math.PI * k) * 200; if (k >= 1) { jump = null; mitzi.jy = 0; mitzi.sq = 1; SFX.land(); } }
+      if (shot) { shot.t += dt; if (shot.t > .55) shot = null; }
+      if (phase === 'fight' && !caught) {
+        A.t -= dt;
+        if (A.st === 'wait' && A.t <= 0) {
+          let r = Math.floor(rnd(0, 3)); if (r === A.rock) r = (r + 1 + Math.floor(rnd(0, 2))) % 3;
+          A.rock = r; A.st = 'up'; A.t = .28; peeks++;
+          A.mode = (A.hits >= 1 && peeks % 2 === 0) ? 'net' : 'peek';
+        } else if (A.st === 'up') {
+          A.dy = Math.max(0, A.t / .28);
+          if (A.t <= 0) {
+            A.dy = 0;
+            if (A.mode === 'net') {
+              A.st = 'wind'; A.t = .8;
+              if (!netSaid) { netSaid = true; say('net'); setHint({ type: 'tap', x: mitzi.x, y: mitzi.y - 90, r: 100, delay: .2 }); }
+            } else { A.st = 'stay'; A.t = [1.6, 1.3, 1.05][A.hits] || 1; }
+          }
+        } else if (A.st === 'wind' && A.t <= 0) { throwNet(); A.st = 'stay'; A.t = .7; A.mode = 'thrown'; }
+        else if (A.st === 'stay' && A.t <= 0) {
+          A.st = 'down'; A.t = .25;
+          if (A.mode === 'peek') { misses++; A.laugh = .6; SFX.laugh(); if (misses === 2 || misses === 6) say('miss'); }
+        } else if (A.st === 'down') {
+          A.dy = 1 - Math.max(0, A.t / .25);
+          if (A.t <= 0) { A.dy = 1; A.st = 'wait'; A.t = rnd(.6, 1.5); }
+        } else if (A.st === 'bonk' && A.t <= 0) {
+          if (A.hits >= 3) {
+            const r = ROCKS[A.rock]; phase = 'out'; outT = 0; ox = r.x; oy = feetY(r); A.x = ox; A.y = oy; net = null;
+          } else { A.st = 'down'; A.t = .3; }
+        }
+      }
+      if (net) {
+        net.t += dt;
+        if (!net.done) {
+          const k = Math.min(1, net.t / net.dur); net.x = lerp(net.x0, mitzi.x, k); net.y = lerp(net.y0, GY - 75, k) - Math.sin(Math.PI * k) * 220; net.rot += dt * 5;
+          if (k >= 1) {
+            net.done = true;
+            if (mitzi.jy > 60) {
+              net.miss = true; net.vx = -420; net.vy = -60; SFX.whoosh(); if (HINT && HINT.type === 'tap') HINT = null;
+              if (!jumpSaid) { jumpSaid = true; say('jump'); }
+            } else {
+              net = null; caught = 6; mitzi.net = true; SFX.net(); A.laugh = 1.5; SFX.laugh();
+              say('caught', null, true); setHint({ type: 'tap', x: mitzi.x, y: mitzi.y - 80, r: 100, delay: .3 });
+            }
+          }
+        } else if (net.miss) { net.x += net.vx * dt; net.vy += 900 * dt; net.y += net.vy * dt; net.rot += dt * 4; if (net.y > 1050) net = null; }
+      }
+      if (phase === 'out') {
+        outT += dt; const k = Math.min(1, outT / 1.4);
+        A.x = lerp(ox, 780, k); A.y = lerp(oy, 720, k) - Math.sin(Math.PI * k) * 140; A.s = lerp(1, 1.25, k); A.rot = Math.sin(TIME * 6) * .15;
+        if (k >= 1) { phase = 'wrap'; A.rot = 0; const c = center(); say('wrap', null, true); setHint({ type: 'circle', x: c.x, y: c.y, r: 165 }); }
+      } else if (phase === 'wrap') A.rot = Math.sin(TIME * 3) * .08;
+      else if (phase === 'fly') {
+        A.y += A.vy * dt; A.rot += dt * 9;
+        if (A.y < -260) { phase = 'space'; A.x = 720; A.y = -150; A.s = .72; A.rot = 0; spT = 0; SPS = [0, 1, 2, 3, 4].map(i => ({ a: i * Math.PI * 2 / 5, got: false })); }
+      } else if (phase === 'space') {
+        spT += dt; A.y = lerp(-150, 330, easeIO(Math.min(1, spT / 1.1))); A.rot = Math.sin(TIME * 2) * .25;
+        if (spT > 1.1 && !spaceOn) { spaceOn = true; say('unwrap', null, true); }
+        if (spaceOn) { const s = SPS.find(s => !s.got); if (s) { const q = spPos(s); HINT = { type: 'tap', x: q.x, y: q.y, r: 52, delay: 1.2 }; } }
+      } else if (phase === 'bye') {
+        byeT += dt; A.y -= 60 * dt; A.x += 50 * dt; A.s = Math.max(.15, A.s - dt * .08); A.rot = Math.sin(TIME * 2) * .2;
+        if (!left && ((byeT > 4.5 && byeDone) || byeT > 9)) { left = true; next(); }
+      }
+      for (const q of FL) q.t += dt / .6;
+      FL = FL.filter(q => q.t < 1);
+    },
+    draw() {
+      marsBg(HZ);
+      ell(PIT.x, PIT.y, PIT.rx + 16, PIT.ry + 8); fs('#B5582F');
+      ell(PIT.x, PIT.y, PIT.rx, PIT.ry); fs('#4A1C0E'); ell(PIT.x, PIT.y + 8, PIT.rx * .82, PIT.ry * .6); fs('#2E1007');
+      if (phase === 'intro' || phase === 'fight') { const w = Math.sin(TIME * 1.4); if (w > .4) { ctx.save(); ell(PIT.x, PIT.y, PIT.rx, PIT.ry); ctx.clip(); ell(PIT.x + 30, PIT.y + 30 - (w - .4) * 70, 13, 17, Math.sin(TIME * 8) * .3); fs(BELL.paw); st(BELL.line, 3); ctx.restore(); } }
+      const inFight = phase === 'intro' || phase === 'fight';
+      for (let i = 0; i < ROCKS.length; i++) {
+        const r = ROCKS[i];
+        if (inFight && A.rock === i && A.dy < 1) {
+          ctx.save(); ctx.beginPath(); ctx.rect(r.x - 260, -200, 520, r.y - 30 + 200); ctx.clip();
+          drawAlien(r.x, feetY(r), A.s, { dizzy: A.st === 'bonk', laugh: A.laugh > 0, armUp: A.st === 'wind', lx: -1 });
+          ctx.restore();
+        }
+        drawRock(r);
+      }
+      if (!inFight && phase !== 'fly' || (phase === 'fly' && A.y > -260)) {
+        drawAlien(A.x, A.y, A.s, { rot: A.rot, dizzy: phase === 'out' || phase === 'wrap' || phase === 'throw' || phase === 'fly', wrap: phase === 'space' ? SPS.filter(s => !s.got).length / 5 : A.wrap, wave: phase === 'bye', sad: phase === 'space' });
+      }
+      if (phase === 'space') for (const s of SPS) if (!s.got) { const q = spPos(s); drawStar(q.x, q.y, 30, { rot: Math.sin(TIME * 3 + s.a) * .2 }); }
+      for (const q of FL) { const k = easeIO(q.t), pw = pawOf(mitzi); drawStar(lerp(q.x, pw.x, k), lerp(q.y, pw.y, k) - Math.sin(Math.PI * k) * 120, lerp(30, 14, k)); }
+      drawCat(mitzi);
+      if (net && !net.miss) drawNet(net.x, net.y, 64, net.rot); else if (net) drawNet(net.x, net.y, 64, net.rot);
+      const pw = pawOf(mitzi);
+      if (shot) { const k = shot.t < .22 ? shot.t / .22 : Math.max(0, 1 - (shot.t - .22) / .33); const tx = lerp(pw.x, shot.x, k), ty = lerp(pw.y, shot.y, k); chainLine(pw.x, pw.y, tx, ty, .8); drawStar(tx, ty, 24, { glow: false }); }
+      else if (inFight || phase === 'bye') chainCoil(pw.x, pw.y + 6);
+      if (inFight) for (let i = 0; i < 3; i++) {
+        const x = 520 + i * 80, y = 60, on = i < 3 - A.hits;
+        circ(x, y, 30); fs(on ? '#7DDB5A' : 'rgba(255,255,255,.35)'); st(on ? '#2E5E22' : 'rgba(80,40,30,.5)', 4);
+        [[-11, -4], [0, -9], [11, -4]].forEach(([ex, ey]) => { circ(x + ex, y + ey, 5.5); fs('#fff'); circ(x + ex, y + ey + 1, 2.5); fs('#222'); });
+        if (!on) { ctx.beginPath(); ctx.moveTo(x - 18, y - 18); ctx.lineTo(x + 18, y + 18); ctx.moveTo(x + 18, y - 18); ctx.lineTo(x - 18, y + 18); st('#E2483D', 7); }
+      }
+    },
+    down(p) {
+      const onMitzi = dist(p.x, p.y, mitzi.x, mitzi.y - mitzi.jy - 85) < 120;
+      if (phase === 'fight') {
+        if (caught) {
+          if (onMitzi) { caught--; mitzi.sq = 1; mitzi.rot = rnd(-.15, .15); SFX.pop(); if (caught <= 0) { caught = 0; mitzi.rot = 0; freeMitzi(); } }
+          return;
+        }
+        if ((A.st === 'up' || A.st === 'stay' || A.st === 'wind') && A.dy < .6) { const h = head(); if (dist(p.x, p.y, h.x, h.y) < 110) { hit(); return; } }
+        if (onMitzi && !jump) { jump = { t: 0 }; SFX.hop(); if (HINT && HINT.type === 'tap' && net) HINT = null; }
+      } else if (phase === 'wrap') { const c = center(); lastA = Math.atan2(p.y - c.y, p.x - c.x); }
+      else if (phase === 'throw') swipe = { x: p.x, y: p.y };
+      else if (phase === 'space' && spaceOn) {
+        for (const s of SPS) if (!s.got) {
+          const q = spPos(s);
+          if (dist(p.x, p.y, q.x, q.y) < 70) {
+            s.got = true; FL.push({ x: q.x, y: q.y, t: 0 }); SFX.ding(SPS.filter(z => z.got).length); A.rot += .6;
+            if (SPS.every(z => z.got)) { phase = 'bye'; byeT = 0; HINT = null; A.wrap = 0; SFX.fanfare(); after(.3, () => say('bye', () => { byeDone = true; })); }
+            return;
+          }
+        }
+      }
+    },
+    move(p) {
+      if (phase === 'wrap' && lastA != null) {
+        const c = center(), a = Math.atan2(p.y - c.y, p.x - c.x); let d = a - lastA;
+        while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2;
+        lastA = a; if (dist(p.x, p.y, c.x, c.y) < 40) return;
+        wrapP += Math.abs(d) / (Math.PI * 4); A.wrap = Math.min(1, wrapP);
+        if (Math.floor(wrapP * 8) > wrapQ) { wrapQ = Math.floor(wrapP * 8); SFX.clink(); }
+        if (wrapP >= 1) { phase = 'throw'; A.wrap = 1; lastA = null; SFX.jingle(); const c2 = center(); say('throw', null, true); setHint({ type: 'swipe', x1: c2.x, y1: c2.y + 40, x2: c2.x, y2: c2.y - 300 }); }
+      } else if (phase === 'throw' && swipe && swipe.y - p.y > 150) launch();
+    },
+    up() { lastA = null; swipe = null; },
+    get dbg() { return { A, phase, head: phase === 'fight' ? head() : center(), caught, net, SPS: SPS.map(s => s.got ? null : spPos(s)), mitzi }; },
+  };
+};
+
+/* ---------- Mars: Bell aus der Grube ziehen ---------- */
+SCENES.rescue = () => {
+  const SY0 = 400, SH = { x1: 530, x2: 750, bot: 870 };
+  const RS = .8, R = { x: 150, y: SY0 - 122 * RS, fire: false, vy: 0, cats: 0 };
+  const mitzi = mkCat(420, SY0, MITZI); mitzi.pawUp = true;
+  const BOT = 855;
+  const bell = mkCat(640, BOT, BELL, .95); bell.pawUp = true; bell.ly = -1;
+  const HK = { x: 470, y: 330 };
+  let phase = 'hook', t = 0, drag = false, target = BOT, lastPull = 0, acc = 0, lastP = null, slipSaid = false, pulls = 0, left = false, lt = 0, meowT = 1;
+  const anchor = () => pawOf(mitzi);
+  const bellPaw = () => pawOf(bell);
+  function pull() {
+    target = Math.max(SY0, target - 68); lastPull = t; pulls++; SFX.pull(); mitzi.rot = -.2; bell.sq = .5;
+    if (pulls >= 2 && HINT && HINT.type === 'swipe') HINT = null;
+  }
+  function board() {
+    const w = winOf(R.x, R.y, 0, RS);
+    hop(mitzi, w.x, w.y + 40, 150, .7, () => { mitzi.alpha = 0; R.cats = 1; SFX.pop(); stars(w.x, w.y, 10); });
+    after(.45, () => hop(bell, w.x, w.y + 40, 170, .75, () => { bell.alpha = 0; R.cats = 2; SFX.pop(); stars(w.x, w.y, 10); after(.5, () => { phase = 'launch'; lt = 0; R.fire = true; SFX.rumble(); }); }, .4));
+  }
+  return {
+    init() { say('hook', null, true); const b = bellPaw(); setHint({ type: 'drag', x1: HK.x, y1: HK.y, x2: b.x, y2: b.y }); },
+    update(dt) {
+      t += dt; updCat(mitzi, dt); updCat(bell, dt); mitzi.rot = lerp(mitzi.rot, 0, Math.min(1, dt * 5));
+      meowT -= dt; if (meowT <= 0 && phase === 'hook') { meowT = rnd(4, 7); SFX.bellMeow(); }
+      if (phase === 'pull') {
+        if (pulls > 0 && t - lastPull > 2.4 && target < BOT) {
+          target = Math.min(BOT, target + 22 * dt);
+          if (!slipSaid) { slipSaid = true; say('slip'); }
+        }
+        bell.y = lerp(bell.y, target, Math.min(1, dt * 6));
+        if (target <= SY0 + 1 && bell.y < SY0 + 14) {
+          phase = 'saved'; bell.y = SY0; bell.pawUp = false; mitzi.pawUp = false; bell.ly = 0;
+          hop(bell, 290, SY0, 170, .8, () => { bell.happy = true; mitzi.happy = true; hearts(355, SY0 - 200, 10); SFX.fanfare(); say('saved'); after(2.2, () => { bell.happy = mitzi.happy = false; board(); }); });
+        }
+      }
+      if (phase === 'launch') {
+        lt += dt; R.vy -= 600 * dt; R.y += R.vy * dt;
+        if (Math.random() < .5) burst(R.x + rnd(-40, 40), SY0 - 6, 1, ['#E8A27A', '#D98A62', '#F4C3A0'], { type: 'smoke', sp: 140, up: 20, g: -20, r0: 14, r1: 26, life: 1.2 });
+        if (lt > 2.2 && !left) { left = true; next(); }
+      }
+    },
+    draw() {
+      marsSky(SY0);
+      ctx.fillStyle = '#C4643C'; ctx.fillRect(-700, SY0, W + 1400, H + 700);
+      ctx.fillStyle = '#B0552F'; ctx.fillRect(-700, SY0 + 140, W + 1400, 140);
+      ctx.fillStyle = '#9C4727'; ctx.fillRect(-700, SY0 + 280, W + 1400, 400);
+      [[120, 520, 18], [300, 640, 12], [900, 560, 20], [1080, 700, 14], [980, 830, 10], [200, 800, 16]].forEach(([x, y, r]) => { ell(x, y, r * 1.4, r); fs('#8A3D20'); });
+      const g = ctx.createLinearGradient(0, SY0, 0, SH.bot); g.addColorStop(0, '#4A1E10'); g.addColorStop(1, '#22090A');
+      rr(SH.x1, SY0 - 6, SH.x2 - SH.x1, SH.bot - SY0 + 6, 34); ctx.fillStyle = g; ctx.fill(); st('#7A3A20', 6);
+      ell((SH.x1 + SH.x2) / 2, SY0, (SH.x2 - SH.x1) / 2 + 16, 14); fs('#7A3A20');
+      ell(R.x, SY0, 100, 14); fs('rgba(90,30,10,.25)');
+      drawRocket(R.x, R.y, 0, RS, { fire: R.fire, mitzi: R.cats >= 1, bell: R.cats >= 2, big: phase === 'launch' });
+      drawCat(bell);
+      if (phase === 'hook' || phase === 'pull') {
+        const a = anchor(), e = phase === 'pull' ? bellPaw() : HK;
+        chainLine(a.x, a.y, e.x, e.y);
+        for (let i = 1; i <= 4; i++) { const k = i / 5; drawStar(lerp(a.x, e.x, k), lerp(a.y, e.y, k), 17, { glow: false, rot: i }); }
+        drawStar(e.x, e.y, 30, { rot: Math.sin(TIME * 3) * .2 });
+      }
+      drawCat(mitzi);
+    },
+    down(p) {
+      if (phase === 'hook') { if (dist(p.x, p.y, HK.x, HK.y) < 100) drag = true; }
+      else if (phase === 'pull') { lastP = p; acc = 0; }
+    },
+    move(p) {
+      if (phase === 'hook' && drag) {
+        let x = p.x, y = clamp(p.y, 120, SH.bot - 30);
+        if (y > SY0 + 10) x = clamp(x, SH.x1 + 24, SH.x2 - 24);
+        const a = anchor(), d = dist(a.x, a.y, x, y); if (d > 640) { x = a.x + (x - a.x) * 640 / d; y = a.y + (y - a.y) * 640 / d; }
+        HK.x = x; HK.y = y;
+        const b = bellPaw();
+        if (dist(HK.x, HK.y, b.x, b.y) < 80) {
+          drag = false; phase = 'pull'; SFX.clink(); stars(b.x, b.y, 10); SFX.bellMeow(); bell.happy = true; after(.6, () => { bell.happy = false; });
+          say('pull', null, true); setHint({ type: 'swipe', x1: 900, y1: 760, x2: 900, y2: 440 });
+        }
+      } else if (phase === 'pull' && lastP) {
+        acc += Math.max(0, lastP.y - p.y); lastP = p;
+        while (acc >= 85) { acc -= 85; pull(); }
+      }
+    },
+    up() { drag = false; lastP = null; },
+    get dbg() { return { H: HK, phase, bell, target, b: bellPaw() }; },
+  };
+};
+
+/* ---------- Wieder zu Hause ---------- */
+SCENES.end = () => {
+  const GY = 770, RS = 1.1, RG = GY - 122 * RS;
+  const R = { x: 1010, y: -400, fire: true, cats: true };
+  const mitzi = mkCat(1010, GY, MITZI), bell = mkCat(1010, GY, BELL); mitzi.alpha = bell.alpha = 0;
+  const SKY = [[300, 260], [450, 190], [600, 160], [750, 190], [900, 260]];
+  let lt = 0, phase = 'land', btns = false;
+  const bA = { x: 520, y: 470 }, bB = { x: 680, y: 470 };
+  return {
+    init() { clearSave(); },
+    update(dt) {
+      updCat(mitzi, dt); updCat(bell, dt);
+      if (phase === 'land') {
+        lt += dt; const k = Math.min(1, lt / 2.6); R.y = lerp(-400, RG, 1 - Math.pow(1 - k, 3));
+        if (k >= 1) {
+          phase = 'home'; R.fire = false; SFX.land();
+          burst(R.x, GY, 14, ['#DDD', '#BBB', '#EEE'], { type: 'smoke', sp: 200, up: 40, g: -10, r0: 14, r1: 26, life: 1.2 });
+          const w = winOf(R.x, R.y, 0, RS);
+          after(.5, () => { R.cats = false; mitzi.alpha = 1; mitzi.x = w.x; mitzi.y = w.y + 45; mitzi.s = .4; hop(mitzi, 420, GY, 160, .8, null, 1); });
+          after(.9, () => { bell.alpha = 1; bell.x = w.x; bell.y = w.y + 45; bell.s = .4; hop(bell, 580, GY, 160, .8, () => { bell.face = -1; }, .95); });
+          after(1.9, () => { mitzi.happy = bell.happy = true; hearts(500, GY - 200, 12); SFX.fanfare(); say('end', null, true); });
+          after(3.5, () => { btns = true; mitzi.happy = bell.happy = false; });
+        }
+      }
+    },
+    draw() {
+      gardenBg(GY);
+      for (let i = 0; i < SKY.length; i++) { const [x, y] = SKY[i]; drawStar(x, y, 30 + Math.sin(TIME * 3 + i) * 3, { rot: Math.sin(TIME * 2 + i) * .15 }); }
+      rr(R.x - 120, GY - 14, 240, 26, 8); fs('#7A8492'); st(OUT, 4);
+      drawRocket(R.x, R.y, 0, RS, { fire: R.fire, mitzi: R.cats, bell: R.cats, big: R.fire });
+      drawCat(mitzi); drawCat(bell);
+      if (btns) {
+        playBtn(bA.x, bA.y, 1 + Math.sin(TIME * 4) * .04);
+        circ(bB.x, bB.y, 72); fs('rgba(255,255,255,.9)'); st(OUT, 6);
+        [[-18, -18], [18, -18], [-18, 18], [18, 18]].forEach(([dx, dy], i) => { rr(bB.x + dx - 14, bB.y + dy - 14, 28, 28, 7); fs(['#5BBF4A', '#3F86D6', '#E0533A', '#F5C04A'][i]); });
+      }
+    },
+    down(p) {
+      if (btns && dist(p.x, p.y, bA.x, bA.y) < 85) { SFX.pop(); goto(1); return; }
+      if (btns && dist(p.x, p.y, bB.x, bB.y) < 85) { SFX.pop(); location.href = '../'; return; }
+      for (const c of [mitzi, bell]) if (c.alpha > .5 && dist(p.x, p.y, c.x, c.y - 90) < 110) { (c === bell ? SFX.bellMeow : SFX.meow)(); c.sq = 1; hearts(c.x, c.y - 200, 6); return; }
+      if (p.y < GY - 100) { burst(p.x, p.y, 18, ['#FFD54A', '#FF6FB0', '#7DDB5A', '#6FC3FF', '#fff'], { type: 'star', sp: 380, up: 60, g: 220, r0: 6, r1: 11 }); SFX.twinkle(); }
+    },
+  };
+};
+
+/* ---------- App-Symbol (nur zum Erzeugen der Bilder) ---------- */
+SCENES.icon = () => ({
+  hud: false,
+  draw() {
+    spaceBg(0); drawMars(980, 900, 330);
+    drawStar(250, 180, 50, {}); drawStar(980, 230, 40, {}); drawStar(200, 760, 34, {});
+    drawRocket(600, 470, .45, 2.3, { fire: true, mitzi: true });
+  },
+});
+
+/* ---------------- Ablauf ---------------- */
+const FLOW = [
+  { s: 'title' },
+  { s: 'intro' },
+  { s: 'flight', dir: 'out' },
+  { s: 'chain' },
+  { s: 'alien' },
+  { s: 'rescue' },
+  { s: 'flight', dir: 'back' },
+  { s: 'end' },
+];
+let scene = null, flowIdx = 0, PAUSE = false;
+const fade = { a: 0, dir: 0, cb: null };
+function startScene(idx) {
+  voiceStop(); flowIdx = idx; TIMERS = []; PARTS = []; HINT = null;
+  const f = FLOW[idx]; scene = SCENES[f.s](f);
+  if (idx >= 2 && f.s !== 'end' && f.s !== 'icon') saveGame(idx);
+  if (scene.init) scene.init();
+}
+function goto(idx) { if (fade.dir) return; fade.dir = 1; fade.cb = () => { startScene(idx); fade.dir = -1; }; }
+function next() { goto(flowIdx + 1); }
+function updFade(dt) {
+  if (fade.dir === 1) { fade.a += dt * 3; if (fade.a >= 1) { fade.a = 1; const cb = fade.cb; fade.cb = null; cb && cb(); } }
+  else if (fade.dir === -1) { fade.a -= dt * 2.5; if (fade.a <= 0) { fade.a = 0; fade.dir = 0; } }
+}
+
+/* ---------------- HUD, Pause ---------------- */
+const MAMA = { x: 1146, y: 54 };
+function drawHUD() {
+  circ(54, 54, 34); fs('rgba(255,255,255,.75)'); st(OUT, 3);
+  poly([34, 58, 54, 38, 74, 58]); fs(OUT); rr(40, 56, 28, 18, 2); fs(OUT);
+  const k = VOICE.speaking ? 1 + Math.sin(TIME * 10) * .06 : 1;
+  ctx.save(); ctx.translate(MAMA.x, MAMA.y); ctx.scale(k, k);
+  circ(0, 0, 38); fs('#FF7FA8'); st('#fff', 4); heartPath(0, 6, 34); fs('#fff');
+  if (VOICE.speaking) for (let i = 0; i < 2; i++) { ctx.beginPath(); ctx.arc(0, 0, 50 + i * 14 + (TIME * 30 % 14), Math.PI * .78, Math.PI * 1.22); st(`rgba(255,255,255,${.7 - i * .3})`, 4); }
+  ctx.restore();
+}
+function drawPause() {
+  ctx.fillStyle = 'rgba(10,10,30,.65)'; ctx.fillRect(-700, -700, W + 1400, H + 1400);
+  circ(600, 400, 100); fs('#5BBF4A'); st('#fff', 7); poly([570, 355, 570, 445, 645, 400]); fs('#fff');
+  circ(600, 650, 56); fs('#F29E38'); st('#fff', 5); poly([570, 656, 600, 626, 630, 656]); fs('#fff'); rr(580, 652, 40, 26, 3); fs('#fff');
+  text('Weiterspielen', 600, 540, 34, '#fff'); text('Zum Menü', 600, 740, 26, '#fff');
+}
+function pauseDown(p) { PAUSE = false; if (dist(p.x, p.y, 600, 650) < 75) goto(0); }
+
+/* ---------------- Eingabe (mehrere Finger) ---------------- */
+const DOWN = new Set();
+const toV = e => ({ x: (e.clientX - OX) / S, y: (e.clientY - OY) / S });
+cv.addEventListener('pointerdown', e => {
+  e.preventDefault(); audioInit(); voiceUnlock(); idle = 0;
+  if (fade.dir) return;
+  const p = toV(e);
+  if (PAUSE) { pauseDown(p); return; }
+  if (scene.hud !== false && dist(p.x, p.y, 54, 54) < 46) { PAUSE = true; SFX.pop(); return; }
+  if (scene.hud !== false && dist(p.x, p.y, MAMA.x, MAMA.y) < 50) { SFX.pop(); if (VOICE.last) say(VOICE.last); return; }
+  try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+  DOWN.add(e.pointerId);
+  if (scene.down) scene.down(p, e.pointerId);
+}, { passive: false });
+cv.addEventListener('pointermove', e => {
+  if (!DOWN.has(e.pointerId) || PAUSE || fade.dir) return;
+  e.preventDefault(); idle = 0; if (scene.move) scene.move(toV(e), e.pointerId);
+}, { passive: false });
+const endPtr = e => { if (!DOWN.has(e.pointerId)) return; DOWN.delete(e.pointerId); if (!PAUSE && scene.up) scene.up(toV(e), e.pointerId); };
+cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', endPtr);
+['touchmove', 'gesturestart', 'contextmenu', 'dblclick'].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
+
+/* ---------------- Hauptschleife ---------------- */
+let last = performance.now();
+function render() {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#0A0D2B'; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.setTransform(DPR * S, 0, 0, DPR * S, DPR * OX, DPR * OY);
+  scene.draw();
+  drawParts();
+  if (scene.hud !== false) drawHUD();
+  if (!fade.dir && !PAUSE) drawHint();
+  if (PAUSE) drawPause();
+  if (fade.a > 0) { ctx.fillStyle = `rgba(10,10,30,${fade.a})`; ctx.fillRect(-2000, -2000, W + 4000, H + 4000); }
+  if (VH > VW * 1.1) {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.fillStyle = 'rgba(10,10,30,.9)'; ctx.fillRect(0, 0, VW, VH);
+    ctx.save(); ctx.translate(VW / 2, VH / 2 - 40); ctx.rotate(Math.sin(TIME * 2) * .6 - .6); rr(-50, -75, 100, 150, 14); st('#fff', 6); ctx.restore();
+    text('Bitte das Tablet quer halten', VW / 2, VH / 2 + 90, 26, '#fff');
+  }
+}
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now; TIME += dt; idle += dt;
+  try {
+    if (!PAUSE) {
+      updTimers(dt); if (scene.update) scene.update(dt); updParts(dt);
+      if (!fade.dir && HINT && VOICE.last && !VOICE.speaking && idle > 16 && VOICE.rep < 2) { VOICE.rep++; idle = 0; say(VOICE.last); }
+    }
+    updFade(dt); render();
+  } catch (err) { console.error(err); }
+  requestAnimationFrame(frame);
+}
+FLOW.push({ s: 'icon' });
+startScene(location.hash === '#icon' ? FLOW.length - 1 : 0);
+FLOW.pop();
+requestAnimationFrame(frame);
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+window.__M = { get idx() { return flowIdx; }, get hint() { return HINT; }, get scene() { return scene; }, get fading() { return fade.dir; }, get voice() { return VOICE; }, FLOW, go: i => startScene(i) };
+</script>
+</body>
+</html>
