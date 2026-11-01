@@ -42,13 +42,13 @@ Alles (Grafik und Töne) ist im Code gezeichnet bzw. erzeugt, es gibt keine exte
 ## Die erste Katze im Weltraum: Mitzi (`mitzi/`)
 
 Das zweite Spiel – wieder hat sich meine Tochter die Geschichte ausgedacht:
-Ein frecher Alien schnappt sich die Katze **Bell** und wirft sie auf dem Mars in eine Grube.
+Ein frecher Alien schnappt sich die Katze **Belle** und wirft sie auf dem Mars in eine Grube.
 Die schwarze Katze **Mitzi** (mit weißem Hals) fliegt mit ihrer eigenen Rakete hinterher und rettet sie.
 
 **Spielen:** `https://ldressel.github.io/Sonstige-Speiele/mitzi/`
 
 ### Ablauf
-1. Zuhause: Das Ufo holt Bell. Auf Mitzi tippen (sie steigt in die Rakete), dann auf den roten Knopf: 3, 2, 1, los!
+1. Zuhause: Das Ufo holt Belle. Auf Mitzi tippen (sie steigt in die Rakete), dann auf den roten Knopf: 3, 2, 1, los!
 2. Flug zum Mars: Rakete mit dem Finger schieben und Meteoriten ausweichen, fünf Sterne antippen.
    Bei einem Treffer wackelt die Rakete und ein Stern fällt raus, den man schnell wieder einfangen muss.
 3. Auf dem Mars: Mit dem Finger von Stern zu Stern fahren, so entsteht die Sternenkette.
@@ -56,7 +56,7 @@ Die schwarze Katze **Mitzi** (mit weißem Hals) fliegt mit ihrer eigenen Rakete 
    Wirft er ein Netz, auf Mitzi tippen, damit sie hochspringt. Ist sie im Netz, schnell oft auf Mitzi tippen.
    Danach den schwindeligen Alien einwickeln (Kreise malen), ins Weltall werfen (nach oben wischen)
    und die Sterne wieder abholen (antippen). Tschüss, Alien!
-5. Bell retten: Sternenkette in die Grube ziehen, dann immer wieder nach oben wischen (sonst rutscht Bell zurück).
+5. Belle retten: Sternenkette in die Grube ziehen, dann immer wieder nach oben wischen (sonst rutscht Belle zurück).
 6. Rückflug: Die Sterne auf die leeren Sternenplätze im Himmel zurücktippen, wieder Meteoriten ausweichen.
 7. Wieder zu Hause.
 

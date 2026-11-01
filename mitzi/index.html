@@ -117,8 +117,8 @@ const SFX = {
 
 /* ---------------- Mamas Stimme (eingebaute Sprachausgabe) ---------------- */
 const LINES = {
-  intro1: 'Oh nein! Der freche Alien hat Bell geschnappt!',
-  intro2: 'Er bringt sie auf den Mars. Hilf Mitzi, Bell zu retten!',
+  intro1: 'Oh nein! Der freche Alien hat Belle geschnappt!',
+  intro2: 'Er bringt sie auf den Mars. Hilf Mitzi, Belle zu retten!',
   tapMitzi: 'Tipp auf Mitzi. Dann steigt sie in ihre Rakete.',
   button: 'Drück auf den roten Knopf!',
   count: 'Drei. Zwei. Eins. Los!',
@@ -140,13 +140,13 @@ const LINES = {
   throw: 'Und jetzt wirf ihn ins Weltall! Wisch ganz schnell nach oben.',
   unwrap: 'Hol dir die Sterne zurück! Tipp sie an.',
   bye: 'Tschüss, frecher Alien! Du hast ihn besiegt!',
-  hook: 'Bell ist ganz unten in der Grube. Zieh die Sternenkette zu Bell runter.',
-  pull: 'Bell hält sich fest! Jetzt zieh sie hoch. Wisch immer wieder nach oben.',
-  slip: 'Nicht aufhören, sonst rutscht Bell wieder runter!',
-  saved: 'Juhu, Bell ist gerettet! Schnell, ab in die Rakete!',
+  hook: 'Belle ist ganz unten in der Grube. Zieh die Sternenkette zu Belle runter.',
+  pull: 'Belle hält sich fest! Jetzt zieh sie hoch. Wisch immer wieder nach oben.',
+  slip: 'Nicht aufhören, sonst rutscht Belle wieder runter!',
+  saved: 'Juhu, Belle ist gerettet! Schnell, ab in die Rakete!',
   back: 'Jetzt fliegen wir nach Hause. Gib die Sterne zurück in den Himmel. Tipp auf die leeren Sternenplätze.',
   home: 'Fast geschafft! Da ist schon die Erde.',
-  end: 'Super gemacht! Mitzi und Bell sind wieder zu Hause. Du bist eine echte Weltraum-Heldin!',
+  end: 'Super gemacht! Mitzi und Belle sind wieder zu Hause. Du bist eine echte Weltraum-Heldin!',
 };
 const SY = window.speechSynthesis || null;
 const VOICE = { v: null, speaking: false, tok: 0, pend: null, last: null, rep: 0, unlocked: false, u: null };
@@ -651,7 +651,7 @@ SCENES.title = () => {
   };
 };
 
-/* ---------- Zuhause: Der Alien holt Bell, Mitzi startet ---------- */
+/* ---------- Zuhause: Der Alien holt Belle, Mitzi startet ---------- */
 SCENES.intro = () => {
   const GY = 770, RS = 1.1;
   const mitzi = mkCat(360, GY, MITZI), bell = mkCat(560, GY, BELL); bell.face = -1;
@@ -1111,7 +1111,7 @@ SCENES.alien = () => {
   };
 };
 
-/* ---------- Mars: Bell aus der Grube ziehen ---------- */
+/* ---------- Mars: Belle aus der Grube ziehen ---------- */
 SCENES.rescue = () => {
   const SY0 = 400, SH = { x1: 530, x2: 750, bot: 870 };
   const RS = .8, R = { x: 150, y: SY0 - 122 * RS, fire: false, vy: 0, cats: 0 };
