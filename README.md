@@ -49,15 +49,15 @@ Die schwarze Katze **Mitzi** (mit weißem Hals) fliegt mit ihrer eigenen Rakete 
 
 ### Ablauf
 1. Zuhause: Das Ufo holt Belle. Auf Mitzi tippen (sie steigt in die Rakete), dann auf den roten Knopf: 3, 2, 1, los!
-2. Flug zum Mars: Rakete mit dem Finger schieben und Meteoriten ausweichen, fünf Sterne antippen.
-   Bei einem Treffer wackelt die Rakete und ein Stern fällt raus, den man schnell wieder einfangen muss.
+2. Flug zum Mars: Rakete mit dem Finger schieben (wischen, egal wo auf dem Bildschirm), Meteoriten ausweichen und
+   durch fünf Sterne fliegen. Bei einem Treffer wackelt die Rakete und ein Stern fällt raus, den man schnell wieder einfangen muss.
 3. Auf dem Mars: Mit dem Finger von Stern zu Stern fahren, so entsteht die Sternenkette.
 4. Kampf gegen den Alien: Er guckt hinter den Steinen hervor, dann schnell antippen (3 Treffer).
    Wirft er ein Netz, auf Mitzi tippen, damit sie hochspringt. Ist sie im Netz, schnell oft auf Mitzi tippen.
    Danach den schwindeligen Alien einwickeln (Kreise malen), ins Weltall werfen (nach oben wischen)
    und die Sterne wieder abholen (antippen). Tschüss, Alien!
 5. Belle retten: Sternenkette in die Grube ziehen, dann immer wieder nach oben wischen (sonst rutscht Belle zurück).
-6. Rückflug: Die Sterne auf die leeren Sternenplätze im Himmel zurücktippen, wieder Meteoriten ausweichen.
+6. Rückflug: Durch die leeren Sternenplätze im Himmel fliegen, dann bleibt dort ein Stern hängen. Wieder Meteoriten ausweichen.
 7. Wieder zu Hause.
 
 ### Für Eltern
