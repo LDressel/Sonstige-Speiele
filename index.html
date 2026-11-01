@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Spiele">
+<meta name="theme-color" content="#F2A35E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="hub-icon-180.png">
+<link rel="icon" type="image/png" href="hub-icon-192.png">
+<title>Spiele</title>
+<style>
+  :root { --ink: #3a2e2a; --paper: #FFF8EC; --font: ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", "Nunito", "Varela Round", system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: var(--font); color: var(--ink);
+    background: linear-gradient(180deg, #F2A35E 0%, #F9CF92 55%, #FCE6BF 100%) fixed;
+    -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+    padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) 40px max(24px, env(safe-area-inset-left));
+  }
+  header { text-align: center; margin: 12px 0 28px; }
+  h1 {
+    font-size: clamp(48px, 9vw, 96px); margin: 0; color: #FFF6E8; letter-spacing: 1px;
+    -webkit-text-stroke: 3px #5A3A1A; paint-order: stroke fill;
+    text-shadow: 0 6px 0 rgba(90,58,26,.25);
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 340px)); justify-content: center; gap: 28px; max-width: 1100px; margin: 0 auto; }
+  .card {
+    display: flex; flex-direction: column; align-items: center; text-decoration: none; color: inherit;
+    background: var(--paper); border: 5px solid var(--ink); border-radius: 36px; padding: 22px 20px 26px;
+    box-shadow: 0 10px 0 rgba(58,46,42,.35); transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .card:active { transform: translateY(8px) scale(.98); box-shadow: 0 2px 0 rgba(58,46,42,.35); }
+  .card img { width: 100%; max-width: 240px; aspect-ratio: 1; border-radius: 28px; border: 4px solid var(--ink); display: block; }
+  .card h2 { font-size: 30px; margin: 18px 0 6px; text-align: center; line-height: 1.15; }
+  .card p { margin: 0; font-size: 18px; text-align: center; opacity: .75; line-height: 1.35; }
+  .play {
+    margin-top: 18px; width: 88px; height: 88px; border-radius: 50%; background: #5BBF4A; border: 5px solid #2F6E25;
+    display: grid; place-items: center;
+  }
+  .play svg { width: 40px; height: 40px; margin-left: 6px; }
+  .soon { border-style: dashed; background: rgba(255,248,236,.55); box-shadow: none; justify-content: center; min-height: 300px; }
+  .soon .big { font-size: 80px; line-height: 1; opacity: .5; }
+  .soon p { opacity: .6; }
+  footer { text-align: center; margin-top: 40px; font-size: 14px; opacity: .55; }
+</style>
+</head>
+<body>
+<header><h1>Spiele</h1></header>
+<main class="grid" id="games"></main>
+<footer>Selbst gemacht für zuhause · keine Werbung · keine Daten</footer>
+
+<script>
+/* ===== Neue Spiele hier eintragen (oberstes = erstes) =====
+   ordner: Unterordner im Repo mit einer index.html
+   bild:   Bild im Spiel-Ordner (quadratisch)                 */
+const GAMES = [
+  { ordner: 'flecki', titel: 'Fleckis Herbstabenteuer', text: 'Hilf der kleinen Katze Flecki beim großen Ausflug!', bild: 'icon-512.png' },
+];
+
+const grid = document.getElementById('games');
+for (const g of GAMES) {
+  const a = document.createElement('a');
+  a.className = 'card'; a.href = g.ordner + '/';
+  a.innerHTML = `<img src="${g.ordner}/${g.bild}" alt="">
+    <h2>${g.titel}</h2><p>${g.text}</p>
+    <div class="play"><svg viewBox="0 0 24 24"><path d="M5 3l16 9-16 9z" fill="#fff"/></svg></div>`;
+  grid.appendChild(a);
+}
+const soon = document.createElement('div');
+soon.className = 'card soon';
+soon.innerHTML = '<div class="big">+</div><h2>Bald mehr</h2><p>Hier kommen neue Spiele dazu.</p>';
+grid.appendChild(soon);
+
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>

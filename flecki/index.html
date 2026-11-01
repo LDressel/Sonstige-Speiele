@@ -557,6 +557,8 @@ SCENES.title = () => {
       drawCat(cat);
       ctx.save(); ctx.translate(600, 175); ctx.rotate(Math.sin(TIME * 1.5) * .02); text('Flecki', 0, 0, 150, '#FFF6E8', '#5A3A1A', 22); ctx.restore();
       text('Das Herbstabenteuer', 600, 268, 44, '#FFF6E8', '#5A3A1A', 10);
+      circ(64, 64, 44); fs('rgba(255,255,255,.8)'); st(OUT, 4);
+      [[-14, -14], [14, -14], [-14, 14], [14, 14]].forEach(([dx, dy], i) => { rr(64 + dx - 11, 64 + dy - 11, 22, 22, 6); fs(['#5BBF4A', '#3F86D6', '#E0533A', '#F5C04A'][i]); });
       const k = 1 + Math.sin(TIME * 4) * .05;
       ctx.save(); ctx.translate(bPlay.x, bPlay.y); ctx.scale(k, k); circ(0, 0, 72); fs('#5BBF4A'); st('#2F6E25', 7); poly([-20, -32, -20, 32, 34, 0]); fs('#fff'); ctx.restore();
       if (hasSave) {
@@ -566,7 +568,8 @@ SCENES.title = () => {
       }
     },
     down(p) {
-      if (dist(p.x, p.y, bPlay.x, bPlay.y) < 90) { SFX.pop(); clearSave(); newGame(); goto(1); }
+      if (dist(p.x, p.y, 64, 64) < 60) { SFX.pop(); location.href = '../'; }
+      else if (dist(p.x, p.y, bPlay.x, bPlay.y) < 90) { SFX.pop(); clearSave(); newGame(); goto(1); }
       else if (hasSave && dist(p.x, p.y, bCont.x, bCont.y) < 90) { SFX.pop(); G = sv.G; goto(sv.idx); }
       else if (dist(p.x, p.y, cat.x + 30, cat.y - 150) < 200) { SFX.meow(); cat.squash = 1; hearts(cat.x + 80, cat.y - 260, 6); }
     },

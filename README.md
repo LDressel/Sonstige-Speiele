@@ -1,5 +1,16 @@
 # Sonstige-Speiele
 
+Eine Spiele-Sammlung fürs Tablet. Die Startseite zeigt alle Spiele als große Kacheln:
+`https://ldressel.github.io/Sonstige-Speiele/`
+
+Auf dem iPad: Startseite in Safari öffnen → Teilen → „Zum Home-Bildschirm“. Dann gibt es ein Symbol „Spiele“,
+über das man alle Spiele erreicht. In Flecki führt der bunte Knopf oben links auf dem Titelbild zurück zur Übersicht.
+
+### Neues Spiel hinzufügen
+1. Neuen Ordner anlegen (z. B. `zahlenzug/`) mit einer `index.html` und einem quadratischen Bild (z. B. `icon-512.png`)
+2. In der `index.html` im Hauptordner oben in der Liste `GAMES` eine Zeile ergänzen:
+   `{ ordner: 'zahlenzug', titel: 'Zahlenzug', text: 'Kurze Beschreibung', bild: 'icon-512.png' },`
+
 ## Fleckis Herbstabenteuer (`flecki/`)
 
 Ein Tablet-Spiel für Kinder ab ca. 5 Jahren. Die Geschichte hat sich meine Tochter ausgedacht:
