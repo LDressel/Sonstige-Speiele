@@ -1,15 +1,37 @@
 {
   "_info": "Alle Sprechtexte des Spiels. Die MP3s in ton/ werden daraus erzeugt (siehe werkzeuge/sprache/LIESMICH.md). 'Belle' wird automatisch wie 'Bell' gesprochen.",
-
   "tiere": {
-    "hase":    { "hoehe": 1.30, "tempo": 0.95, "kommt": "Da kommt der kleine Hase." },
-    "hund":    { "hoehe": 1.12, "tempo": 1.00, "kommt": "Da kommt der kleine Hund." },
-    "maus":    { "hoehe": 1.45, "tempo": 0.92, "kommt": "Da kommt die kleine Maus." },
-    "baer":    { "hoehe": 0.80, "tempo": 1.12, "kommt": "Da kommt der große Bär." },
-    "fuchs":   { "hoehe": 1.05, "tempo": 1.00, "kommt": "Da kommt der Fuchs." },
-    "schwein": { "hoehe": 1.22, "tempo": 0.97, "kommt": "Da kommt das kleine Schweinchen." }
+    "hase": {
+      "hoehe": 1.3,
+      "tempo": 0.95,
+      "kommt": "Da kommt der kleine Hase."
+    },
+    "hund": {
+      "hoehe": 1.12,
+      "tempo": 1.0,
+      "kommt": "Da kommt der kleine Hund."
+    },
+    "maus": {
+      "hoehe": 1.45,
+      "tempo": 0.92,
+      "kommt": "Da kommt die kleine Maus."
+    },
+    "baer": {
+      "hoehe": 0.8,
+      "tempo": 1.12,
+      "kommt": "Da kommt der große Bär."
+    },
+    "fuchs": {
+      "hoehe": 1.05,
+      "tempo": 1.0,
+      "kommt": "Da kommt der Fuchs."
+    },
+    "schwein": {
+      "hoehe": 1.22,
+      "tempo": 0.97,
+      "kommt": "Da kommt das kleine Schweinchen."
+    }
   },
-
   "tiersaetze": {
     "klage_splitter": "Aua, meine Pfote tut so weh!",
     "klage_schramme": "Aua! Ich bin hingefallen. Jetzt tut meine Pfote weh.",
@@ -18,23 +40,25 @@
     "klage_bruch": "Aua! Ich bin vom Baum gefallen. Meine Pfote tut ganz doll weh!",
     "klage_ohren": "Mein Ohr tut weh. Und ich höre gar nicht gut.",
     "danke": "Danke, Belle! Jetzt geht es mir wieder gut!",
-    "mmm": "Mmmh, lecker!"
+    "mmm": "Mmmh, lecker!",
+    "klage_zahnweh": "Aua, mein Zahn tut so weh!",
+    "klage_zecke": "Es juckt mich so am Hals.",
+    "klage_floh": "Es juckt und juckt mich überall!",
+    "klage_bauchweh": "Oh, mein Bauch tut so weh.",
+    "kontrolle": "Hallo Belle! Ich komme zur Kontrolle. Darf mein Gips heute ab?",
+    "tschuess": "Tschüss, Belle! Danke für alles!"
   },
-
   "erzaehler": {
     "titel": "Willkommen in Belles Tierarztpraxis! Tippe auf den grünen Knopf.",
     "tag_1": "Guten Morgen, Belle! Heute macht deine Tierarztpraxis zum ersten Mal auf. Die Tiere kommen zu dir, und du machst sie wieder gesund.",
     "tag": "Guten Morgen, Belle! Ein neuer Tag in deiner Tierarztpraxis. Die ersten Patienten warten schon.",
     "koffer_1": "Das ist dein Arztkoffer. Darin sind die Lupe und das Thermometer. Damit untersuchst du die Tiere.",
-
     "neu_stetho": "Schau mal, du hast ein neues Gerät bekommen: das Stethoskop! Damit hörst du, wie das Herz klopft und wie die Lunge atmet.",
     "neu_roentgen": "Schau mal, deine Praxis hat jetzt ein Röntgengerät! Damit kannst du in das Tier hineinschauen und die Knochen sehen.",
     "neu_ohrenspiegel": "Schau mal, ein neues Gerät: der Ohrenspiegel! Er hat ein kleines Licht. Damit kannst du in die Ohren hineinschauen.",
-
     "untersuchen": "Untersuche deinen Patienten. Zieh ein Gerät aus dem Koffer auf das Tier.",
     "noch_ein_geraet": "Probier noch ein anderes Gerät aus dem Koffer.",
     "klemmbrett": "Weißt du jetzt, was dein Patient hat? Dann tippe auf das Klemmbrett.",
-
     "befund_lupe_splitter": "Schau mal! Da steckt ein Splitter in der Pfote.",
     "befund_lupe_schramme": "Da ist eine Schramme an der Pfote. Und ein bisschen Schmutz ist auch drin.",
     "befund_lupe_bruch": "Die Pfote ist dick geschwollen. Von außen sieht man aber nichts. Vielleicht ist innen etwas kaputt?",
@@ -47,7 +71,6 @@
     "befund_roentgen_ok": "Auf dem Röntgenbild sind alle Knochen heil.",
     "befund_ohr_ohren": "Das Ohr ist innen ganz rot. Das ist eine Ohrenentzündung.",
     "befund_ohr_ok": "Die Ohren sind ganz gesund.",
-
     "diagnose": "Was hat dein Patient? Tippe auf das richtige Bild.",
     "karte_splitter": "Splitter",
     "karte_schramme": "Schramme",
@@ -56,14 +79,12 @@
     "karte_bruch": "Knochenbruch",
     "karte_ohren": "Ohrenentzündung",
     "falsch": "Hmm, das glaube ich nicht. Untersuche lieber noch einmal genau.",
-
     "richtig_splitter": "Richtig! Ein Splitter. Den holen wir jetzt raus.",
     "richtig_schramme": "Richtig! Eine Schramme. Die machen wir jetzt sauber.",
     "richtig_fieber": "Richtig! Dein Patient hat Fieber.",
     "richtig_husten": "Richtig! Ein dicker Husten.",
     "richtig_bruch": "Richtig! Ein Knochenbruch. Der braucht einen Gips.",
     "richtig_ohren": "Richtig! Eine Ohrenentzündung.",
-
     "schritt_pinzette": "Nimm die Pinzette und zieh den Splitter vorsichtig heraus.",
     "schritt_pflaster": "Jetzt kommt ein Pflaster drauf. Zieh das Pflaster auf die Pfote.",
     "schritt_tupfer": "Nimm den Tupfer und wisch die Schramme schön sauber. Reib hin und her.",
@@ -76,22 +97,18 @@
     "schritt_sticker": "Toll! Zum Schluss darf dein Patient einen Sticker auf den Gips kleben.",
     "schritt_tropfen": "Nimm die Ohrentropfen und halte sie ans Ohr. Dann tippe dreimal, für drei Tropfen.",
     "schritt_watte": "Jetzt noch ein Wattebausch ins Ohr, damit es schön warm bleibt.",
-
     "tippen_tropfen": "Tippe, damit ein Tropfen ins Ohr fällt.",
     "weiter_reiben": "Weiter so, reib noch ein bisschen.",
     "weiter_ziehen": "Gut festhalten und weiter ziehen!",
-
     "lob_1": "Gut gemacht!",
     "lob_2": "Super!",
     "lob_3": "Prima!",
     "lob_4": "Toll!",
-
     "gesund": "Juhu, wieder gesund! Die Karte kommt in dein Patientenbuch.",
     "neue_karte": "Eine neue Karte in deinem Patientenbuch! Tippe auf das Buch, dann erkläre ich dir mehr.",
     "feierabend": "Super gemacht, Belle! Alle Patienten sind wieder gesund. Feierabend!",
     "morgen": "Tippe auf den grünen Knopf, dann beginnt der nächste Tag.",
     "morgen_neu": "Morgen gibt es in deiner Praxis etwas Neues. Tippe auf den grünen Knopf.",
-
     "buch_auf": "Das ist dein Patientenbuch. Tippe auf eine Karte, dann erkläre ich sie dir.",
     "buch_zu": "Diese Karte hast du noch nicht entdeckt.",
     "buch_splitter": "Ein Splitter ist ein kleines Stück Holz, das in die Haut gepiekst hat. Man zieht ihn mit einer Pinzette heraus. Dann kommt ein Pflaster drauf, damit kein Schmutz in die Wunde kommt.",
@@ -104,6 +121,53 @@
     "buch_thermo": "Das Thermometer misst, wie warm der Körper ist. Zeigt es Rot, ist der Körper zu warm. Das ist Fieber.",
     "buch_stetho": "Mit dem Stethoskop hört man in den Körper hinein: wie das Herz klopft und wie die Lunge atmet.",
     "buch_roentgen": "Das Röntgengerät macht ein ganz besonderes Foto. Darauf sieht man die Knochen, ohne dass es wehtut.",
-    "buch_ohrenspiegel": "Der Ohrenspiegel hat ein kleines Licht und einen Trichter. Damit schaut man tief ins Ohr hinein."
+    "buch_ohrenspiegel": "Der Ohrenspiegel hat ein kleines Licht und einen Trichter. Damit schaut man tief ins Ohr hinein.",
+    "neu_zahnspiegel": "Schau mal, ein neues Gerät: der Zahnspiegel! Damit kannst du in den Mund schauen und die Zähne ansehen.",
+    "neu_flohkamm": "Schau mal, ein neues Gerät: der Flohkamm! Damit kämmst du durchs Fell und findest kleine Flöhe.",
+    "neu_ultraschall": "Schau mal, deine Praxis hat jetzt ein Ultraschallgerät! Damit kannst du in den Bauch hineinschauen.",
+    "ausbau_roentgen": "Und deine Praxis ist gewachsen: An der Wand hängt jetzt ein Leuchtkasten für die Röntgenbilder!",
+    "ausbau_station": "Deine Praxis wird größer! Jetzt gibt es eine Krankenstation mit Betten. Dort können kranke Tiere über Nacht bleiben und sich ausruhen.",
+    "neu_zwei": "Ab heute haben manche Patienten zwei Krankheiten auf einmal. Untersuche ganz genau, mit allen Geräten!",
+    "neu_notfall": "Ab heute kann auch mal ein Notfall kommen. Dann musst du ganz schnell helfen!",
+    "zwei_hinweis": "Achtung! Dieser Patient hat zwei Krankheiten.",
+    "noch_was": "Super! Aber dein Patient hat noch etwas. Weißt du, was noch?",
+    "befund_lupe_zecke": "Schau mal! Da hat sich eine Zecke im Fell festgebissen.",
+    "befund_zahn_zahnweh": "Da ist ein dunkles Loch im Zahn. Deshalb tut er so weh.",
+    "befund_zahn_ok": "Die Zähne sind schön sauber und gesund.",
+    "befund_kamm_floh": "Igitt! Im Kamm hüpfen kleine Flöhe. Dein Patient hat Flöhe.",
+    "befund_kamm_ok": "Im Kamm sind keine Flöhe. Das Fell ist sauber.",
+    "befund_ultra_bauchweh": "Im Bauch ist ganz viel Luft. Da hat jemand zu viele Süßigkeiten gegessen!",
+    "befund_ultra_ok": "Im Bauch ist alles in Ordnung.",
+    "befund_roentgen_heil": "Der Knochen ist wieder ganz zusammengewachsen! Der Gips darf ab.",
+    "karte_zahnweh": "Loch im Zahn",
+    "karte_zecke": "Zecke",
+    "karte_floh": "Flöhe",
+    "karte_bauchweh": "Bauchweh",
+    "richtig_zahnweh": "Richtig! Ein Loch im Zahn.",
+    "richtig_zecke": "Richtig! Eine Zecke. Die muss raus.",
+    "richtig_floh": "Richtig! Flöhe. Die waschen wir weg.",
+    "richtig_bauchweh": "Richtig! Bauchweh.",
+    "schritt_zahnbuerste": "Nimm die Zahnbürste und putz den Zahn schön sauber. Reib hin und her.",
+    "schritt_fuellung": "Jetzt kommt eine weiße Füllung in das Loch. Zieh sie zum Mund.",
+    "schritt_zeckenzange": "Nimm die Zeckenzange und zieh die Zecke vorsichtig heraus.",
+    "schritt_shampoo": "Nimm das Flohshampoo und reib es ins Fell, bis es schön schäumt.",
+    "schritt_handtuch": "Jetzt mit dem Handtuch trocken rubbeln.",
+    "schritt_tee": "Ein warmer Kamillentee beruhigt den Bauch. Gib ihn deinem Patienten.",
+    "schritt_waermflasche": "Jetzt noch eine Wärmflasche auf den Bauch.",
+    "schritt_gipsschere": "Nimm die Gipsschere und schneide den Gips vorsichtig auf. Fahr dafür immer wieder über den Gips.",
+    "kontrolle_start": "Mach ein Röntgenbild. Ist der Knochen schon wieder heil?",
+    "kontrolle_fertig": "Der Gips ist ab! Die Pfote ist wieder ganz gesund.",
+    "notfall": "Achtung, ein Notfall! Schnell, Belle, ein Patient braucht deine Hilfe!",
+    "notfall_gut": "Puh! Den Notfall hast du super gemeistert!",
+    "station_bleibt": "Dein Patient bleibt heute Nacht auf der Krankenstation und ruht sich aus.",
+    "station_nacht": "Auf der Krankenstation schlafen die Tiere schon. Gute Nacht!",
+    "station_morgen": "Guten Morgen! Die Tiere auf der Krankenstation haben gut geschlafen und sind wieder fit.",
+    "buch_zahnweh": "Zucker kann ein Loch in den Zahn machen, und das tut weh. Der Zahnarzt macht das Loch sauber und füllt es mit einer Füllung. Darum: Zähne putzen nicht vergessen!",
+    "buch_zecke": "Eine Zecke ist ein winziges Tier, das sich in der Haut festbeißt. Man zieht sie vorsichtig mit einer Zeckenzange heraus. Nach dem Spielen im Gras sollte man sich gut absuchen.",
+    "buch_floh": "Flöhe sind winzige Tierchen, die im Fell wohnen und ganz weit springen können. Sie machen, dass es juckt. Ein Flohshampoo wäscht sie weg.",
+    "buch_bauchweh": "Wenn man zu viele Süßigkeiten isst, kann der Bauch wehtun. Ein warmer Tee und eine Wärmflasche helfen, dass es dem Bauch bald wieder besser geht.",
+    "buch_zahnspiegel": "Der Zahnspiegel ist ein kleiner runder Spiegel an einem Stiel. Damit sieht man auch die Zähne ganz hinten im Mund.",
+    "buch_flohkamm": "Der Flohkamm hat ganz enge Zinken. Damit kämmt man kleine Flöhe aus dem Fell.",
+    "buch_ultraschall": "Das Ultraschallgerät schaut mit Tönen in den Bauch, die so hoch sind, dass man sie nicht hören kann. Auf dem Bildschirm sieht man dann, was im Bauch los ist."
   }
 }

@@ -177,6 +177,9 @@ const SFX = {
   plop() { tone(200, .12, 'sine', .4, 500); },
   hop() { tone(330, .14, 'sine', .25, 620); },
   cough() { noise(.16, .25, 600, 1.5); noise(.16, .2, 600, 1.5, .22); },
+  ultra() { for (let i = 0; i < 5; i++) tone(1600, .08, 'sine', .12, null, i * .25); },
+  siren() { for (let i = 0; i < 4; i++) { tone(660, .38, 'triangle', .22, null, i * .8); tone(880, .38, 'triangle', .22, null, i * .8 + .4); } },
+  snore() { noise(.8, .08, 300, 2); },
 };
 
 /* ---------------- Spielinhalt ---------------- */
@@ -191,7 +194,7 @@ const TIERE = {
 const TIER_IDS = Object.keys(TIERE);
 // Ohr-Position (lokal) für Ohrenspiegel/Tropfen
 const OHR = { hase: [-30, -318], hund: [-74, -208], maus: [-62, -265], baer: [-56, -262], fuchs: [-46, -268], schwein: [-52, -258] };
-const ZIEL = { pfote: [-62, -32], mund: [0, -168], stirn: [0, -248], brust: [0, -98], hals: [0, -134] };
+const ZIEL = { pfote: [-62, -32], mund: [0, -168], stirn: [0, -248], brust: [0, -98], hals: [0, -134], nacken: [-44, -142], bauch: [0, -72] };
 
 const GERAETE = {
   lupe:         { buch: 'buch_lupe', ziel: 'pfote' },
@@ -199,50 +202,98 @@ const GERAETE = {
   stetho:       { buch: 'buch_stetho', ziel: 'brust', neu: 'neu_stetho' },
   roentgen:     { buch: 'buch_roentgen', ziel: 'brust', neu: 'neu_roentgen' },
   ohrenspiegel: { buch: 'buch_ohrenspiegel', ziel: 'ohr', neu: 'neu_ohrenspiegel' },
+  zahnspiegel:  { buch: 'buch_zahnspiegel', ziel: 'mund', neu: 'neu_zahnspiegel' },
+  flohkamm:     { buch: 'buch_flohkamm', ziel: 'brust', neu: 'neu_flohkamm' },
+  ultraschall:  { buch: 'buch_ultraschall', ziel: 'bauch', neu: 'neu_ultraschall' },
 };
-const GERAET_ORDER = ['lupe', 'thermo', 'stetho', 'roentgen', 'ohrenspiegel'];
+const GERAET_ORDER = ['lupe', 'thermo', 'stetho', 'roentgen', 'ohrenspiegel', 'zahnspiegel', 'flohkamm', 'ultraschall'];
 // Befund je Gerät: welche Krankheit wird damit erkannt?
 const BEFUND = {
-  lupe: { splitter: 'befund_lupe_splitter', schramme: 'befund_lupe_schramme', bruch: 'befund_lupe_bruch', _: 'befund_lupe_ok' },
+  lupe: { splitter: 'befund_lupe_splitter', schramme: 'befund_lupe_schramme', bruch: 'befund_lupe_bruch', zecke: 'befund_lupe_zecke', _: 'befund_lupe_ok' },
   thermo: { fieber: 'befund_thermo_fieber', _: 'befund_thermo_ok' },
   stetho: { husten: 'befund_stetho_husten', _: 'befund_stetho_ok' },
-  roentgen: { bruch: 'befund_roentgen_bruch', _: 'befund_roentgen_ok' },
+  roentgen: { bruch: 'befund_roentgen_bruch', kontrolle: 'befund_roentgen_heil', _: 'befund_roentgen_ok' },
   ohrenspiegel: { ohren: 'befund_ohr_ohren', _: 'befund_ohr_ok' },
+  zahnspiegel: { zahnweh: 'befund_zahn_zahnweh', _: 'befund_zahn_ok' },
+  flohkamm: { floh: 'befund_kamm_floh', _: 'befund_kamm_ok' },
+  ultraschall: { bauchweh: 'befund_ultra_bauchweh', _: 'befund_ultra_ok' },
 };
+// station: Patient bleibt über Nacht auf der Krankenstation
 const KRANK = {
-  splitter: { geraet: 'lupe', schritte: [{ item: 'pinzette', art: 'ziehen', ziel: 'pfote' }, { item: 'pflaster', art: 'drauf', ziel: 'pfote' }] },
-  schramme: { geraet: 'lupe', schritte: [{ item: 'tupfer', art: 'reiben', ziel: 'pfote', menge: 750 }, { item: 'salbe', art: 'drauf', ziel: 'pfote' }, { item: 'pflaster', art: 'drauf', ziel: 'pfote' }] },
-  fieber:   { geraet: 'thermo', schritte: [{ item: 'fiebersaft', art: 'loeffel', ziel: 'mund' }, { item: 'waschlappen', art: 'drauf', ziel: 'stirn' }] },
+  splitter: { geraet: 'lupe', ort: 'pfote', schritte: [{ item: 'pinzette', art: 'ziehen', ziel: 'pfote' }, { item: 'pflaster', art: 'drauf', ziel: 'pfote' }] },
+  schramme: { geraet: 'lupe', ort: 'pfote', schritte: [{ item: 'tupfer', art: 'reiben', ziel: 'pfote', menge: 750 }, { item: 'salbe', art: 'drauf', ziel: 'pfote' }, { item: 'pflaster', art: 'drauf', ziel: 'pfote' }] },
+  fieber:   { geraet: 'thermo', station: true, schritte: [{ item: 'fiebersaft', art: 'loeffel', ziel: 'mund' }, { item: 'waschlappen', art: 'drauf', ziel: 'stirn' }] },
   husten:   { geraet: 'stetho', schritte: [{ item: 'hustensaft', art: 'loeffel', ziel: 'mund' }, { item: 'schal', art: 'drauf', ziel: 'hals' }] },
-  bruch:    { geraet: 'roentgen', schritte: [{ item: 'gips', art: 'reiben', ziel: 'pfote', menge: 1100 }, { item: 'sticker', art: 'drauf', ziel: 'pfote' }] },
+  bruch:    { geraet: 'roentgen', ort: 'pfote', station: true, schritte: [{ item: 'gips', art: 'reiben', ziel: 'pfote', menge: 1100 }, { item: 'sticker', art: 'drauf', ziel: 'pfote' }] },
   ohren:    { geraet: 'ohrenspiegel', schritte: [{ item: 'tropfen', art: 'tropfen', ziel: 'ohr', menge: 3 }, { item: 'watte', art: 'drauf', ziel: 'ohr' }] },
+  zahnweh:  { geraet: 'zahnspiegel', schritte: [{ item: 'zahnbuerste', art: 'reiben', ziel: 'mund', menge: 650 }, { item: 'fuellung', art: 'drauf', ziel: 'mund' }] },
+  zecke:    { geraet: 'lupe', ort: 'nacken', schritte: [{ item: 'zeckenzange', art: 'ziehen', ziel: 'nacken' }, { item: 'salbe', art: 'drauf', ziel: 'nacken' }] },
+  floh:     { geraet: 'flohkamm', schritte: [{ item: 'shampoo', art: 'reiben', ziel: 'brust', menge: 900 }, { item: 'handtuch', art: 'reiben', ziel: 'brust', menge: 700 }] },
+  bauchweh: { geraet: 'ultraschall', station: true, schritte: [{ item: 'tee', art: 'loeffel', ziel: 'mund' }, { item: 'waermflasche', art: 'drauf', ziel: 'bauch' }] },
+  // Nachkontrolle nach einem Knochenbruch (keine Diagnose-Karte)
+  kontrolle: { geraet: 'roentgen', ort: 'pfote', schritte: [{ item: 'gipsschere', art: 'reiben', ziel: 'pfote', menge: 900 }] },
 };
-const KRANK_ORDER = ['splitter', 'schramme', 'fieber', 'husten', 'bruch', 'ohren'];
+const KRANK_ORDER = ['splitter', 'schramme', 'fieber', 'husten', 'bruch', 'ohren', 'zahnweh', 'zecke', 'floh', 'bauchweh'];
+const KARTE = { splitter: 'Splitter', schramme: 'Schramme', fieber: 'Fieber', husten: 'Husten', bruch: 'Knochenbruch', ohren: 'Ohrenentzündung', zahnweh: 'Loch im Zahn', zecke: 'Zecke', floh: 'Flöhe', bauchweh: 'Bauchweh' };
+// Erlaubte Paare für Patienten mit zwei Krankheiten (verschiedene Geräte und Körperstellen)
+const PAARE = [['fieber', 'splitter'], ['husten', 'schramme'], ['ohren', 'splitter'], ['fieber', 'schramme'], ['husten', 'bruch'], ['zahnweh', 'splitter'],
+  ['bauchweh', 'schramme'], ['zecke', 'fieber'], ['floh', 'ohren'], ['zahnweh', 'husten'], ['bauchweh', 'ohren'], ['zecke', 'zahnweh'], ['floh', 'zahnweh'], ['bauchweh', 'splitter']];
 // Was an welchem Praxistag neu dazukommt
 const FREI = [
   null,
   { geraete: ['lupe', 'thermo'], krank: ['splitter', 'schramme', 'fieber'] },
   { geraete: ['stetho'], krank: ['husten'] },
-  { geraete: ['roentgen'], krank: ['bruch'] },
+  { geraete: ['roentgen'], krank: ['bruch'], ausbau: 'roentgen' },
   { geraete: ['ohrenspiegel'], krank: ['ohren'] },
+  { geraete: ['zahnspiegel'], krank: ['zahnweh'] },
+  { geraete: [], krank: ['zecke'], ausbau: 'station' },
+  { geraete: ['flohkamm'], krank: ['floh'] },
+  { geraete: ['ultraschall'], krank: ['bauchweh'] },
+  { geraete: [], krank: [], zwei: true },
+  { geraete: [], krank: [], notfall: true },
 ];
 function frei(day) {
-  const g = [], k = [];
-  for (let d = 1; d <= Math.min(day, FREI.length - 1); d++) { g.push(...FREI[d].geraete); k.push(...FREI[d].krank); }
-  return { geraete: g, krank: k };
+  const g = [], k = [], aus = {}; let zwei = false, notfall = false;
+  for (let d = 1; d <= Math.min(day, FREI.length - 1); d++) {
+    const f = FREI[d]; g.push(...f.geraete); k.push(...f.krank);
+    if (f.ausbau) aus[f.ausbau] = true; if (f.zwei) zwei = true; if (f.notfall) notfall = true;
+  }
+  return { geraete: g, krank: k, ausbau: aus, zwei, notfall };
 }
 function neuAmTag(day) { return day < FREI.length && day > 1 ? FREI[day] : null; }
 function makeDay(day) {
   const f = frei(day), n = day === 1 ? 3 : day < FREI.length ? 4 : 5, list = [];
-  const neu = neuAmTag(day);
-  let lastA = null, lastK = null;
+  const neu = neuAmTag(day) || {};
+  const paare = PAARE.filter(([x, y]) => f.krank.includes(x) && f.krank.includes(y));
+  let lastA = null, lastK = null, notfallHeute = false;
   for (let i = 0; i < n; i++) {
-    let k;
-    if (i === 0 && neu) k = neu.krank[0];
-    else if (day === 1) k = ['splitter', 'fieber', 'schramme'][i];
-    else { do { k = pick(f.krank); } while (k === lastK && f.krank.length > 1); }
+    let ks, notfall = false;
+    if (i === 0 && neu.krank && neu.krank.length) ks = [neu.krank[0]];
+    else if (i === 0 && neu.zwei) ks = pick(paare).slice();
+    else if (i === 0 && neu.notfall) { notfall = true; ks = [pick(['bruch', 'schramme'])]; }
+    else if (day === 1) ks = [['splitter', 'fieber', 'schramme'][i]];
+    else {
+      let k; do { k = pick(f.krank); } while (k === lastK && f.krank.length > 1);
+      ks = [k];
+      if (f.zwei && paare.length && Math.random() < (day >= 11 ? .3 : .25)) ks = pick(paare).slice();
+      if (f.notfall && !notfallHeute && i >= 2 && Math.random() < .5) {
+        notfall = true; const np = paare.filter(p => p.includes('bruch') || p.includes('schramme'));
+        ks = Math.random() < .5 || !np.length ? [pick(['bruch', 'schramme'])] : pick(np).slice();
+      }
+    }
+    if (notfall) notfallHeute = true;
     let a; do { a = pick(TIER_IDS); } while (a === lastA);
-    list.push({ a, k }); lastA = a; lastK = k;
+    list.push({ a, ks, notfall }); lastA = a; lastK = ks[0];
+  }
+  // Nachkontrolle: höchstens eine pro Tag, als zweiter Patient
+  if (SAVE && SAVE.kontrollen) {
+    const i = SAVE.kontrollen.findIndex(k => k.due <= day);
+    if (i >= 0) { const k = SAVE.kontrollen.splice(i, 1)[0]; list.splice(Math.min(1, list.length), 0, { a: k.a, ks: ['kontrolle'], kontrolle: true }); }
+  }
+  // Nicht zweimal dasselbe Tier hintereinander
+  for (let i = 1; i < list.length; i++) if (list[i].a === list[i - 1].a) {
+    const j = list[i].kontrolle ? i - 1 : i, nb = [list[j - 1], list[j + 1]].filter(Boolean).map(p => p.a);
+    list[j].a = pick(TIER_IDS.filter(t => !nb.includes(t)));
   }
   return list;
 }
@@ -250,7 +301,7 @@ function makeDay(day) {
 /* ---------------- Spielstand ---------------- */
 const SAVEKEY = 'belle-tierarzt-v1';
 let SAVE = null;
-function newSave() { return { day: 1, pat: 0, list: null, buch: {}, geheilt: 0 }; }
+function newSave() { return { day: 1, pat: 0, list: null, buch: {}, geheilt: 0, kontrollen: [], station: [] }; }
 function save() { try { localStorage.setItem(SAVEKEY, JSON.stringify(SAVE)); } catch (e) {} }
 function loadSave() { try { return JSON.parse(localStorage.getItem(SAVEKEY)); } catch (e) { return null; } }
 
@@ -545,21 +596,22 @@ function tierSVG(a) {
 const PS = 1.15;          // Größe des Patienten auf dem Tisch
 const SEAT = [600, 590];
 let P = null;             // aktueller Patient
-function makePatient(a, k) {
+function makePatient(a, ks, opt = {}) {
   const g = $('pat');
   g.innerHTML = tierSVG(a);
   const q = s => g.querySelector(s);
   P = {
-    a, k, g, head: q('.head'), eyes: q('.eyes'), brows: q('.brows'), mH: q('.mHappy'), mS: q('.mSad'), mO: q('.mOpen'),
+    a, ks, k: ks[0], kontrolle: !!opt.kontrolle, notfall: !!opt.notfall, diag: [], g, head: q('.head'), eyes: q('.eyes'), brows: q('.brows'), mH: q('.mHappy'), mS: q('.mSad'), mO: q('.mOpen'),
     cheeks: g.querySelectorAll('.cheek'), tail: q('.tail'), armR: q('.armR'), pawR: q('.pawR'), body: q('.body'),
     ov0: q('.ov0'), ovArm: q('.ovArm'), ovHead: q('.ovHead'), ovTop: q('.ovTop'),
     mood: 'sick', x: 140, y: 790, s: .7, hop: 0, cough: 0, coughT: 2, talk: false, sym: null, healed: false,
     befunde: {}, found: false, step: 0, prog: 0, saidKlemm: false,
   };
-  setMood('sick');
+  setMood(P.kontrolle ? 'happy' : 'sick');
   drawSymptoms();
   placePat();
 }
+const has = k => P && P.ks.includes(k);
 function placePat() { $('patWrap').setAttribute('transform', `translate(${P.x},${P.y - P.hop}) scale(${P.s})`); }
 function setMood(m) {
   P.mood = m;
@@ -576,7 +628,24 @@ function zielLocal(z) { return z === 'ohr' ? OHR[P.a] : ZIEL[z]; }
 function drawSymptoms() {
   clear(P.ovArm); clear(P.ovHead); clear(P.ovTop); clear(P.ov0);
   P.sym = {};
-  const k = P.k;
+  for (const k of P.ks) drawSymptom(k);
+}
+function drawSymptom(k) {
+  if (k === 'kontrolle') { rubVisual('gips', 1); P.gipsSticker = el('g', { transform: 'translate(-60,-54) scale(.42)' }, P.ovArm, toolIcon('sticker')); }
+  if (k === 'zahnweh') {
+    P.sym.backe = el('g', {}, P.ovHead, `<ellipse cx="-50" cy="-186" rx="22" ry="18" fill="#F27A7A" opacity=".35"/><path d="M-80 -200 l-12 -6 M-82 -184 l-14 0 M-78 -168 l-12 6" stroke="#F0505E" stroke-width="4" stroke-linecap="round"/>`);
+  }
+  if (k === 'zecke') {
+    const [x, y] = ZIEL.nacken;
+    P.sym.zecke = el('g', { transform: `translate(${x},${y})` }, P.ovTop, `<g stroke="#3A2A22" stroke-width="2.4" stroke-linecap="round">${[-1, 1].map(sx => [-5, 0, 5, 9].map(yy => `<path d="M${sx * 6} ${yy - 2} l${sx * 9} ${yy > 4 ? 6 : yy < 0 ? -6 : 1}"/>`).join('')).join('')}</g>
+      <ellipse cx="0" cy="3" rx="8" ry="10" fill="#4A2F25"/><circle cx="0" cy="-8" r="4.5" fill="#2E1E18"/><ellipse cx="-2" cy="0" rx="2.5" ry="3.5" fill="#FFF" opacity=".3"/>`);
+  }
+  if (k === 'floh') {
+    P.fleas = [...Array(6)].map(() => ({ e: el('circle', { r: 3.4, fill: '#2E1E18' }, P.ovTop), x: rnd(-60, 60), y: rnd(-170, -30), t: rnd(0, 1) }));
+  }
+  if (k === 'bauchweh') {
+    P.sym.bauch = el('g', {}, P.ovTop, `<path d="M-14 -84 c10 -10 22 0 14 10 c-8 8 -20 -2 -12 -12 M14 -54 c10 -10 22 0 14 10" stroke="#C9A0D8" stroke-width="4" fill="none" stroke-linecap="round"/>`);
+  }
   if (k === 'splitter') {
     P.sym.splitter = el('g', {}, P.ovArm, `<path d="M-74 -46 L-56 -28" stroke="#8A5A2B" stroke-width="6" stroke-linecap="round"/><path d="M-74 -46 L-62 -34" stroke="#B07A45" stroke-width="3" stroke-linecap="round"/>`);
     P.sym.rot = el('ellipse', { cx: -58, cy: -28, rx: 9, ry: 6, fill: '#F27A7A', opacity: .55 }, P.ovArm);
@@ -638,6 +707,32 @@ function toolIcon(t) {
     case 'tropfen': return `<rect x="-16" y="-8" width="32" height="48" rx="8" fill="#B9E3F7" stroke="#5FA9D0" stroke-width="4"/><rect x="-7" y="-26" width="14" height="20" rx="3" fill="#FFFFFF" stroke="#9AA7AF" stroke-width="3"/>
       <path d="M0 -26 L0 -40" stroke="#9AA7AF" stroke-width="5" stroke-linecap="round"/><rect x="-10" y="8" width="20" height="18" rx="3" fill="#FFF" opacity=".9"/><path d="M0 11 C-5 17 -5 22 0 22 C5 22 5 17 0 11Z" fill="#5FA9D0"/>`;
     case 'watte': return `<circle cx="-10" cy="4" r="18" fill="#FFFFFF" stroke="#D5DDE4" stroke-width="3"/><circle cx="10" cy="-4" r="20" fill="#FFFFFF" stroke="#D5DDE4" stroke-width="3"/><circle cx="6" cy="14" r="16" fill="#FFFFFF" stroke="#D5DDE4" stroke-width="3"/><circle cx="2" cy="4" r="14" fill="#FFFFFF"/>`;
+    case 'zahnspiegel': return `<rect x="-5" y="-8" width="10" height="62" rx="5" fill="#9AA7AF" transform="rotate(30)"/><g transform="rotate(30)">${[4, 16, 28, 40].map(y => `<rect x="-5" y="${y}" width="10" height="3" fill="#7F93A3"/>`).join('')}</g>
+      <circle cx="-14" cy="-26" r="22" fill="#C7D2DA" stroke="#7F93A3" stroke-width="5"/><circle cx="-14" cy="-26" r="15" fill="#E9F7FF"/><path d="M-22 -32 a10 10 0 0 1 8 -6" stroke="#FFF" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+    case 'flohkamm': return `<g transform="rotate(-18)"><rect x="-42" y="-24" width="84" height="20" rx="8" fill="#F2A35E" stroke="#B86E2E" stroke-width="3"/>
+      ${[...Array(15)].map((_, i) => `<rect x="${-38 + i * 5.3}" y="-6" width="3" height="${i % 5 === 2 ? 34 : 30}" rx="1.5" fill="#B86E2E"/>`).join('')}<circle cx="-28" cy="-14" r="4" fill="#FFE2C4"/></g>`;
+    case 'ultraschall': return `<rect x="-40" y="-40" width="62" height="50" rx="8" fill="#7F93A3"/><rect x="-34" y="-34" width="50" height="38" rx="5" fill="#1E2330"/>
+      <path d="M-9 -30 L-28 0 L10 0Z" fill="#8E97A8" opacity=".8"/><circle cx="-10" cy="-10" r="5" fill="#1E2330"/>
+      <path d="M22 -10 C40 -6 44 20 30 34" stroke="#5E7D96" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <g transform="translate(26,40) rotate(-20)"><rect x="-9" y="-14" width="18" height="26" rx="6" fill="#E2E8EC" stroke="#9AA7AF" stroke-width="3"/><rect x="-11" y="10" width="22" height="8" rx="4" fill="#5E7D96"/></g>`;
+    case 'zahnbuerste': return `<g transform="rotate(-35)"><rect x="-6" y="-10" width="12" height="62" rx="6" fill="#8FD0F2" stroke="#5FA9D0" stroke-width="3"/><rect x="-8" y="-40" width="16" height="32" rx="5" fill="#8FD0F2" stroke="#5FA9D0" stroke-width="3"/>
+      ${[-36, -29, -22, -15].map(y => `<rect x="-20" y="${y}" width="14" height="5" rx="2" fill="#FFFFFF" stroke="#D5DDE4" stroke-width="1.5"/>`).join('')}</g>`;
+    case 'fuellung': return `<path d="M-26 -30 C-34 -8 -24 10 -18 36 C-14 46 -6 44 -4 30 C-2 18 2 18 4 30 C6 44 14 46 18 36 C24 10 34 -8 26 -30 C16 -40 8 -30 0 -32 C-8 -30 -16 -40 -26 -30Z" fill="#FFFFFF" stroke="#C9D5DE" stroke-width="4"/>
+      <path d="${star(22, -30, 13, 5)}" fill="#FFD84D"/><path d="M-14 -20 q6 -6 12 0" stroke="#E2E8EC" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+    case 'zeckenzange': return `<g transform="rotate(170)"><path d="M-8 40 C-10 10 -12 -20 -4 -40 M8 40 C10 10 12 -20 4 -40" stroke="#5FBF8F" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <path d="M-4 -40 Q0 -46 4 -40" stroke="#3E9C6E" stroke-width="6" fill="none" stroke-linecap="round"/><rect x="-14" y="10" width="28" height="12" rx="6" fill="#3E9C6E"/></g>`;
+    case 'shampoo': return `<rect x="-22" y="-26" width="44" height="64" rx="14" fill="#B6E39B" stroke="#7FBF62" stroke-width="4"/><rect x="-8" y="-40" width="16" height="16" rx="3" fill="#FFF" stroke="#9AA7AF" stroke-width="3"/>
+      <rect x="-14" y="-6" width="28" height="22" rx="5" fill="#FFF" opacity=".9"/><circle cx="-2" cy="5" r="4" fill="#3A2A22"/><path d="M-6 9 l-5 4 M2 9 l5 4" stroke="#3A2A22" stroke-width="2"/><path d="M-8 2 l10 6" stroke="#F2575E" stroke-width="3"/>
+      ${[[24, -30, 9], [34, -14, 6], [20, -46, 6]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#E9F7FF" stroke="#9FD3EE" stroke-width="2"/>`).join('')}`;
+    case 'handtuch': return `<rect x="-40" y="-26" width="80" height="52" rx="10" fill="#FFC2C8" stroke="#E98F9A" stroke-width="4"/><rect x="-40" y="8" width="80" height="8" fill="#FFFFFF" opacity=".8"/><rect x="-40" y="-16" width="80" height="5" fill="#FFFFFF" opacity=".6"/>
+      <path d="M-40 -26 L-40 26 M40 -26 L40 26" stroke="#E98F9A" stroke-width="5"/>`;
+    case 'tee': return `<path d="M-30 -12 L30 -12 L24 30 Q0 42 -24 30Z" fill="#FFFFFF" stroke="#C9D5DE" stroke-width="4" stroke-linejoin="round"/><ellipse cx="0" cy="-12" rx="30" ry="7" fill="#F2C14E"/>
+      <path d="M28 -4 C46 -4 46 18 26 18" stroke="#C9D5DE" stroke-width="6" fill="none"/><path d="M-10 -26 q-8 -10 0 -20 M6 -26 q-8 -10 0 -20" stroke="#B9C9CF" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M-6 8 C-14 0 -10 -6 -2 0 C2 -8 10 -4 4 6 Z" fill="#9BD47F"/>`;
+    case 'waermflasche': return `<rect x="-8" y="-46" width="16" height="16" rx="3" fill="#E2696D"/><path d="M-30 -30 L30 -30 C36 0 36 20 30 40 L-30 40 C-36 20 -36 0 -30 -30Z" fill="#F57F87" stroke="#C94F5A" stroke-width="4"/>
+      ${[-14, 0, 14, 28].map(y => `<path d="M-24 ${y} h48" stroke="#E2696D" stroke-width="3"/>`).join('')}<path d="M0 8 C-16 -4 -12 -16 0 -6 C12 -16 16 -4 0 8Z" fill="#FFF"/>`;
+    case 'gipsschere': return `<g transform="rotate(-30)"><path d="M-4 0 L-10 -46 Q-4 -50 2 -44 Z" fill="#C7D2DA" stroke="#7F93A3" stroke-width="3"/><path d="M4 0 L14 -44 Q8 -50 2 -44Z" fill="#E2E8EC" stroke="#7F93A3" stroke-width="3"/>
+      <circle cx="-14" cy="22" r="13" fill="none" stroke="#F2A35E" stroke-width="7"/><circle cx="14" cy="22" r="13" fill="none" stroke="#F2A35E" stroke-width="7"/><path d="M-6 10 L6 0 M6 10 L-6 0" stroke="#F2A35E" stroke-width="7" stroke-linecap="round"/><circle cx="0" cy="4" r="4" fill="#7F93A3"/></g>`;
   }
   return '';
 }
@@ -669,6 +764,17 @@ function krankBild(k) {
       <path d="M0 -20 L6 -8 L-4 2 L4 14" stroke="#F2575E" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
     case 'ohren': return `<path d="M-10 -70 C60 -80 80 20 30 50 C10 62 0 80 -24 72 C-50 64 -40 30 -50 0 C-60 -40 -40 -66 -10 -70Z" fill="#F7D2B0" stroke="#D9A473" stroke-width="5"/>
       <path d="M-4 -40 C40 -46 46 10 14 24 C-6 32 -20 10 -14 -10" fill="url(#gEarRed)"/><path d="M58 -50 l18 -10 M70 -16 l22 0 M60 16 l18 10" stroke="#F0505E" stroke-width="6" stroke-linecap="round"/>`;
+    case 'zahnweh': return `<g transform="scale(1.9) translate(0,4)"><path d="M-26 -30 C-34 -8 -24 10 -18 36 C-14 46 -6 44 -4 30 C-2 18 2 18 4 30 C6 44 14 46 18 36 C24 10 34 -8 26 -30 C16 -40 8 -30 0 -32 C-8 -30 -16 -40 -26 -30Z" fill="#FFFFFF" stroke="#C9D5DE" stroke-width="3"/>
+      <path d="M-4 -24 C-12 -16 -8 -6 2 -8 C10 -12 8 -22 -4 -24Z" fill="#5A3A2A"/></g><path d="M66 -40 l18 -10 M74 0 l22 0 M66 40 l18 10 M-66 -40 l-18 -10 M-74 0 l-22 0" stroke="#F0505E" stroke-width="6" stroke-linecap="round"/>`;
+    case 'zecke': return `<g transform="scale(3.4)"><g stroke="#3A2A22" stroke-width="2.4" stroke-linecap="round">${[-1, 1].map(sx => [-5, 0, 5, 9].map(yy => `<path d="M${sx * 6} ${yy - 2} l${sx * 9} ${yy > 4 ? 6 : yy < 0 ? -6 : 1}"/>`).join('')).join('')}</g>
+      <ellipse cx="0" cy="3" rx="8" ry="10" fill="#4A2F25"/><circle cx="0" cy="-8" r="4.5" fill="#2E1E18"/><ellipse cx="-2" cy="0" rx="2.5" ry="3.5" fill="#FFF" opacity=".3"/></g>`;
+    case 'floh': return `<rect x="-96" y="20" width="192" height="50" rx="20" fill="#E6B276"/>${[...Array(14)].map((_, i) => `<path d="M${-88 + i * 13} 26 q6 -10 12 0" stroke="#A8733F" stroke-width="3" fill="none"/>`).join('')}
+      ${[[-40, -40, 1.5], [30, -10, 1.1], [60, -60, .9]].map(([x, y, sc]) => `<g transform="translate(${x},${y}) scale(${sc})"><ellipse rx="14" ry="10" fill="#4A2F25"/><circle cx="12" cy="-4" r="6" fill="#2E1E18"/><path d="M-6 6 l-10 14 M2 8 l-4 14 M8 6 l10 12" stroke="#2E1E18" stroke-width="3" stroke-linecap="round"/><circle cx="14" cy="-6" r="1.8" fill="#FFF"/></g>`).join('')}
+      <path d="M-70 10 q20 -60 50 -50 M10 0 q20 -40 40 -30" stroke="#B9C9CF" stroke-width="3" fill="none" stroke-dasharray="6 6"/>`;
+    case 'bauchweh': return `<ellipse cx="0" cy="10" rx="74" ry="68" fill="#F7D2B0" stroke="#D9A473" stroke-width="5"/><ellipse cx="0" cy="22" rx="46" ry="40" fill="#FBE6D3"/>
+      <path d="M-18 6 c14 -14 30 0 20 14 c-10 12 -28 -2 -16 -16 M14 34 c10 -10 22 0 14 10" stroke="#B49AC9" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <g transform="translate(70,-50) rotate(20)"><rect x="-18" y="-10" width="36" height="20" rx="10" fill="#F57F87"/><path d="M-18 0 l-12 -10 v20Z M18 0 l12 -10 v20Z" fill="#F57F87"/><path d="M-8 -10 v20 M4 -10 v20" stroke="#FFF" stroke-width="4"/></g>
+      <g transform="translate(-74,-50)"><circle r="14" fill="#8FD0F2"/><path d="M-6 -6 L6 6 M6 -6 L-6 6" stroke="#FFF" stroke-width="3"/></g>`;
   }
   return '';
 }
@@ -825,7 +931,8 @@ function startGame() {
   SAVE = loadSave() || newSave();
   if (!SAVE.buch) SAVE.buch = {};
   clear($('modal')); TITLE_PULSE = null;
-  hudGame(true);
+  if (!SAVE.kontrollen) SAVE.kontrollen = []; if (!SAVE.station) SAVE.station = [];
+  hudGame(true); drawAusbau();
   guard(mainLoop());
 }
 
@@ -867,12 +974,123 @@ async function dayIntro(day) {
   await tween(300, t => card.setAttribute('transform', `translate(600,430) scale(${1 - t})`));
   clear(m);
   const neu = neuAmTag(day);
+  if (SAVE.station && SAVE.station.length) await stationMorgen();
   if (day === 1) {
     drawTray(frei(day).geraete);
     const tr = $('tray'); await tween(400, t => tr.setAttribute('transform', `translate(0,${(1 - t) * 140})`), easeBack);
     await say('koffer_1');
   }
-  if (neu) for (const t of neu.geraete) await revealTool(t);
+  if (neu) {
+    for (const t of neu.geraete) await revealTool(t);
+    if (neu.ausbau === 'roentgen') await revealLeuchtkasten();
+    if (neu.ausbau === 'station') await revealStation();
+    if (neu.zwei) await revealBild(`<g transform="translate(-70,10) rotate(-10) scale(.55)"><rect x="-150" y="-200" width="300" height="400" rx="34" fill="url(#gCard)" stroke="#F2D5C2" stroke-width="6"/>${krankBild('fieber')}</g>
+      <g transform="translate(70,10) rotate(10) scale(.55)"><rect x="-150" y="-200" width="300" height="400" rx="34" fill="url(#gCard)" stroke="#F2D5C2" stroke-width="6"/>${krankBild('splitter')}</g>
+      <circle cx="0" cy="-110" r="44" fill="#F57F87" stroke="#FFF" stroke-width="8"/><text x="0" y="-92" text-anchor="middle" font-size="56" fill="#FFF">2</text>`, 'neu_zwei');
+    if (neu.notfall) await revealBild(`<g transform="scale(1.6)"><rect x="-26" y="-6" width="52" height="16" rx="5" fill="#9AA7AF"/><path d="M-20 -6 Q0 -40 20 -6Z" fill="#3D7BFF"/><circle class="blink" cy="-16" r="34" fill="#7FB0FF" opacity=".6"/></g>
+      <g transform="translate(0,70)"><rect x="-90" y="-40" width="180" height="80" rx="18" fill="#FFFFFF" stroke="#E2696D" stroke-width="6"/><rect x="-10" y="-30" width="20" height="60" rx="5" fill="#E2696D"/><rect x="-30" y="-10" width="60" height="20" rx="5" fill="#E2696D"/></g>`, 'neu_notfall', () => SFX.siren());
+  }
+  drawAusbau();
+}
+async function revealBild(inner, line, sfx) {
+  const m = $('modal'); clear(m);
+  el('rect', { x: 0, y: 0, width: 1200, height: 900, fill: '#FFFFFF', opacity: .55 }, m);
+  const g = el('g', { transform: 'translate(600,420) scale(0)' }, m);
+  g.innerHTML = `<g class="rays">${[...Array(12)].map((_, i) => `<path d="M0 0 L${Math.cos(i * Math.PI / 6 - .12) * 300} ${Math.sin(i * Math.PI / 6 - .12) * 300} L${Math.cos(i * Math.PI / 6 + .12) * 300} ${Math.sin(i * Math.PI / 6 + .12) * 300}Z" fill="#FFE27A" opacity=".55"/>`).join('')}</g>
+    <circle r="170" fill="#FFFFFF" filter="url(#sh)"/>${inner}`;
+  REVEAL = g.querySelector('.rays');
+  (sfx || SFX.sparkle)();
+  await tween(600, k => g.setAttribute('transform', `translate(600,420) scale(${k})`), easeBack);
+  burst(600, 420, 26);
+  await say(line);
+  await wait(300);
+  await tween(300, k => g.setAttribute('transform', `translate(600,420) scale(${1 - k})`));
+  clear(m); REVEAL = null;
+}
+/* Praxisausbau: Leuchtkasten für Röntgenbilder */
+function drawAusbau() {
+  let g = $('ausbau'); if (!g) g = el('g', { id: 'ausbau' }, $('room'));
+  clear(g);
+  if (!SAVE || !frei(SAVE.day).ausbau.roentgen) return;
+  g.innerHTML = `<g filter="url(#shS)"><rect x="626" y="192" width="168" height="120" rx="14" fill="#FFFFFF"/></g>
+    <rect x="636" y="202" width="148" height="100" rx="8" fill="#DDF3FF"/><rect x="636" y="202" width="148" height="100" rx="8" fill="#FFFFFF" opacity=".35"/>
+    <g transform="translate(672,252)"><rect x="-30" y="-42" width="60" height="84" rx="4" fill="#1D3A6B"/>
+      <g fill="#EAF4FF"><rect x="-6" y="-34" width="12" height="36" rx="6"/><ellipse cx="0" cy="8" rx="14" ry="9"/>${[[-11, 24], [-4, 28], [4, 28], [11, 24]].map(([x, y]) => `<rect x="${x - 3}" y="${y - 7}" width="6" height="14" rx="3"/>`).join('')}</g></g>
+    <g transform="translate(748,252)"><rect x="-30" y="-42" width="60" height="84" rx="4" fill="#1D3A6B"/>
+      <g stroke="#EAF4FF" stroke-width="4" fill="none" stroke-linecap="round"><path d="M0 -34 V30"/>${[-24, -12, 0, 12].map(y => `<path d="M-2 ${y} q-18 4 -20 16 M2 ${y} q18 4 20 16"/>`).join('')}</g><circle cx="0" cy="-36" r="9" fill="#EAF4FF"/></g>
+    <rect x="662" y="196" width="20" height="10" rx="3" fill="#9AA7AF"/><rect x="738" y="196" width="20" height="10" rx="3" fill="#9AA7AF"/>`;
+}
+async function revealLeuchtkasten() {
+  drawAusbau();
+  const g = $('ausbau'); g.style.opacity = 0;
+  SFX.sparkle();
+  await tween(700, t => g.style.opacity = t);
+  burst(710, 250, 22);
+  const ring = el('rect', { x: 616, y: 182, width: 188, height: 140, rx: 20, fill: 'none', stroke: '#FFD84D', 'stroke-width': 8 }, $('fx'));
+  await say('ausbau_roentgen');
+  ring.remove();
+}
+
+/* ---------- Krankenstation ---------- */
+function bettSVG(x, y, farbe) {
+  return `<g transform="translate(${x},${y})">
+    <rect x="-112" y="-110" width="16" height="190" rx="8" fill="#C7D2DA"/><rect x="96" y="-50" width="16" height="130" rx="8" fill="#C7D2DA"/>
+    <rect x="-110" y="-104" width="70" height="90" rx="20" fill="#FFFFFF" stroke="#C7D2DA" stroke-width="5"/>
+    <rect x="-104" y="0" width="208" height="36" rx="12" fill="#F2F7FA" stroke="#C7D2DA" stroke-width="4"/>
+    <ellipse cx="-62" cy="-8" rx="42" ry="20" fill="#FFFFFF" stroke="#DDE3EA" stroke-width="3"/>
+    <g class="tier"></g>
+    <path d="M-40 -18 Q30 -34 104 -18 L104 30 L-40 30Z" fill="${farbe}"/>${[-20, 10, 40, 70].map(xx => `<circle cx="${xx}" cy="6" r="5" fill="#FFFFFF" opacity=".55"/>`).join('')}
+    <path d="M-40 -18 Q30 -34 104 -18" stroke="#FFFFFF" stroke-width="6" fill="none" opacity=".7"/></g>`;
+}
+function stationSzene(nacht, tiere, wach) {
+  const m = $('modal'); clear(m);
+  el('rect', { x: 0, y: 0, width: 1200, height: 900, fill: nacht ? '#1B2350' : '#FFFFFF', opacity: nacht ? .55 : .45 }, m);
+  const card = el('g', { transform: 'translate(600,430) scale(0)' }, m);
+  const farben = ['#8FD0F2', '#F6A6B2', '#B6E39B'];
+  card.innerHTML = `<rect x="-480" y="-300" width="960" height="560" rx="44" fill="${nacht ? '#2A3570' : '#EAF7F2'}" filter="url(#sh)"/>
+    <rect x="-480" y="80" width="960" height="180" rx="0" fill="${nacht ? '#3A3F6E' : '#F3D9B6'}"/><rect x="-480" y="210" width="960" height="50" rx="0" fill="${nacht ? '#3A3F6E' : '#F3D9B6'}"/>
+    <rect x="-480" y="-300" width="960" height="560" rx="44" fill="none" stroke="${nacht ? '#4B5797' : '#BFE3D6'}" stroke-width="10"/>
+    <g transform="translate(0,-210)"><rect x="-70" y="-50" width="140" height="100" rx="16" fill="#FFFFFF"/><rect x="-60" y="-40" width="120" height="80" rx="10" fill="${nacht ? '#1B2350' : '#BFE6FF'}"/>
+      ${nacht ? `<circle cx="20" cy="-10" r="20" fill="#FFE9A8"/><circle cx="30" cy="-16" r="18" fill="#1B2350"/><path d="${star(-30, -16, 7, 3)}" fill="#FFE27A"/><path d="${star(-12, 16, 5, 2)}" fill="#FFE27A"/>` : `<circle cx="20" cy="-6" r="18" fill="#FFD84D"/><ellipse cx="-24" cy="10" rx="22" ry="9" fill="#FFF"/>`}
+      <rect x="-4" y="-40" width="8" height="80" fill="#FFFFFF"/></g>
+    <g transform="translate(-360,-210)"><rect x="-56" y="-26" width="112" height="52" rx="14" fill="#FFFFFF"/><g transform="translate(-28,0) scale(.5)">${toolIcon('waermflasche')}</g>
+      <rect x="-2" y="-10" width="8" height="24" rx="2" fill="#F57F87"/><rect x="-10" y="-2" width="24" height="8" rx="2" fill="#F57F87"/><g transform="translate(34,2) scale(.5)" fill="#F57F87">${pawShape()}</g></g>
+    ${[-290, 0, 290].map((x, i) => bettSVG(x, 90, farben[i])).join('')}
+    ${nacht ? [...Array(10)].map(() => `<path d="${star(rnd(-440, 440), rnd(-280, -120), rnd(5, 9), rnd(2, 4))}" fill="#FFE27A" opacity="${rnd(.4, .9).toFixed(2)}"/>`).join('') : ''}`;
+  const betten = card.querySelectorAll('.tier');
+  (tiere || []).forEach((t, i) => {
+    if (!betten[i]) return;
+    const g = el('g', { transform: wach ? 'translate(-56,10) scale(.42)' : 'translate(23,10) rotate(-74) scale(.42)' }, betten[i]);
+    g.innerHTML = tierSVG(t.a);
+    g.querySelectorAll('.brows,.mSad,.mOpen').forEach(n => n.style.display = 'none');
+    if (!wach) {
+      g.querySelector('.eyes').style.display = 'none';
+      el('path', { d: 'M-38 -216 q11 9 22 0 M16 -216 q11 9 22 0', stroke: '#3B2A22', 'stroke-width': 5, fill: 'none', 'stroke-linecap': 'round' }, g.querySelector('.head'));
+      el('g', { class: 'zzz' }, betten[i], `<text x="-20" y="-110" font-size="34" fill="#FFFFFF" opacity=".9">z</text><text x="0" y="-140" font-size="26" fill="#FFFFFF" opacity=".7">z</text><text x="16" y="-164" font-size="20" fill="#FFFFFF" opacity=".5">z</text>`);
+    }
+  });
+  return card;
+}
+async function stationMorgen() {
+  const card = stationSzene(false, SAVE.station, true);
+  await tween(500, t => card.setAttribute('transform', `translate(600,430) scale(${t})`), easeBack);
+  floatHearts(600, 420, 8); SFX.yay();
+  await say('station_morgen');
+  await say(SAVE.station[0].a + '_tschuess', { who: 'none' });
+  await wait(300);
+  await tween(300, t => card.setAttribute('transform', `translate(600,430) scale(${1 - t})`));
+  clear($('modal'));
+  SAVE.station = []; save();
+}
+async function revealStation() {
+  const card = stationSzene(false, [], true);
+  SFX.sparkle();
+  await tween(600, t => card.setAttribute('transform', `translate(600,430) scale(${t})`), easeBack);
+  burst(600, 430, 30);
+  await say('ausbau_station');
+  await wait(300);
+  await tween(300, t => card.setAttribute('transform', `translate(600,430) scale(${1 - t})`));
+  clear($('modal'));
 }
 async function revealTool(t) {
   const m = $('modal'); clear(m);
@@ -897,31 +1115,39 @@ let REVEAL = null;
 /* ----- Ein Patient ----- */
 async function patientFlow(p) {
   MODE = 'arrive';
+  if (!p.ks) p.ks = [p.k];  // alter Spielstand
   clipReset(); $('clipL').style.display = '';
   drawTray(frei(SAVE.day).geraete);
-  makePatient(p.a, p.k);
+  makePatient(p.a, p.ks, p);
   $('patWrap').style.display = '';
   P.x = 140; P.y = 788; P.s = .78; P.hop = 0; placePat(); P.g.style.opacity = 0;
+  // Notfall: Blaulicht und Sirene
+  if (p.notfall) { await notfallAlarm(); }
   // Tür auf, Tier kommt herein
-  SFX.bell(); await tween(500, doorOpen);
+  SFX.bell(); await tween(p.notfall ? 300 : 500, doorOpen);
   P.g.style.opacity = 1;
-  await walk(140, 788, 410, 788, .78, .92, 1100);
+  await walk(140, 788, 410, 788, .78, .92, p.notfall ? 650 : 1100);
   doorAnimClose();
   // Auf den Tisch hüpfen
   SFX.hop();
   await tween(650, t => { P.x = lerp(410, SEAT[0], t); P.y = lerp(788, SEAT[1], t); P.s = lerp(.92, PS, t); P.hop = Math.sin(t * Math.PI) * 120; placePat(); }, t => t);
   P.hop = 0; placePat();
-  await say('kommt_' + p.a);
-  await say(p.a + '_klage_' + p.k, { who: 'tier' });
+  if (!p.notfall) await say('kommt_' + p.a);
+  if (p.kontrolle) await say(p.a + '_kontrolle', { who: 'tier' });
+  else for (const k of p.ks) await say(p.a + '_klage_' + k, { who: 'tier' });
+  if (p.ks.length > 1) await say('zwei_hinweis');
   // Untersuchen
   MODE = 'exam'; CUR = { r: RUN };
   const first = SAVE.pat === 0;
-  if (first) await say('untersuchen', { instr: true }); else { V.last = 'untersuchen'; V.rep = 0; }
+  if (p.kontrolle) await say('kontrolle_start', { instr: true });
+  else if (first || p.ks.length > 1) await say('untersuchen', { instr: true }); else { V.last = 'untersuchen'; V.rep = 0; }
   await new Promise(res => { CUR.diagnosed = res; });
-  // Behandeln
+  // Behandeln (in der Reihenfolge der Diagnosen)
   MODE = 'treat';
-  const steps = KRANK[p.k].schritte, items = [...new Set(steps.map(s => s.item))];
-  drawTray(shuffleSome(items));
+  const order = p.kontrolle ? ['kontrolle'] : P.diag.slice();
+  const steps = [].concat(...order.map(k => KRANK[k].schritte));
+  P.steps = steps;
+  drawTray(shuffleSome([...new Set(steps.map(s => s.item))]));
   for (let i = 0; i < steps.length; i++) {
     P.step = i; P.prog = 0; P.stepDone = null;
     await say('schritt_' + steps[i].item, { instr: true });
@@ -934,13 +1160,22 @@ async function patientFlow(p) {
   heal();
   floatHearts(SEAT[0], SEAT[1] - 260, 7);
   BELLE.bounce = 1; SFX.yay();
+  if (p.kontrolle) await say('kontrolle_fertig');
   await say(p.a + '_danke', { who: 'tier' });
-  const neu = !SAVE.buch['k_' + p.k];
-  await cardToBook(p.k);
-  SAVE.buch['k_' + p.k] = neu ? 2 : SAVE.buch['k_' + p.k];
-  if (neu) HUD.bookDot.style.display = '';
+  if (p.notfall) { burst(SEAT[0], SEAT[1] - 200, 30); await say('notfall_gut'); }
+  let neuK = false;
+  for (const k of p.ks) {
+    if (k === 'kontrolle') continue;
+    const neu = !SAVE.buch['k_' + k];
+    await cardToBook(k);
+    if (neu) { SAVE.buch['k_' + k] = 2; neuK = true; HUD.bookDot.style.display = ''; }
+  }
+  if (p.ks.includes('bruch')) SAVE.kontrollen.push({ a: p.a, due: SAVE.day + 2 });
+  const bleibt = frei(SAVE.day).ausbau.station && p.ks.some(k => KRANK[k].station) && SAVE.station.length < 3;
+  if (bleibt) SAVE.station.push({ a: p.a, ks: p.ks.slice() });
   save();
-  await say(neu ? 'neue_karte' : 'gesund');
+  if (!p.kontrolle) await say(neuK ? 'neue_karte' : 'gesund');
+  if (bleibt) await say('station_bleibt');
   // Tier geht wieder
   SFX.hop();
   await tween(600, t => { P.x = lerp(SEAT[0], 410, t); P.y = lerp(SEAT[1], 788, t); P.s = lerp(PS, .92, t); P.hop = Math.sin(t * Math.PI) * 100; placePat(); }, t => t);
@@ -950,6 +1185,18 @@ async function patientFlow(p) {
   await tween(250, t => { P.g.style.opacity = 1 - t; });
   await tween(400, t => doorOpen(1 - t));
   $('patWrap').style.display = 'none';
+}
+async function notfallAlarm() {
+  const g = el('g', { 'pointer-events': 'none' }, $('fx'));
+  const flash = el('rect', { x: 0, y: 0, width: 1200, height: 900, fill: '#3D7BFF', opacity: 0 }, g);
+  const lamp = el('g', { transform: 'translate(140,292)' }, g, `<rect x="-26" y="-6" width="52" height="16" rx="5" fill="#9AA7AF"/><path d="M-20 -6 Q0 -40 20 -6Z" fill="#3D7BFF"/><circle class="gl" cy="-16" r="34" fill="#7FB0FF" opacity=".6"/>`);
+  const gl = lamp.querySelector('.gl');
+  SFX.siren();
+  const said = say('notfall');
+  await tween(2600, t => { const on = Math.sin(t * Math.PI * 14) > 0; flash.setAttribute('opacity', on ? .16 : 0); gl.setAttribute('opacity', on ? .9 : .2); gl.setAttribute('fill', on ? '#7FB0FF' : '#FF8A8A'); }, t => t);
+  await said;
+  await tween(300, t => flash.setAttribute('opacity', 0));
+  g.remove();
 }
 function shuffleSome(a) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; }
 function doorAnimClose() { guard(tween(450, t => doorOpen(1 - t))); }
@@ -965,6 +1212,9 @@ function heal() {
   if (P.sym.ohr) P.sym.ohr.remove();
   if (P.sym.rot) P.sym.rot.remove();
   if (P.sym.blau) P.sym.blau.remove();
+  if (P.sym.backe) P.sym.backe.remove();
+  if (P.sym.bauch) P.sym.bauch.remove();
+  if (P.fleas) { P.fleas.forEach(f => f.e.remove()); P.fleas = null; }
   P.cheeks.forEach(c => { c.setAttribute('fill', '#F48A9A'); c.setAttribute('opacity', '.45'); });
 }
 async function cardToBook(k) {
@@ -983,19 +1233,28 @@ async function dayEnd() {
   MODE = 'end';
   clear($('tray')); $('clipL').style.display = 'none';
   const m = $('modal'); clear(m);
-  el('rect', { x: 0, y: 0, width: 1200, height: 900, fill: '#2C3C78', opacity: .45 }, m);
-  const card = el('g', { transform: 'translate(600,420) scale(0)' }, m);
-  card.innerHTML = `<rect x="-280" y="-230" width="560" height="460" rx="40" fill="#24306A" filter="url(#sh)"/>
+  const mitStation = frei(SAVE.day).ausbau.station;
+  let card;
+  if (mitStation) {
+    card = stationSzene(true, SAVE.station, false);
+  } else {
+    el('rect', { x: 0, y: 0, width: 1200, height: 900, fill: '#2C3C78', opacity: .45 }, m);
+    card = el('g', { transform: 'translate(600,420) scale(0)' }, m);
+    card.innerHTML = `<rect x="-280" y="-230" width="560" height="460" rx="40" fill="#24306A" filter="url(#sh)"/>
     ${[...Array(14)].map(() => `<path d="${star(rnd(-250, 250), rnd(-200, 40), rnd(6, 12), rnd(3, 5))}" fill="#FFE27A" opacity="${rnd(.5, 1).toFixed(2)}"/>`).join('')}
     <g transform="translate(-160,-110)"><circle r="62" fill="#FFE9A8"/><circle cx="30" cy="-16" r="55" fill="#24306A"/></g>
     <g transform="translate(40,200) scale(.62)">${belleSVG()}</g>`;
+  }
+  const cy = mitStation ? 430 : 420;
   BELLE.bounce = 1;
-  await tween(500, t => card.setAttribute('transform', `translate(600,420) scale(${t})`), easeBack);
+  await tween(500, t => card.setAttribute('transform', `translate(600,${cy}) scale(${t})`), easeBack);
   burst(600, 300, 30);
   await say('feierabend');
+  if (mitStation && SAVE.station.length) { SFX.snore(); await say('station_nacht'); }
   const next = SAVE.day + 1, neu = neuAmTag(next);
-  const b = el('g', { class: 'btn', transform: 'translate(600,720) scale(0)' }, m, `<circle r="74" fill="#5BBF4A" stroke="#FFFFFF" stroke-width="10" filter="url(#sh)"/><path d="M-20 -34 L38 0 L-20 34Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="8" stroke-linejoin="round"/>`);
-  await tween(400, t => b.setAttribute('transform', `translate(600,720) scale(${t})`), easeBack);
+  const by = mitStation ? 800 : 720;
+  const b = el('g', { class: 'btn', transform: `translate(600,${by}) scale(0)` }, m, `<circle r="74" fill="#5BBF4A" stroke="#FFFFFF" stroke-width="10" filter="url(#sh)"/><path d="M-20 -34 L38 0 L-20 34Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="8" stroke-linejoin="round"/>`);
+  await tween(400, t => b.setAttribute('transform', `translate(600,${by}) scale(${t})`), easeBack);
   TITLE_PULSE = b;
   const r = RUN;
   const pressed = new Promise(res => b.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.yay(); res(); }));
@@ -1010,6 +1269,7 @@ async function dayEnd() {
 function onClip() {
   if (MODE !== 'exam' || !CUR) return;
   SFX.pop();
+  if (P.kontrolle) { say('kontrolle_start', { instr: true }); wiggle(CLIP.g); return; }
   if (!CLIP.n) { say('untersuchen', { instr: true }); wiggle(CLIP.g); return; }
   guard(openDiagnose());
 }
@@ -1017,17 +1277,19 @@ function wiggle(g) { const t0 = g.getAttribute('transform'); guard(tween(400, t 
 
 async function runExam(tool, fromX, fromY) {
   MODE = 'busy';
-  const dz = P.k, z = GERAETE[tool].ziel, [tx, ty] = zielXY(z);
+  const det = P.ks.find(k => BEFUND[tool][k]) || null;
+  const z = tool === 'lupe' && det && KRANK[det].ort ? KRANK[det].ort : GERAETE[tool].ziel, [tx, ty] = zielXY(z);
   // Gerät fliegt an seine Stelle
   const gh = el('g', {}, $('drag'), `<g transform="scale(1.05)">${toolIcon(tool)}</g>`);
   await tween(350, t => gh.setAttribute('transform', `translate(${lerp(fromX, tx + 20, t)},${lerp(fromY, ty - 10, t)})`));
-  const key = BEFUND[tool][dz] || BEFUND[tool]._;
-  const good = !!BEFUND[tool][dz];
+  const key = det ? BEFUND[tool][det] : BEFUND[tool]._;
+  const good = !!det;
   if (tool === 'roentgen') { gh.remove(); await xrayScan(); }
   else if (tool === 'stetho') { (good ? SFX.rattle : SFX.heart)(); }
-  else if (tool === 'thermo') { SFX.pick(); }
+  else if (tool === 'flohkamm') { for (let i = 0; i < 4; i++) setTimeout(SFX.rub, i * 140); }
+  else if (tool === 'ultraschall') { SFX.ultra(); }
   else SFX.pick();
-  const c = await showPopup(befundBild(tool, good));
+  const c = await showPopup(befundBild(tool, det));
   if (tool === 'thermo') animThermo(c, good);
   if (tool === 'stetho') animStetho(c, good);
   await say(key);
@@ -1035,6 +1297,7 @@ async function runExam(tool, fromX, fromY) {
   if (gh.isConnected) gh.remove();
   await hidePopup();
   if (!P.befunde[tool]) { P.befunde[tool] = 1; clipAdd(tool, good); SFX.pop(); }
+  if (good && P.kontrolle) { P.found = true; if (CUR && CUR.diagnosed) CUR.diagnosed(); return; }
   if (good) {
     P.found = true; CLIP.pulse = 1;
     if (!P.saidKlemm) { P.saidKlemm = true; MODE = 'exam'; await say('klemmbrett', { instr: true }); }
@@ -1055,15 +1318,16 @@ async function xrayScan() {
   await tween(250, t => { scr.setAttribute('opacity', .45 * (1 - t)); line.setAttribute('opacity', .9 * (1 - t)); });
   g.remove();
 }
-function befundBild(tool, good) {
-  const c = TIERE[P.a];
+function befundBild(tool, det) {
+  const c = TIERE[P.a], good = !!det;
   const fur = `<rect x="-160" y="-160" width="320" height="320" fill="${c.fur}"/>` + [...Array(40)].map(() => `<path d="M${rnd(-150, 150).toFixed(0)} ${rnd(-150, 150).toFixed(0)} q6 -10 12 0" stroke="${c.dark}" stroke-width="3" fill="none" opacity=".25"/>`).join('');
   switch (tool) {
     case 'lupe': {
       let s = fur;
-      if (P.k === 'splitter') s += `<path d="M-90 70 L30 -30" stroke="#8A5A2B" stroke-width="22" stroke-linecap="round"/><path d="M-90 70 L-20 12" stroke="#B07A45" stroke-width="8" stroke-linecap="round"/><circle cx="34" cy="-34" r="34" fill="#F27A7A" opacity=".35"/>`;
-      else if (P.k === 'schramme') s += `<path d="M-100 -40 L80 0 M-90 20 L90 60 M-70 80 L50 110" stroke="#E2575E" stroke-width="12" stroke-linecap="round"/>${[[-40, -10], [20, 30], [-60, 50], [50, -10], [0, 80], [-20, 10]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="${rnd(9, 14).toFixed(0)}" fill="#8B6A45"/>`).join('')}`;
-      else if (P.k === 'bruch') s += `<ellipse cx="0" cy="0" rx="120" ry="100" fill="#8E7CC3" opacity=".4"/><path d="M-130 -40 Q0 -80 130 -40 M-130 60 Q0 100 130 60" stroke="${c.dark}" stroke-width="6" fill="none" opacity=".5"/>`;
+      if (det === 'splitter') s += `<path d="M-90 70 L30 -30" stroke="#8A5A2B" stroke-width="22" stroke-linecap="round"/><path d="M-90 70 L-20 12" stroke="#B07A45" stroke-width="8" stroke-linecap="round"/><circle cx="34" cy="-34" r="34" fill="#F27A7A" opacity=".35"/>`;
+      else if (det === 'schramme') s += `<path d="M-100 -40 L80 0 M-90 20 L90 60 M-70 80 L50 110" stroke="#E2575E" stroke-width="12" stroke-linecap="round"/>${[[-40, -10], [20, 30], [-60, 50], [50, -10], [0, 80], [-20, 10]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="${rnd(9, 14).toFixed(0)}" fill="#8B6A45"/>`).join('')}`;
+      else if (det === 'bruch') s += `<ellipse cx="0" cy="0" rx="120" ry="100" fill="#8E7CC3" opacity=".4"/><path d="M-130 -40 Q0 -80 130 -40 M-130 60 Q0 100 130 60" stroke="${c.dark}" stroke-width="6" fill="none" opacity=".5"/>`;
+      else if (det === 'zecke') s += `<circle cx="0" cy="10" r="50" fill="#F27A7A" opacity=".3"/><g transform="translate(0,0) scale(6)">${krankBild('zecke').replace('scale(3.4)', 'scale(1)')}</g>`;
       else s += `<g transform="translate(0,20) scale(1.6)" fill="${c.light}" opacity=".6">${pawShape()}</g>`;
       return s + `<circle r="150" fill="#DDF3FF" opacity=".15"/><path d="M-110 -60 a130 130 0 0 1 60 -70" stroke="#FFF" stroke-width="14" fill="none" stroke-linecap="round" opacity=".7"/>`;
     }
@@ -1081,13 +1345,33 @@ function befundBild(tool, good) {
     case 'roentgen': {
       const bones = `<g fill="#EAF4FF"><rect x="-26" y="-150" width="52" height="160" rx="24"/><ellipse cx="0" cy="40" rx="62" ry="40"/>${[[-48, 90], [-17, 106], [17, 106], [48, 90]].map(([x, y]) => `<rect x="${x - 11}" y="${y - 24}" width="22" height="48" rx="11"/>`).join('')}</g>`;
       return `<rect x="-160" y="-160" width="320" height="320" fill="url(#gXray)"/>
-        <path d="M-90 -160 C-80 -40 -110 60 -70 160 L70 160 C110 60 80 -40 90 -160Z" fill="#5C7FB8" opacity=".35"/>${bones}
-        ${good ? `<path d="M-34 -70 L-8 -60 L-20 -46 L6 -36 L-4 -24 L30 -14" stroke="#F2575E" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="0" cy="-44" r="60" fill="none" stroke="#FFD84D" stroke-width="6" stroke-dasharray="14 10"/>` : ''}`;
+        <path d="M-90 -160 C-80 -40 -110 60 -70 160 L70 160 C110 60 80 -40 90 -160Z" fill="#5C7FB8" opacity=".35"/>${det === 'kontrolle' ? `<path d="M-100 -160 C-90 -40 -116 60 -80 160 L80 160 C116 60 90 -40 100 -160Z" fill="#DDE8F5" opacity=".25"/>` : ''}${bones}
+        ${det === 'bruch' ? `<path d="M-34 -70 L-8 -60 L-20 -46 L6 -36 L-4 -24 L30 -14" stroke="#F2575E" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="0" cy="-44" r="60" fill="none" stroke="#FFD84D" stroke-width="6" stroke-dasharray="14 10"/>` : ''}
+        ${det === 'kontrolle' ? `<path d="M-24 -44 L24 -40" stroke="#C8D8EE" stroke-width="4" opacity=".7"/><circle cx="96" cy="-96" r="34" fill="#5BBF4A"/><path d="M80 -96 l12 12 l20 -24" stroke="#FFF" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` : ''}`;
     }
     case 'ohrenspiegel':
       return `<rect x="-160" y="-160" width="320" height="320" fill="#2E1A1F"/>
         <circle r="130" fill="${good ? 'url(#gEarRed)' : 'url(#gEar)'}"/><circle r="40" fill="${good ? '#5A0E16' : '#5A1E2A'}" opacity=".8"/>
         <circle cx="-50" cy="-60" r="40" fill="#FFF8D0" opacity=".25"/>${good ? `<path d="M-80 30 q20 -10 40 0 M30 60 q20 -10 40 0 M40 -60 q16 -10 32 0" stroke="#FFB0B0" stroke-width="6" fill="none" stroke-linecap="round"/>` : ''}`;
+    case 'zahnspiegel': {
+      const tooth = (x, y, sc, bad) => `<g transform="translate(${x},${y}) scale(${sc})"><path d="M-26 -30 C-34 -8 -24 10 -18 36 C-14 46 -6 44 -4 30 C-2 18 2 18 4 30 C6 44 14 46 18 36 C24 10 34 -8 26 -30 C16 -40 8 -30 0 -32 C-8 -30 -16 -40 -26 -30Z" fill="#FFFFFF" stroke="#E6DCD2" stroke-width="3"/>
+        ${bad ? `<path d="M-6 -22 C-14 -12 -8 -2 4 -4 C12 -10 8 -20 -6 -22Z" fill="#4A2F25"/>` : `<path d="M-14 -20 q6 -6 12 0" stroke="#F2F7FA" stroke-width="4" fill="none"/>`}</g>`;
+      return `<rect x="-160" y="-160" width="320" height="320" fill="#B23A4A"/><ellipse cx="0" cy="40" rx="150" ry="110" fill="#E07A86"/>
+        <ellipse cx="0" cy="60" rx="70" ry="40" fill="#C2505E"/>
+        ${[-110, -55, 0, 55, 110].map((x, i) => tooth(x, -40 + Math.abs(x) * .3, .95, good && i === 3)).join('')}
+        ${good ? `<ellipse cx="55" cy="-58" rx="36" ry="16" fill="#F2575E" opacity=".45"/>` : `<path d="${star(-90, 80, 16, 6)}" fill="#FFF" opacity=".8"/>`}`;
+    }
+    case 'flohkamm': {
+      let s = fur + `<g transform="translate(0,-10) scale(3)">${toolIcon('flohkamm')}</g>`;
+      if (good) s += [[-60, 70, 1.2], [40, 90, 1], [90, 30, .8], [-20, 120, .9]].map(([x, y, sc]) => `<g transform="translate(${x},${y}) scale(${sc})"><ellipse rx="14" ry="10" fill="#2E1E18"/><circle cx="12" cy="-4" r="6" fill="#1E120E"/><path d="M-6 6 l-10 14 M2 8 l-4 14 M8 6 l10 12" stroke="#1E120E" stroke-width="3" stroke-linecap="round"/><path d="M-20 -14 q10 -20 24 -10" stroke="#FFF" stroke-width="3" fill="none" stroke-dasharray="4 4"/></g>`).join('');
+      else s += `<path d="${star(80, 90, 18, 7)}" fill="#FFF" opacity=".85"/><path d="${star(-70, 100, 12, 5)}" fill="#FFF" opacity=".7"/>`;
+      return s;
+    }
+    case 'ultraschall':
+      return `<rect x="-160" y="-160" width="320" height="320" fill="#151820"/>
+        <path d="M0 -150 L-150 110 Q0 170 150 110Z" fill="#3A404E"/>${[...Array(70)].map(() => `<circle cx="${rnd(-110, 110).toFixed(0)}" cy="${rnd(-60, 120).toFixed(0)}" r="${rnd(1.5, 4).toFixed(1)}" fill="#8E97A8" opacity="${rnd(.3, .8).toFixed(2)}"/>`).join('')}
+        <ellipse cx="0" cy="40" rx="90" ry="60" fill="none" stroke="#B9C2D2" stroke-width="5" opacity=".7"/>
+        ${good ? [[-30, 30, 26], [20, 50, 20], [40, 10, 16], [-50, 70, 14], [0, 0, 12]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#0E1016" stroke="#DDE3EE" stroke-width="3"/>`).join('') : `<path d="M-50 40 q25 -16 50 0 t50 0" stroke="#DDE3EE" stroke-width="4" fill="none" opacity=".6"/>`}`;
   }
   return '';
 }
@@ -1107,29 +1391,31 @@ function animStetho(c, good) {
 
 /* ----- Diagnose-Karten ----- */
 async function openDiagnose() {
-  MODE = 'diag'; MODAL_BUSY = false;
+  MODE = 'diag';
   const m = $('modal'); clear(m);
   const bg = el('rect', { x: 0, y: 0, width: 1200, height: 900, fill: '#2F4A44', opacity: 0 }, m);
   const unl = frei(SAVE.day).krank;
-  let opts = shuffleSome(unl.filter(k => k !== P.k)).slice(0, 2); opts.push(P.k); opts = shuffleSome(opts);
-  const n = opts.length, W = 300, gap = 40, x0 = 600 - ((n - 1) * (W + gap)) / 2;
+  const offen = P.ks.filter(k => !P.diag.includes(k));
+  let opts = shuffleSome(unl.filter(k => !P.ks.includes(k))).slice(0, offen.length > 1 ? 2 : 2).concat(offen);
+  opts = shuffleSome(opts);
+  const n = opts.length, W = n > 3 ? 250 : 300, H = n > 3 ? 340 : 400, gap = n > 3 ? 26 : 40, x0 = 600 - ((n - 1) * (W + gap)) / 2, sc = n > 3 ? .82 : 1;
   const cards = opts.map((k, i) => {
     const g = el('g', { class: 'btn', transform: `translate(${x0 + i * (W + gap)},470) scale(0)` }, m);
-    g.innerHTML = `<g class="hl" opacity="0"><rect x="-166" y="-216" width="332" height="432" rx="44" fill="#FFD84D"/></g>
-      <rect x="-150" y="-200" width="300" height="400" rx="34" fill="url(#gCard)" filter="url(#sh)"/>
-      <g transform="translate(0,-30)">${krankBild(k)}</g>
-      <text y="160" text-anchor="middle" font-size="34" fill="#5A8A7E">${{ splitter: 'Splitter', schramme: 'Schramme', fieber: 'Fieber', husten: 'Husten', bruch: 'Knochenbruch', ohren: 'Ohrenentzündung' }[k]}</text>`;
+    g.innerHTML = `<g class="hl" opacity="0"><rect x="${-W / 2 - 16}" y="${-H / 2 - 16}" width="${W + 32}" height="${H + 32}" rx="44" fill="#FFD84D"/></g>
+      <rect x="${-W / 2}" y="${-H / 2}" width="${W}" height="${H}" rx="34" fill="url(#gCard)" filter="url(#sh)"/>
+      <g transform="translate(0,${-30 * sc}) scale(${sc})">${krankBild(k)}</g>
+      <text y="${H / 2 - 40}" text-anchor="middle" font-size="${n > 3 ? 28 : 34}" fill="#5A8A7E">${KARTE[k]}</text>
+      <g class="ok" style="display:none"><circle cx="${W / 2 - 30}" cy="${-H / 2 + 30}" r="30" fill="#5BBF4A" stroke="#FFF" stroke-width="6"/><path d="M${W / 2 - 44} ${-H / 2 + 30} l10 10 l18 -20" stroke="#FFF" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>`;
     g._k = k; g._x = x0 + i * (W + gap);
     g.addEventListener('pointerdown', e => { e.stopPropagation(); chooseCard(g, cards); });
     return g;
   });
-  // Schließen
   const x = el('g', { class: 'btn', transform: 'translate(1110,150)' }, m, `<circle r="40" fill="#FFFFFF" filter="url(#shS)"/><path d="M-14 -14 L14 14 M14 -14 L-14 14" stroke="#9AA7AF" stroke-width="8" stroke-linecap="round"/>`);
   x.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.pop(); closeDiagnose(); });
-  const my = DIAG = { cards, chosen: false, r: RUN };
-  const alive = () => DIAG === my && !my.chosen && MODE === 'diag';
+  const my = DIAG = { cards, chosen: false, busy: false };
+  const alive = () => DIAG === my && !my.busy && MODE === 'diag';
   await tween(250, t => bg.setAttribute('opacity', .45 * t));
-  for (const c of cards) { if (!alive()) return; await tween(260, t => c.setAttribute('transform', `translate(${c._x},470) scale(${t})`), easeBack); }
+  for (const c of cards) { if (DIAG !== my) return; await tween(220, t => c.setAttribute('transform', `translate(${c._x},470) scale(${t})`), easeBack); }
   if (!alive()) return;
   await say('diagnose', { instr: true });
   for (const c of cards) {
@@ -1143,14 +1429,23 @@ async function openDiagnose() {
 }
 let DIAG = null;
 async function chooseCard(g, cards) {
-  if (!DIAG || DIAG.chosen || MODE !== 'diag') return;
-  DIAG.chosen = true; stopVoice();
+  if (!DIAG || DIAG.busy || MODE !== 'diag' || g._done) return;
+  DIAG.busy = true; stopVoice();
+  const my = DIAG;
   cards.forEach(c => c.querySelector('.hl').setAttribute('opacity', 0));
-  if (g._k === P.k) {
-    g.querySelector('.hl').setAttribute('opacity', 1);
+  if (P.ks.includes(g._k) && !P.diag.includes(g._k)) {
+    P.diag.push(g._k); g._done = true;
+    g.querySelector('.hl').setAttribute('opacity', 1); g.querySelector('.ok').style.display = '';
     SFX.yay(); burst(g._x, 470, 24); BELLE.bounce = 1;
     await guard(tween(300, t => g.setAttribute('transform', `translate(${g._x},470) scale(${1 + .08 * Math.sin(t * Math.PI)})`)));
-    await guard(say('richtig_' + P.k));
+    await guard(say('richtig_' + g._k));
+    if (DIAG !== my) return;
+    if (P.diag.length < P.ks.length) {
+      g.querySelector('.hl').setAttribute('opacity', 0);
+      my.busy = false;
+      await guard(say('noch_was', { instr: true }));
+      return;
+    }
     clear($('modal')); DIAG = null;
     CLIP.pulse = 0; clipReset();
     if (CUR && CUR.diagnosed) CUR.diagnosed();
@@ -1160,7 +1455,7 @@ async function chooseCard(g, cards) {
     await guard(tween(500, t => g.setAttribute('transform', `translate(${g._x + Math.sin(t * Math.PI * 6) * 14 * (1 - t)},470)`)));
     g.setAttribute('transform', t0);
     await guard(say('falsch', { instr: true }));
-    closeDiagnose();
+    if (DIAG === my) closeDiagnose();
   }
 }
 function closeDiagnose() { stopVoice(); clear($('modal')); DIAG = null; if (MODE === 'diag') MODE = 'exam'; V.last = 'untersuchen'; }
@@ -1168,7 +1463,7 @@ function closeDiagnose() { stopVoice(); clear($('modal')); DIAG = null; if (MODE
 /* =========================================================
    BEHANDELN
    ========================================================= */
-function curStep() { return KRANK[P.k].schritte[P.step]; }
+function curStep() { return P.steps[P.step]; }
 function stepOk() { if (P.stepDone) { const f = P.stepDone; P.stepDone = null; TRAY_HINT = null; f(); } }
 function placeTreat(item) {
   // Sichtbares Ergebnis am Tier
@@ -1178,6 +1473,8 @@ function placeTreat(item) {
     case 'pflaster': el('g', { transform: `translate(${lx},${ly}) rotate(-28) scale(.42)` }, host, toolIcon('pflaster')); break;
     case 'salbe': el('g', {}, host, `<ellipse cx="${lx}" cy="${ly}" rx="17" ry="11" fill="#FFFFFF" opacity=".85"/><ellipse cx="${lx - 5}" cy="${ly - 3}" rx="5" ry="3" fill="#FFF"/>`); break;
     case 'waschlappen': el('g', { transform: `translate(${lx},${ly + 6}) scale(.85,.6)` }, host, `<rect x="-44" y="-20" width="88" height="40" rx="12" fill="#8FD0F2" stroke="#5FA9D0" stroke-width="4"/>${[-26, -10, 6, 22].map(x => `<line x1="${x}" y1="-16" x2="${x}" y2="16" stroke="#B9E3F7" stroke-width="5"/>`).join('')}`); break;
+    case 'fuellung': if (P.sym.backe) P.sym.backe.remove(); el('path', { d: star(lx + 18, ly - 8, 14, 5), fill: '#FFD84D' }, P.ovHead); break;
+    case 'waermflasche': el('g', { transform: `translate(${lx},${ly}) scale(.6) rotate(-8)` }, P.ovTop, toolIcon('waermflasche')); break;
     case 'schal': el('g', {}, P.ovTop, `<path d="M-62 -146 Q0 -112 62 -146 L64 -124 Q0 -88 -64 -124Z" fill="#F2575E" stroke="#C93E45" stroke-width="3"/>
         ${[-44, -20, 4, 28, 50].map(x => `<rect x="${x}" y="${-140 + Math.abs(x) * .12}" width="9" height="24" fill="#FFF" opacity=".95"/>`).join('')}
         <path d="M24 -118 L16 -60 L42 -58 L46 -118Z" fill="#F2575E" stroke="#C93E45" stroke-width="3"/><rect x="18" y="-92" width="26" height="8" fill="#FFF"/>`); break;
@@ -1221,9 +1518,13 @@ ST.addEventListener('pointermove', e => {
     }
   } else if (st.art === 'ziehen') {
     const tip = [p.x, p.y + 36];
-    if (!DRAG.grab && dist(tip[0], tip[1], tx, ty) < 55) { DRAG.grab = true; SFX.pick(); P.sym.splitter.style.display = 'none'; DRAG.spl = el('g', {}, DRAG.gh, `<path d="M-12 26 L6 44" stroke="#8A5A2B" stroke-width="7" stroke-linecap="round"/>`); }
+    const sym = st.item === 'zeckenzange' ? P.sym.zecke : P.sym.splitter;
+    if (!DRAG.grab && dist(tip[0], tip[1], tx, ty) < 55) {
+      DRAG.grab = true; SFX.pick(); sym.style.display = 'none';
+      DRAG.spl = el('g', {}, DRAG.gh, st.item === 'zeckenzange' ? `<g transform="translate(0,34) scale(.8)">${krankBild('zecke').replace('scale(3.4)', 'scale(1)')}</g>` : `<path d="M-12 26 L6 44" stroke="#8A5A2B" stroke-width="7" stroke-linecap="round"/>`);
+    }
     if (DRAG.grab && dist(tip[0], tip[1], tx, ty) > 130) {
-      SFX.plop(); P.sym.splitter.remove(); if (P.sym.rot) P.sym.rot.setAttribute('opacity', .3);
+      SFX.plop(); sym.remove(); if (st.item === 'pinzette' && P.sym.rot) P.sym.rot.setAttribute('opacity', .3);
       flyAway(DRAG.gh); DRAG.gh = null; endDrag(true); stepOk();
     }
   }
@@ -1270,7 +1571,7 @@ function resolveDrop(x, y) {
   }
   if (st.art === 'reiben') { endDrag(false); if (P.prog > 0) { if (!V.speaking) guard(say('weiter_reiben')); } return; }
   if (st.art === 'ziehen') {
-    if (d.grab) { P.sym.splitter.style.display = ''; endDrag(false); guard(say('weiter_ziehen')); }
+    if (d.grab) { (st.item === 'zeckenzange' ? P.sym.zecke : P.sym.splitter).style.display = ''; endDrag(false); guard(say('weiter_ziehen')); }
     else endDrag(false);
     return;
   }
@@ -1299,8 +1600,10 @@ async function spoon(g, x, y, tx, ty) {
   g.remove();
   P.mO.style.display = 'none'; setMood(P.mood);
   await say(P.a + '_mmm', { who: 'tier' });
-  if (P.k === 'fieber') { if (P.sym.hitze) P.sym.hitze.setAttribute('opacity', .3); }
-  if (P.k === 'husten') P.cough = .3;
+  const it = curStep().item;
+  if (it === 'fiebersaft' && P.sym.hitze) P.sym.hitze.setAttribute('opacity', .3);
+  if (it === 'hustensaft') P.cough = .3;
+  if (it === 'tee' && P.sym.bauch) P.sym.bauch.setAttribute('opacity', .4);
   MODE = 'treat'; stepOk();
 }
 let DROPPER = null;
@@ -1327,6 +1630,14 @@ function tropfenTap() {
     }
   }));
 }
+function foam(n, area, host) {
+  // Schaumblasen (bleiben über Schritte hinweg in P.foam)
+  if (!P.foam) P.foam = el('g', {}, host || P.ovTop);
+  while (P.foam.childNodes.length < n) {
+    const [cx, cy, rx, ry] = area;
+    el('circle', { cx: (cx + rnd(-rx, rx)).toFixed(0), cy: (cy + rnd(-ry, ry)).toFixed(0), r: rnd(6, 13).toFixed(1), fill: '#FFFFFF', stroke: '#BFE3F5', 'stroke-width': 2, opacity: .92 }, P.foam);
+  }
+}
 function rubVisual(item, k) {
   if (item === 'tupfer' && P.sym.dreck) { P.sym.dreck.setAttribute('opacity', 1 - k); P.sym.kratzer.setAttribute('opacity', 1 - k * .5); }
   if (item === 'gips') {
@@ -1335,6 +1646,24 @@ function rubVisual(item, k) {
       ${[-100, -84, -68, -52].map(y => `<path d="M-84 ${y} q20 8 40 -2" stroke="#D5DDE4" stroke-width="3" fill="none"/>`).join('')}`);
     P.gips.setAttribute('opacity', (.15 + .85 * k).toFixed(2));
     if (k >= 1 && P.sym.blau) P.sym.blau.remove();
+  }
+  if (item === 'gipsschere' && P.gips) {
+    P.gips.setAttribute('opacity', (1 - k).toFixed(2));
+    if (P.gipsSticker) P.gipsSticker.setAttribute('opacity', (1 - k).toFixed(2));
+    if (k >= 1) { P.gips.remove(); P.gips = null; if (P.gipsSticker) P.gipsSticker.remove(); }
+  }
+  if (item === 'zahnbuerste') {
+    foam(Math.round(k * 9), [0, -166, 30, 10], P.ovHead);
+    if (k >= 1) { P.foam.remove(); P.foam = null; }
+  }
+  if (item === 'shampoo') {
+    foam(Math.round(k * 34), [0, -100, 70, 80]);
+    if (P.fleas) P.fleas.forEach(f => f.e.setAttribute('opacity', (1 - k).toFixed(2)));
+    if (k >= 1 && P.fleas) { P.fleas.forEach(f => f.e.remove()); P.fleas = null; }
+  }
+  if (item === 'handtuch' && P.foam) {
+    P.foam.setAttribute('opacity', (1 - k).toFixed(2));
+    if (k >= 1) { P.foam.remove(); P.foam = null; }
   }
 }
 
@@ -1352,19 +1681,21 @@ function openBook() {
   b.innerHTML = `<rect x="70" y="120" width="1060" height="700" rx="40" fill="#F57F87" filter="url(#sh)"/><rect x="92" y="140" width="1016" height="660" rx="28" fill="#FFF8EE"/>
     <line x1="600" y1="150" x2="600" y2="790" stroke="#F2D5C2" stroke-width="6"/>`;
   const entries = KRANK_ORDER.map(k => ({ id: 'k_' + k, k, art: 'k' })).concat(GERAET_ORDER.map(t => ({ id: 'g_' + t, k: t, art: 'g' })));
+
   entries.forEach((en, i) => {
-    const col = i < 6 ? i % 3 : (i - 6) % 3, row = i < 6 ? Math.floor(i / 3) : Math.floor((i - 6) / 3);
-    const x = (i < 6 ? 186 : 696) + col * 160, y = 316 + row * 262;
+    const nk = KRANK_ORDER.length, links = i < nk, j = links ? i : i - nk;
+    const col = links ? j % 4 : j % 3, row = links ? Math.floor(j / 4) : Math.floor(j / 3);
+    const x = links ? 168 + col * 122 : 728 + col * 128, y = 252 + row * 196;
     const have = SAVE.buch[en.id], neu = have === 2;
     const g = el('g', { class: 'btn', transform: `translate(${x},${y})` }, m);
-    g.innerHTML = `<rect x="-72" y="-110" width="144" height="220" rx="22" fill="${have ? '#FFFFFF' : '#ECE7E0'}" stroke="${neu ? '#FFD84D' : '#E9D9C9'}" stroke-width="${neu ? 8 : 4}"/>
-      ${have ? `<g transform="translate(0,-4) scale(${en.art === 'k' ? .62 : 1.2})">${en.art === 'k' ? krankBild(en.k) : toolIcon(en.k)}</g>` : `<text y="26" text-anchor="middle" font-size="80" fill="#CFC6BB">?</text>`}`;
+    g.innerHTML = `<rect x="-54" y="-84" width="108" height="168" rx="18" fill="${have ? '#FFFFFF' : '#ECE7E0'}" stroke="${neu ? '#FFD84D' : '#E9D9C9'}" stroke-width="${neu ? 7 : 4}"/>
+      ${have ? `<g transform="translate(0,-2) scale(${en.art === 'k' ? .47 : .92})">${en.art === 'k' ? krankBild(en.k) : toolIcon(en.k)}</g>` : `<text y="22" text-anchor="middle" font-size="66" fill="#CFC6BB">?</text>`}`;
     g.addEventListener('pointerdown', e => {
       e.stopPropagation(); SFX.pop();
       if (!have) { guard(say('buch_zu')); return; }
       if (SAVE.buch[en.id] === 2) { SAVE.buch[en.id] = 1; save(); g.querySelector('rect').setAttribute('stroke', '#E9D9C9'); g.querySelector('rect').setAttribute('stroke-width', 4); }
       m.querySelectorAll('.bookHl').forEach(n => n.remove());
-      el('rect', { class: 'bookHl', x: -80, y: -118, width: 160, height: 236, rx: 26, fill: 'none', stroke: '#5BBF4A', 'stroke-width': 8 }, g);
+      el('rect', { class: 'bookHl', x: -61, y: -91, width: 122, height: 182, rx: 22, fill: 'none', stroke: '#5BBF4A', 'stroke-width': 8 }, g);
       guard(say(en.art === 'k' ? 'buch_' + en.k : GERAETE[en.k].buch));
     });
   });
@@ -1407,9 +1738,16 @@ function frame(now) {
     P.body.setAttribute('transform', `translate(0,-10) scale(1,${1 + br}) translate(0,10)`);
     P.head.setAttribute('transform', `translate(0,${hj + Math.sin(TIME * 2.4) * 1.5}) rotate(${P.mood === 'sick' ? -4 + Math.sin(TIME) * 1.5 : Math.sin(TIME * 3) * 4} 0 -150)`);
     P.tail.setAttribute('transform', `rotate(${Math.sin(TIME * (P.mood === 'happy' ? 8 : 1.5)) * (P.mood === 'happy' ? 10 : 3)} 60 -40)`);
-    pBlinkT -= dt; const pb = pBlinkT < 0 ? .12 : (P.mood === 'sick' && P.k === 'fieber' && !P.healed ? .6 : 1); if (pBlinkT < -.13) pBlinkT = rnd(2, 4.5);
+    pBlinkT -= dt; const pb = pBlinkT < 0 ? .12 : (P.mood === 'sick' && has('fieber') && !P.healed ? .6 : 1); if (pBlinkT < -.13) pBlinkT = rnd(2, 4.5);
     P.eyes.setAttribute('transform', `translate(0,-218) scale(1,${pb}) translate(0,218)`);
-    if (P.k === 'splitter' || P.k === 'schramme' || P.k === 'bruch') P.armR.setAttribute('transform', P.healed ? '' : `translate(0,${-6 + Math.sin(TIME * 3) * 2})`);
+    if (has('splitter') || has('schramme') || has('bruch')) P.armR.setAttribute('transform', P.healed ? '' : `translate(0,${-6 + Math.sin(TIME * 3) * 2})`);
+    if (P.fleas) for (const f of P.fleas) {
+      if (f.x1 === undefined) { f.x0 = f.x1 = f.x; f.y0 = f.y1 = f.y; f.d = rnd(.5, 1.4); }
+      f.t += dt;
+      if (f.t > f.d) { f.t = 0; f.d = rnd(.5, 1.4); f.x0 = f.x1; f.y0 = f.y1; f.x1 = rnd(-62, 62); f.y1 = rnd(-175, -30); }
+      const k = Math.min(1, f.t / .22);
+      f.e.setAttribute('cx', lerp(f.x0, f.x1, k).toFixed(1)); f.e.setAttribute('cy', (lerp(f.y0, f.y1, k) - Math.sin(k * Math.PI) * 26).toFixed(1));
+    }
     // Sprechen
     const talking = V.speaking && V.who === 'tier';
     talkT += dt;
@@ -1449,6 +1787,8 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) naviga
 window.__T = {
   get mode() { return MODE; }, get save() { return SAVE; }, get P() { return P; }, get V() { return V; },
   zielXY, frei, KRANK, SEAT, PS, GERAETE, get step() { return P && P.stepDone ? curStep() : null; },
+  endBtn() { const b = [...document.querySelectorAll('#modal g.btn')].pop(); if (!b) return null; const m = /translate\(([-\d.]+),([-\d.]+)\)/.exec(b.getAttribute('transform')); return [+m[1], +m[2]]; },
+  get diagBusy() { return !DIAG || DIAG.busy; },
   cards() { return [...document.querySelectorAll('#modal g.btn')].filter(g => g._k).map(g => [g._k, g._x, 470]); },
   slotXY(it) { const s = traySlot(it); return s ? [s._x, s._y] : null; },
 };

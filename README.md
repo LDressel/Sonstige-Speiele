@@ -83,15 +83,27 @@ Jeden Tag kommen kranke Tiere in ihre Praxis, und Belle (also das Kind) findet h
    Dort erklärt die Stimme jede Krankheit und jedes Gerät kindgerecht.
 
 ### Neue Geräte und Krankheiten
-| Tag | Neues Gerät | Neue Krankheit | Behandlung |
-|---|---|---|---|
-| 1 | Lupe, Thermometer | Splitter, Schramme, Fieber | Pinzette + Pflaster · Tupfer + Salbe + Pflaster · Fiebersaft + Waschlappen |
-| 2 | Stethoskop | Husten | Hustensaft + Schal |
-| 3 | Röntgengerät | Knochenbruch | Gips wickeln + Sticker |
-| 4 | Ohrenspiegel | Ohrenentzündung | Ohrentropfen + Watte |
-| ab 5 | – | alles gemischt | |
+| Tag | Neu | Behandlung |
+|---|---|---|
+| 1 | Lupe, Thermometer · Splitter, Schramme, Fieber | Pinzette + Pflaster · Tupfer + Salbe + Pflaster · Fiebersaft + Waschlappen |
+| 2 | Stethoskop · Husten | Hustensaft + Schal |
+| 3 | Röntgengerät · Knochenbruch · **Leuchtkasten an der Wand** | Gips wickeln + Sticker |
+| 4 | Ohrenspiegel · Ohrenentzündung | Ohrentropfen + Watte |
+| 5 | Zahnspiegel · Loch im Zahn | Zahnbürste + Füllung |
+| 6 | Zecke (mit der Lupe finden) · **Krankenstation** | Zeckenzange + Salbe |
+| 7 | Flohkamm · Flöhe | Flohshampoo + Handtuch |
+| 8 | Ultraschall · Bauchweh | Kamillentee + Wärmflasche |
+| 9 | Patienten mit **zwei Krankheiten** gleichzeitig | beide Behandlungen nacheinander |
+| 10 | **Notfälle** mit Blaulicht und Sirene | |
+| ab 11 | alles gemischt, 5–6 Patienten am Tag | |
 
-Neue Krankheiten kommen in `tierarzt/index.html` in die Listen `KRANK`, `BEFUND` und `FREI`,
+Außerdem:
+- **Nachkontrolle:** Wer einen Gips bekommen hat, kommt zwei Tage später wieder. Röntgenbild machen,
+  dann den Gips mit der Gipsschere abnehmen.
+- **Krankenstation (ab Tag 6):** Tiere mit Fieber, Knochenbruch oder Bauchweh bleiben über Nacht.
+  Abends schlafen sie in den Betten, am nächsten Morgen verabschieden sie sich.
+
+Neue Krankheiten kommen in `tierarzt/index.html` in die Listen `KRANK`, `BEFUND`, `KARTE` und `FREI`,
 die Sprechtexte in `tierarzt/texte.json` (danach Sprachdateien neu erzeugen, siehe unten).
 
 ### Für Eltern
