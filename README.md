@@ -116,7 +116,8 @@ die Sprechtexte in `tierarzt/texte.json` (danach Sprachdateien neu erzeugen, sie
   Der Lautsprecher-Knopf oben rechts wiederholt die letzte Anweisung. In den Minispielen zeigt beim ersten Mal
   (und wenn lange nichts passiert) eine Hand, wie es geht.
 - Kein Game Over, keine Werbung, keine Daten werden gesendet. Der Spielstand wird nach jedem Patienten gespeichert.
-- Auf dem Titelbild setzt der kleine Pfeil-Knopf oben rechts das Spiel zurück (zweimal tippen).
+- Auf dem Titelbild setzt der kleine Pfeil-Knopf oben rechts das Spiel zurück: 3 Sekunden gedrückt halten, dann eine
+  kleine Rechenaufgabe lösen (Eltern-Sperre). Der alte Spielstand wird vorher noch einmal gesichert.
 
 ## Sprachdateien erzeugen (`werkzeuge/sprache/`)
 
