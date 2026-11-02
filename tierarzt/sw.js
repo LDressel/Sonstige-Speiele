@@ -1,6 +1,6 @@
 // Offline-Unterstützung: Spiel und alle Sprachdateien werden beim ersten Öffnen gespeichert,
 // danach läuft das Spiel auch ohne Internet. Neue Version: Zahl bei CACHE erhöhen.
-const CACHE = 'tierarzt-v3';
+const CACHE = 'tierarzt-v4';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png', './ton/liste.json'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(async c => {
