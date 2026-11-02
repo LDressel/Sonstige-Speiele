@@ -91,7 +91,7 @@ Jeden Tag kommen kranke Tiere in ihre Praxis, und Belle (also das Kind) findet h
 | 3 | Röntgengerät · Knochenbruch · **Leuchtkasten an der Wand** | Knochen einrichten (schieben und drehen) · Gips im Kreis wickeln + Sticker |
 | 4 | Ohrenspiegel · Ohrenentzündung | Ohrentropfen im richtigen Moment fallen lassen + Watte |
 | 5 | Zahnspiegel · Loch im Zahn | Bohren (rechtzeitig loslassen) + Füllung |
-| 6 | Zecke (mit der Lupe finden) · **Krankenstation** | Zecke herausdrehen + Salbe |
+| 6 | Zecke (mit der Lupe finden) · **Krankenstation** | Zecke nah an der Haut greifen und langsam gerade herausziehen + Salbe |
 | 7 | Flohkamm · Flöhe | Flohshampoo · Flöhe fangen (antippen) · Handtuch |
 | 8 | Ultraschall · Bauchweh | Kräutertee nach Rezept (Merkspiel) · Wärmflasche befüllen |
 | 9 | Patienten mit **zwei Krankheiten** gleichzeitig | beide Behandlungen nacheinander |

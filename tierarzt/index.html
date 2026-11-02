@@ -2155,47 +2155,64 @@ MG.bohren = m => {
   };
 };
 
-/* Zecke: festhalten, im Kreis drehen bis sie grün leuchtet, dann herausziehen */
+/* Zecke: dicht an der Haut greifen und langsam, gerade nach oben herausziehen.
+   Zu schnell, schief gezogen oder am Bauch gepackt zählt als Fehler. */
 MG.zecke = m => {
-  m.c.innerHTML = furBg(P.a) + `<circle cx="0" cy="0" r="90" fill="#F27A7A" opacity=".35"/>`;
-  const glow = el('circle', { r: 72, fill: 'none', stroke: '#5BBF4A', 'stroke-width': 10, opacity: 0 }, m.c);
-  const tk = el('g', {}, m.c, `<g transform="scale(5)">${krankBild('zecke').replace('scale(3.4)', 'scale(1)')}</g>`);
-  const tong = el('line', { x1: 0, y1: 0, stroke: '#3E9C6E', 'stroke-width': 12, 'stroke-linecap': 'round', opacity: 0 }, m.ui);
-  const turns = 2 + Math.round(lvl()), need = turns * 2 * Math.PI;
-  let grab = false, acc = 0, la = null, dir = 0, loose = false;
-  m.pips(turns, 0);
+  const c = TIERE[P.a], SK = 60, L = 170, vmax = lerp(520, 300, lvl()), side = lerp(55, 32, lvl());
+  m.c.innerHTML = `<rect x="-400" y="-300" width="800" height="600" fill="#EAF7F2"/>`;
+  const skin = el('path', { fill: c.fur, stroke: c.dark, 'stroke-width': 6 }, m.c);
+  el('g', {}, m.c, [...Array(40)].map(() => `<path d="M${rnd(-390, 390).toFixed(0)} ${rnd(SK + 30, 290).toFixed(0)} q8 -12 16 0" stroke="${c.dark}" stroke-width="4" fill="none" opacity=".22"/>`).join(''));
+  el('path', { d: `M0 ${SK - 70} V-240 M-18 -216 L0 -244 L18 -216`, stroke: '#5BBF4A', 'stroke-width': 8, fill: 'none', 'stroke-dasharray': '16 12', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: .8 }, m.c);
+  const tk = el('g', {}, m.c, `<g transform="rotate(180) scale(5)">${krankBild('zecke').replace('scale(3.4)', 'scale(1)')}</g>`);
+  const ring = el('circle', { r: 28, fill: 'none', stroke: '#FFD84D', 'stroke-width': 6, 'stroke-dasharray': '10 7' }, m.c);
+  const tong = el('g', { opacity: 0 }, m.ui, `<g transform="translate(0,-48) scale(1.2)">${toolIcon('zeckenzange')}</g>`);
+  const meter = el('g', { transform: 'translate(334,10)' }, m.ui);
+  el('rect', { x: -22, y: -150, width: 44, height: 300, rx: 22, fill: '#FFFFFF', stroke: '#C9D5DE', 'stroke-width': 4 }, meter);
+  const mFill = el('rect', { x: -14, y: 142, width: 28, height: 0, rx: 14, fill: '#5BBF4A' }, meter);
+  el('path', { d: 'M-30 -85 h60', stroke: '#F2575E', 'stroke-width': 6, 'stroke-linecap': 'round' }, meter);
+  let grab = false, pulled = 0, y0 = 0, x0 = 0, sp = 0, dx = 0, out = false;
+  const h = () => pulled * .32;   // so weit hebt sich die Haut mit
+  const grip = () => [dx, SK - 6 - h()];
+  function render() {
+    const b = h();
+    skin.setAttribute('d', `M-420 ${SK} L-130 ${SK} C-60 ${SK} -45 ${SK - b} 0 ${SK - b} C45 ${SK - b} 60 ${SK} 130 ${SK} L420 ${SK} L420 320 L-420 320Z`);
+    if (out) return;
+    tk.setAttribute('transform', `translate(${dx * .4},${SK - 48 - b}) rotate(${dx * .25})`);
+    const [gx, gy] = grip(); ring.setAttribute('cx', gx); ring.setAttribute('cy', gy);
+    tong.setAttribute('transform', `translate(${gx},${gy})`);
+  }
+  function slip(x, y) { m.fail(x, y); grab = false; sp = 0; dx = 0; pulled = Math.max(0, pulled - 60); tong.setAttribute('opacity', 0); ring.setAttribute('opacity', 1); render(); }
+  render();
   return {
-    down(p) { if (dist(p.x, p.y, 0, 0) < 85) { grab = true; la = null; SFX.pick(); tong.setAttribute('opacity', .9); tong.setAttribute('x2', p.x); tong.setAttribute('y2', p.y); } },
+    down(p) {
+      if (out) return;
+      const [gx, gy] = grip();
+      if (dist(p.x, p.y, gx, gy) < 42) { grab = true; y0 = p.y + pulled; x0 = p.x; sp = 0; SFX.pick(); tong.setAttribute('opacity', 1); ring.setAttribute('opacity', 0); }
+      else if (dist(p.x, p.y, 0, SK - 72 - h()) < 50) m.fail(p.x, p.y - 60);   // am dicken Bauch gepackt: nicht drücken!
+    },
     move(p) {
       if (!grab) return;
-      tong.setAttribute('x2', p.x); tong.setAttribute('y2', p.y);
-      const r = Math.hypot(p.x, p.y);
-      if (r > 240) {
-        grab = false; tong.setAttribute('opacity', 0);
-        if (loose) { SFX.plop(); guard(tween(450, t => { tk.setAttribute('transform', `translate(${p.x * t},${p.y * t}) rotate(${acc * 57 * dir})`); tk.setAttribute('opacity', 1 - t); })); glow.remove(); m.win(); }
-        else { m.fail(0, -120); tk.setAttribute('transform', `rotate(${acc * 57 * dir})`); }   // noch fest: rutscht ab
-        return;
+      dx = clamp(p.x - x0, -80, 80);
+      if (Math.abs(p.x - x0) > side) { slip(p.x, p.y - 50); return; }   // schief gezogen
+      const np = clamp(y0 - p.y, pulled, L);
+      sp = sp * .6 + (np - pulled) / p.dt * .4;
+      if (sp > vmax) { slip(0, SK - 140); return; }   // zu schnell: rutscht ab
+      pulled = np; render();
+      if (pulled >= L) {
+        grab = false; out = true; SFX.plop(); tong.setAttribute('opacity', 0);
+        const y1 = SK - 48 - h();
+        guard(tween(450, t => { tk.setAttribute('transform', `translate(0,${y1 - t * 160})`); tk.setAttribute('opacity', 1 - t); }));
+        guard(tween(300, t => { pulled = L * (1 - t); render(); }));
+        m.win();
       }
-      if (!loose && r > 45) {
-        const an = Math.atan2(p.y, p.x);
-        if (la !== null) {
-          const da = wrapA(an - la);
-          if (!dir && Math.abs(da) > .02) dir = Math.sign(da);
-          if (Math.sign(da) === dir) {
-            acc += Math.abs(da); m.pips(turns, Math.min(turns, Math.floor(acc / (2 * Math.PI))));
-            if (acc >= need) { loose = true; glow.setAttribute('opacity', .9); SFX.ding(); }
-          }
-        }
-        la = an;
-      } else if (r <= 45) la = null;
-      tk.setAttribute('transform', `translate(${clamp(p.x, -30, 30) * .3},${clamp(p.y, -30, 30) * .3}) rotate(${(acc * 57 * (dir || 1)).toFixed(1)})`);
     },
-    up() { grab = false; la = null; tong.setAttribute('opacity', 0); },
-    demo() {
-      const k = [kf(0, 0, 0, 0), kf(0, 0, 1, 400)];
-      if (!loose) { k.push(kf(110, 0, 1, 300)); const n = Math.ceil(((need - acc) / (2 * Math.PI) + .25) * 8); for (let i = 1; i <= n; i++) { const an = i / 8 * 2 * Math.PI; k.push(kf(110 * Math.cos(an), 110 * Math.sin(an), 1, 170)); } }
-      k.push(kf(290, -40, 0, 600), kf(290, -40, 0, 300)); return k;
+    up() { if (grab) { grab = false; dx = 0; tong.setAttribute('opacity', 0); ring.setAttribute('opacity', 1); render(); } },
+    tick(dt) {
+      sp *= Math.max(0, 1 - dt * 5);
+      const k = clamp(sp / vmax / 1.25, 0, 1), hh = 284 * k;
+      mFill.setAttribute('y', 142 - hh); mFill.setAttribute('height', hh); mFill.setAttribute('fill', sp > vmax * .75 ? '#F2A33A' : '#5BBF4A');
     },
+    demo() { if (out) return null; const [gx, gy] = grip(); return [kf(gx, gy, 0, 0), kf(gx, gy, 1, 500), kf(gx, gy - (L - pulled) - 30, 0, 3200), kf(gx, gy - (L - pulled) - 30, 0, 300)]; },
   };
 };
 
