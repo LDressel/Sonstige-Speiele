@@ -77,25 +77,29 @@ Jeden Tag kommen kranke Tiere in ihre Praxis, und Belle (also das Kind) findet h
 1. Ein Tier kommt durch die Tür, hüpft auf den Behandlungstisch und erzählt, was ihm wehtut.
 2. **Untersuchen:** Ein Gerät aus dem roten Arztkoffer auf das Tier ziehen. Im großen Kreis sieht man, was das Gerät zeigt.
    Jeder Befund landet auf Belles Klemmbrett (rot = da stimmt was nicht, grün = alles gut).
-3. **Diagnose:** Aufs Klemmbrett tippen und die richtige Karte auswählen. Falsch geraten ist nicht schlimm – dann noch mal untersuchen.
-4. **Behandeln:** Die Hilfsmittel in der richtigen Reihenfolge benutzen (ziehen, reiben, tropfen …).
-5. Das Tier ist gesund, bedankt sich und seine Karte kommt ins **Patientenbuch** (Herz-Buch oben rechts).
-   Dort erklärt die Stimme jede Krankheit und jedes Gerät kindgerecht.
+3. **Diagnose:** Aufs Klemmbrett tippen und die richtige Karte auswählen (ab Tag 3 vier Karten). Falsch geraten kostet einen Stern.
+4. **Behandeln:** Das richtige Hilfsmittel aus dem Koffer auf das Tier ziehen. Ab Tag 2 liegen auch falsche Sachen im Koffer.
+   Die meisten Behandlungen sind ein **Minispiel** in einem großen Fenster (siehe unten).
+5. Das Tier ist gesund, bedankt sich und es gibt **1–3 Sterne** (3 = ohne Fehler). Die Sterne des Tages stehen oben in der Leiste
+   und am Feierabend. Die Karte kommt ins **Patientenbuch** (Herz-Buch oben rechts), dort erklärt die Stimme alles kindgerecht.
 
 ### Neue Geräte und Krankheiten
-| Tag | Neu | Behandlung |
+| Tag | Neu | Behandlung (Minispiel) |
 |---|---|---|
-| 1 | Lupe, Thermometer · Splitter, Schramme, Fieber | Pinzette + Pflaster · Tupfer + Salbe + Pflaster · Fiebersaft + Waschlappen |
-| 2 | Stethoskop · Husten | Hustensaft + Schal |
-| 3 | Röntgengerät · Knochenbruch · **Leuchtkasten an der Wand** | Gips wickeln + Sticker |
-| 4 | Ohrenspiegel · Ohrenentzündung | Ohrentropfen + Watte |
-| 5 | Zahnspiegel · Loch im Zahn | Zahnbürste + Füllung |
-| 6 | Zecke (mit der Lupe finden) · **Krankenstation** | Zeckenzange + Salbe |
-| 7 | Flohkamm · Flöhe | Flohshampoo + Handtuch |
-| 8 | Ultraschall · Bauchweh | Kamillentee + Wärmflasche |
+| 1 | Lupe, Thermometer · Splitter, Schramme, Fieber | Splitter langsam herausziehen + Pflaster · Schmutz wegwischen ohne die Wunde zu berühren + Salbe + Pflaster · Fiebersaft genau dosieren + Waschlappen |
+| 2 | Stethoskop · Husten | Hustensaft dosieren · Inhalieren (im Takt tippen) + Schal |
+| 3 | Röntgengerät · Knochenbruch · **Leuchtkasten an der Wand** | Knochen einrichten (schieben und drehen) · Gips im Kreis wickeln + Sticker |
+| 4 | Ohrenspiegel · Ohrenentzündung | Ohrentropfen im richtigen Moment fallen lassen + Watte |
+| 5 | Zahnspiegel · Loch im Zahn | Bohren (rechtzeitig loslassen) + Füllung |
+| 6 | Zecke (mit der Lupe finden) · **Krankenstation** | Zecke herausdrehen + Salbe |
+| 7 | Flohkamm · Flöhe | Flohshampoo · Flöhe fangen (antippen) · Handtuch |
+| 8 | Ultraschall · Bauchweh | Kräutertee nach Rezept (Merkspiel) · Wärmflasche befüllen |
 | 9 | Patienten mit **zwei Krankheiten** gleichzeitig | beide Behandlungen nacheinander |
-| 10 | **Notfälle** mit Blaulicht und Sirene | |
-| ab 11 | alles gemischt, 5–6 Patienten am Tag | |
+| 10 | **Notfälle** mit Blaulicht, Sirene und **Zeitbalken** (zu langsam = ein Stern weniger) | |
+| ab 11 | alles gemischt, 6 Patienten am Tag | |
+
+Die Minispiele werden mit jedem Tag schwerer (bis Tag 12): schmalere Zielbereiche, schnellere Zeiger und Flöhe,
+mehr Schmutzflecken, längere Kräuterrezepte, zwei Splitter, Knochen, die man auch drehen muss.
 
 Außerdem:
 - **Nachkontrolle:** Wer einen Gips bekommen hat, kommt zwei Tage später wieder. Röntgenbild machen,
@@ -108,7 +112,9 @@ die Sprechtexte in `tierarzt/texte.json` (danach Sprachdateien neu erzeugen, sie
 
 ### Für Eltern
 - Die Stimme kommt aus fertigen Sprachdateien (`tierarzt/ton/`), nicht mehr aus der Vorlesestimme des iPads.
-  Der Lautsprecher-Knopf oben rechts wiederholt die letzte Anweisung.
+  Sie erklärt jede Krankheit, jedes Gerät und jedes Minispiel **nur beim ersten Mal**, danach bleibt sie still.
+  Der Lautsprecher-Knopf oben rechts wiederholt die letzte Anweisung. In den Minispielen zeigt beim ersten Mal
+  (und wenn lange nichts passiert) eine Hand, wie es geht.
 - Kein Game Over, keine Werbung, keine Daten werden gesendet. Der Spielstand wird nach jedem Patienten gespeichert.
 - Auf dem Titelbild setzt der kleine Pfeil-Knopf oben rechts das Spiel zurück (zweimal tippen).
 

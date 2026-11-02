@@ -43,6 +43,7 @@ svg text{font-family:ui-rounded,"SF Pro Rounded","Arial Rounded MT Bold","Nunito
   <clipPath id="clipPop"><circle cx="0" cy="0" r="150"/></clipPath>
   <clipPath id="clipWin"><rect x="312" y="132" width="216" height="216" rx="18"/></clipPath>
   <clipPath id="clipDoor"><rect x="64" y="318" width="152" height="462" rx="14"/></clipPath>
+  <clipPath id="clipMini"><rect x="-384" y="-284" width="768" height="568" rx="34"/></clipPath>
 </defs>
 <g id="room"></g>
 <g id="doorL"></g>
@@ -54,6 +55,8 @@ svg text{font-family:ui-rounded,"SF Pro Rounded","Arial Rounded MT Bold","Nunito
 <g id="hud"></g>
 <g id="tray"></g>
 <g id="pop"></g>
+<g id="mini"></g>
+<g id="fx2" pointer-events="none"></g>
 <g id="modal"></g>
 <g id="drag" pointer-events="none"></g>
 </svg>
@@ -219,19 +222,20 @@ const BEFUND = {
   ultraschall: { bauchweh: 'befund_ultra_bauchweh', _: 'befund_ultra_ok' },
 };
 // station: Patient bleibt über Nacht auf der Krankenstation
+// art 'mini': Behandlung als Minispiel im großen Fenster (mg = welches, siehe MG)
 const KRANK = {
-  splitter: { geraet: 'lupe', ort: 'pfote', schritte: [{ item: 'pinzette', art: 'ziehen', ziel: 'pfote' }, { item: 'pflaster', art: 'drauf', ziel: 'pfote' }] },
-  schramme: { geraet: 'lupe', ort: 'pfote', schritte: [{ item: 'tupfer', art: 'reiben', ziel: 'pfote', menge: 750 }, { item: 'salbe', art: 'drauf', ziel: 'pfote' }, { item: 'pflaster', art: 'drauf', ziel: 'pfote' }] },
-  fieber:   { geraet: 'thermo', station: true, schritte: [{ item: 'fiebersaft', art: 'loeffel', ziel: 'mund' }, { item: 'waschlappen', art: 'drauf', ziel: 'stirn' }] },
-  husten:   { geraet: 'stetho', schritte: [{ item: 'hustensaft', art: 'loeffel', ziel: 'mund' }, { item: 'schal', art: 'drauf', ziel: 'hals' }] },
-  bruch:    { geraet: 'roentgen', ort: 'pfote', station: true, schritte: [{ item: 'gips', art: 'reiben', ziel: 'pfote', menge: 1100 }, { item: 'sticker', art: 'drauf', ziel: 'pfote' }] },
-  ohren:    { geraet: 'ohrenspiegel', schritte: [{ item: 'tropfen', art: 'tropfen', ziel: 'ohr', menge: 3 }, { item: 'watte', art: 'drauf', ziel: 'ohr' }] },
-  zahnweh:  { geraet: 'zahnspiegel', schritte: [{ item: 'zahnbuerste', art: 'reiben', ziel: 'mund', menge: 650 }, { item: 'fuellung', art: 'drauf', ziel: 'mund' }] },
-  zecke:    { geraet: 'lupe', ort: 'nacken', schritte: [{ item: 'zeckenzange', art: 'ziehen', ziel: 'nacken' }, { item: 'salbe', art: 'drauf', ziel: 'nacken' }] },
-  floh:     { geraet: 'flohkamm', schritte: [{ item: 'shampoo', art: 'reiben', ziel: 'brust', menge: 900 }, { item: 'handtuch', art: 'reiben', ziel: 'brust', menge: 700 }] },
-  bauchweh: { geraet: 'ultraschall', station: true, schritte: [{ item: 'tee', art: 'loeffel', ziel: 'mund' }, { item: 'waermflasche', art: 'drauf', ziel: 'bauch' }] },
+  splitter: { geraet: 'lupe', ort: 'pfote', schritte: [{ item: 'pinzette', art: 'mini', mg: 'splitter', ziel: 'pfote' }, { item: 'pflaster', art: 'drauf', ziel: 'pfote' }] },
+  schramme: { geraet: 'lupe', ort: 'pfote', schritte: [{ item: 'tupfer', art: 'mini', mg: 'dreck', ziel: 'pfote' }, { item: 'salbe', art: 'drauf', ziel: 'pfote' }, { item: 'pflaster', art: 'drauf', ziel: 'pfote' }] },
+  fieber:   { geraet: 'thermo', station: true, schritte: [{ item: 'fiebersaft', art: 'mini', mg: 'dosis', ziel: 'mund' }, { item: 'waschlappen', art: 'drauf', ziel: 'stirn' }] },
+  husten:   { geraet: 'stetho', schritte: [{ item: 'hustensaft', art: 'mini', mg: 'dosis', ziel: 'mund' }, { item: 'inhalator', art: 'mini', mg: 'atem', ziel: 'mund' }, { item: 'schal', art: 'drauf', ziel: 'hals' }] },
+  bruch:    { geraet: 'roentgen', ort: 'pfote', station: true, schritte: [{ item: 'einrichten', art: 'mini', mg: 'knochen', ziel: 'pfote' }, { item: 'gips', art: 'mini', mg: 'wickeln', ziel: 'pfote' }, { item: 'sticker', art: 'drauf', ziel: 'pfote' }] },
+  ohren:    { geraet: 'ohrenspiegel', schritte: [{ item: 'tropfen', art: 'mini', mg: 'tropfen', ziel: 'ohr' }, { item: 'watte', art: 'drauf', ziel: 'ohr' }] },
+  zahnweh:  { geraet: 'zahnspiegel', schritte: [{ item: 'bohrer', art: 'mini', mg: 'bohren', ziel: 'mund' }, { item: 'fuellung', art: 'drauf', ziel: 'mund' }] },
+  zecke:    { geraet: 'lupe', ort: 'nacken', schritte: [{ item: 'zeckenzange', art: 'mini', mg: 'zecke', ziel: 'nacken' }, { item: 'salbe', art: 'drauf', ziel: 'nacken' }] },
+  floh:     { geraet: 'flohkamm', schritte: [{ item: 'shampoo', art: 'reiben', ziel: 'brust', menge: 900 }, { item: 'fangglas', art: 'mini', mg: 'floehe', ziel: 'brust' }, { item: 'handtuch', art: 'reiben', ziel: 'brust', menge: 700 }] },
+  bauchweh: { geraet: 'ultraschall', station: true, schritte: [{ item: 'tee', art: 'mini', mg: 'kraeuter', ziel: 'mund' }, { item: 'waermflasche', art: 'mini', mg: 'dosis', ziel: 'bauch' }] },
   // Nachkontrolle nach einem Knochenbruch (keine Diagnose-Karte)
-  kontrolle: { geraet: 'roentgen', ort: 'pfote', schritte: [{ item: 'gipsschere', art: 'reiben', ziel: 'pfote', menge: 900 }] },
+  kontrolle: { geraet: 'roentgen', ort: 'pfote', schritte: [{ item: 'gipsschere', art: 'mini', mg: 'schnitt', ziel: 'pfote' }] },
 };
 const KRANK_ORDER = ['splitter', 'schramme', 'fieber', 'husten', 'bruch', 'ohren', 'zahnweh', 'zecke', 'floh', 'bauchweh'];
 const KARTE = { splitter: 'Splitter', schramme: 'Schramme', fieber: 'Fieber', husten: 'Husten', bruch: 'Knochenbruch', ohren: 'Ohrenentzündung', zahnweh: 'Loch im Zahn', zecke: 'Zecke', floh: 'Flöhe', bauchweh: 'Bauchweh' };
@@ -262,7 +266,7 @@ function frei(day) {
 }
 function neuAmTag(day) { return day < FREI.length && day > 1 ? FREI[day] : null; }
 function makeDay(day) {
-  const f = frei(day), n = day === 1 ? 3 : day < FREI.length ? 4 : 5, list = [];
+  const f = frei(day), n = day === 1 ? 3 : day < 6 ? 4 : day < FREI.length ? 5 : 6, list = [];
   const neu = neuAmTag(day) || {};
   const paare = PAARE.filter(([x, y]) => f.krank.includes(x) && f.krank.includes(y));
   let lastA = null, lastK = null, notfallHeute = false;
@@ -301,9 +305,31 @@ function makeDay(day) {
 /* ---------------- Spielstand ---------------- */
 const SAVEKEY = 'belle-tierarzt-v1';
 let SAVE = null;
-function newSave() { return { day: 1, pat: 0, list: null, buch: {}, geheilt: 0, kontrollen: [], station: [] }; }
+function newSave() { return { day: 1, pat: 0, list: null, buch: {}, geheilt: 0, kontrollen: [], station: [], erklaert: {}, sterne: 0, tagSterne: 0 }; }
 function save() { try { localStorage.setItem(SAVEKEY, JSON.stringify(SAVE)); } catch (e) {} }
 function loadSave() { try { return JSON.parse(localStorage.getItem(SAVEKEY)); } catch (e) { return null; } }
+
+/* Erklärungen nur beim ersten Mal: danach bleibt die Stimme still (Lautsprecher-Knopf wiederholt) */
+function erstmal(id) {
+  if (!SAVE) return true;
+  if (!SAVE.erklaert) SAVE.erklaert = {};
+  if (SAVE.erklaert[id]) return false;
+  SAVE.erklaert[id] = 1; save(); return true;
+}
+async function sayErst(id, opt = {}) {
+  if (erstmal(id)) return say(id, opt);
+  if (opt.instr) { V.last = id; V.rep = 0; }
+}
+// Alte Spielstände: was schon oft gehört wurde, gilt als erklärt (neue Minispiele nicht)
+function altesErklaert() {
+  const e = SAVE.erklaert = {};
+  if (!SAVE.geheilt) return;
+  ['tag_1', 'koffer_1', 'untersuchen', 'noch_ein_geraet', 'klemmbrett', 'diagnose', 'falsch', 'noch_was', 'zwei_hinweis', 'kontrolle_start', 'kontrolle_fertig',
+    'station_bleibt', 'station_nacht', 'station_morgen', 'notfall', 'notfall_gut', 'feierabend', 'morgen', 'buch_auf'].forEach(id => e[id] = 1);
+  const f = frei(SAVE.day);
+  for (const k of f.krank) { e['karte_' + k] = e['richtig_' + k] = 1; for (const s of KRANK[k].schritte) if (s.art !== 'mini') e['schritt_' + s.item] = 1; }
+  for (const t of f.geraete) for (const id of Object.values(BEFUND[t])) e[id] = 1;
+}
 
 /* =========================================================
    GRAFIK
@@ -605,7 +631,7 @@ function makePatient(a, ks, opt = {}) {
     cheeks: g.querySelectorAll('.cheek'), tail: q('.tail'), armR: q('.armR'), pawR: q('.pawR'), body: q('.body'),
     ov0: q('.ov0'), ovArm: q('.ovArm'), ovHead: q('.ovHead'), ovTop: q('.ovTop'),
     mood: 'sick', x: 140, y: 790, s: .7, hop: 0, cough: 0, coughT: 2, talk: false, sym: null, healed: false,
-    befunde: {}, found: false, step: 0, prog: 0, saidKlemm: false,
+    befunde: {}, found: false, step: 0, prog: 0, saidKlemm: false, fehler: 0, t0: 0, limit: 0, zuSpaet: false,
   };
   setMood(P.kontrolle ? 'happy' : 'sick');
   drawSymptoms();
@@ -733,6 +759,17 @@ function toolIcon(t) {
       ${[-14, 0, 14, 28].map(y => `<path d="M-24 ${y} h48" stroke="#E2696D" stroke-width="3"/>`).join('')}<path d="M0 8 C-16 -4 -12 -16 0 -6 C12 -16 16 -4 0 8Z" fill="#FFF"/>`;
     case 'gipsschere': return `<g transform="rotate(-30)"><path d="M-4 0 L-10 -46 Q-4 -50 2 -44 Z" fill="#C7D2DA" stroke="#7F93A3" stroke-width="3"/><path d="M4 0 L14 -44 Q8 -50 2 -44Z" fill="#E2E8EC" stroke="#7F93A3" stroke-width="3"/>
       <circle cx="-14" cy="22" r="13" fill="none" stroke="#F2A35E" stroke-width="7"/><circle cx="14" cy="22" r="13" fill="none" stroke="#F2A35E" stroke-width="7"/><path d="M-6 10 L6 0 M6 10 L-6 0" stroke="#F2A35E" stroke-width="7" stroke-linecap="round"/><circle cx="0" cy="4" r="4" fill="#7F93A3"/></g>`;
+    case 'inhalator': return `<path d="M-4 -22 C-32 -24 -42 6 -26 24 L6 24 C18 8 16 -20 -4 -22Z" fill="#B9E3F7" stroke="#5FA9D0" stroke-width="4"/>
+      <rect x="4" y="-4" width="34" height="42" rx="10" fill="#FFFFFF" stroke="#9AA7AF" stroke-width="4"/><rect x="12" y="4" width="18" height="10" rx="3" fill="#8FC7B8"/>
+      <circle cx="-30" cy="-38" r="9" fill="#FFFFFF" stroke="#C9D5DE" stroke-width="3"/><circle cx="-12" cy="-46" r="11" fill="#FFFFFF" stroke="#C9D5DE" stroke-width="3"/>`;
+    case 'einrichten': return `<g transform="rotate(-25)"><rect x="-10" y="-42" width="20" height="36" rx="9" fill="#FFFFFF" stroke="#9AA7AF" stroke-width="3"/><rect x="-10" y="6" width="20" height="36" rx="9" fill="#FFFFFF" stroke="#9AA7AF" stroke-width="3"/>
+      ${[[-8, -42], [8, -42], [-8, 42], [8, 42]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="9" fill="#FFFFFF" stroke="#9AA7AF" stroke-width="3"/>`).join('')}<path d="M-12 -4 L-4 2 L4 -4 L12 2" stroke="#F2575E" stroke-width="4" fill="none" stroke-linecap="round"/></g>
+      <path d="M26 -32 A40 40 0 0 1 34 18" stroke="#F57F87" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M42 8 L34 22 L22 12" stroke="#F57F87" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+    case 'bohrer': return `<g transform="rotate(35)"><rect x="-10" y="-22" width="20" height="66" rx="9" fill="#DDE3EA" stroke="#7F93A3" stroke-width="3"/><rect x="-10" y="22" width="20" height="7" fill="#8FC7B8"/>
+      <path d="M-10 -20 Q-10 -40 -28 -40 L-28 -28 Q-18 -28 -18 -20Z" fill="#DDE3EA" stroke="#7F93A3" stroke-width="3" stroke-linejoin="round"/><rect x="-36" y="-30" width="5" height="22" rx="2" fill="#7F93A3"/><circle cx="-33.5" cy="-8" r="5" fill="#FFD84D" stroke="#E8A93A" stroke-width="2"/></g>`;
+    case 'fangglas': return `<rect x="-26" y="-20" width="52" height="58" rx="14" fill="#E9F7FF" stroke="#9FC7DA" stroke-width="4"/><rect x="-30" y="-34" width="60" height="16" rx="6" fill="#F2A35E" stroke="#B86E2E" stroke-width="3"/>
+      <g transform="translate(4,14)"><ellipse rx="10" ry="7" fill="#2E1E18"/><circle cx="9" cy="-3" r="4.5" fill="#1E120E"/><path d="M-4 5 l-6 9 M4 5 l6 9" stroke="#1E120E" stroke-width="2.5" stroke-linecap="round"/></g>
+      <path d="M-16 -8 v32" stroke="#FFFFFF" stroke-width="5" opacity=".8" stroke-linecap="round"/>`;
   }
   return '';
 }
@@ -791,8 +828,12 @@ function drawHud() {
       <circle id="bookDot" cx="26" cy="-26" r="11" fill="#FFD84D" stroke="#FFF" stroke-width="4" style="display:none"/></g>
     <g id="bSpeak" class="btn" transform="translate(1134,62)"><circle r="40" fill="#FFFFFF" filter="url(#shS)"/><g id="speakWaves"></g>
       <path d="M-18 -8 H-8 L6 -20 V20 L-8 8 H-18Z" fill="#4E8C7E" stroke="#4E8C7E" stroke-width="4" stroke-linejoin="round"/>
-      <path class="w1" d="M12 -10 Q20 0 12 10" stroke="#4E8C7E" stroke-width="5" fill="none" stroke-linecap="round"/><path class="w2" d="M18 -18 Q32 0 18 18" stroke="#4E8C7E" stroke-width="5" fill="none" stroke-linecap="round"/></g>`;
+      <path class="w1" d="M12 -10 Q20 0 12 10" stroke="#4E8C7E" stroke-width="5" fill="none" stroke-linecap="round"/><path class="w2" d="M18 -18 Q32 0 18 18" stroke="#4E8C7E" stroke-width="5" fill="none" stroke-linecap="round"/></g>
+    <g id="nfBar" transform="translate(600,124)" style="display:none"><rect x="-210" y="-18" width="420" height="36" rx="18" fill="#FFFFFF" filter="url(#shS)"/>
+      <rect x="-170" y="-9" width="364" height="18" rx="9" fill="#F2E3E3"/><rect class="f" x="-170" y="-9" width="364" height="18" rx="9" fill="#F2575E"/>
+      <g transform="translate(-190,0) scale(.5)"><path d="M0 22 C-40 -6 -30 -34 0 -14 C30 -34 40 -6 0 22Z" fill="#F2575E"/><path d="M-26 -2 h12 l6 -10 l8 20 l6 -10 h20" stroke="#FFF" stroke-width="5" fill="none" stroke-linejoin="round"/></g></g>`;
   HUD.home = $('bHome'); HUD.book = $('bBook'); HUD.speak = $('bSpeak'); HUD.day = $('dayBadge'); HUD.bookDot = $('bookDot');
+  HUD.nf = $('nfBar'); HUD.nfF = HUD.nf.querySelector('.f');
   HUD.w1 = HUD.speak.querySelector('.w1'); HUD.w2 = HUD.speak.querySelector('.w2');
   HUD.home.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.pop(); onHome(); });
   HUD.book.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.pop(); openBook(); });
@@ -802,14 +843,16 @@ function hudGame(on) { for (const k of ['book', 'speak', 'day']) HUD[k].style.di
 function drawDayBadge() {
   if (!SAVE) return;
   const n = SAVE.list ? SAVE.list.length : 0;
-  let s = `<rect x="${-60 - n * 26}" y="-30" width="${120 + n * 52}" height="60" rx="30" fill="#FFFFFF" filter="url(#shS)"/>
+  let s = `<g transform="translate(-55,0)"><rect x="${-60 - n * 26}" y="-30" width="${230 + n * 52}" height="60" rx="30" fill="#FFFFFF" filter="url(#shS)"/>
+    <g transform="translate(${60 + n * 26 + 30},0)"><path d="${star(0, 0, 22, 10)}" fill="#FFD84D" stroke="#E8A93A" stroke-width="3" stroke-linejoin="round"/>
+      <text x="44" y="10" text-anchor="middle" font-size="28" fill="#9A6A00">${SAVE.tagSterne || 0}</text></g>
     <g transform="translate(${-24 - n * 26},0)"><circle r="20" fill="#FFD84D"/>${[0, 1, 2, 3, 4, 5, 6, 7].map(i => { const a = i * Math.PI / 4; return `<line x1="${Math.cos(a) * 24}" y1="${Math.sin(a) * 24}" x2="${Math.cos(a) * 30}" y2="${Math.sin(a) * 30}" stroke="#FFC233" stroke-width="4" stroke-linecap="round"/>`; }).join('')}
     <text y="8" text-anchor="middle" font-size="22" fill="#9A6A00">${SAVE.day}</text></g>`;
   for (let i = 0; i < n; i++) {
     const done = i < SAVE.pat, cur = i === SAVE.pat;
     s += `<g transform="translate(${20 - n * 26 + i * 52 + 26},4) scale(.7)" fill="${done ? '#F57F87' : cur ? '#FFC2C8' : '#E3ECEA'}">${pawShape()}</g>`;
   }
-  HUD.day.innerHTML = s;
+  HUD.day.innerHTML = s + '</g>';
 }
 
 /* ---------- Arztkoffer (unten) ---------- */
@@ -836,11 +879,11 @@ function trayHint(it) { TRAY_HINT = it; }
 
 /* ---------- Effekte ---------- */
 const PARTS = [];
-function burst(x, y, n = 18, colors = ['#FFD84D', '#F57F87', '#8FD0F2', '#B6E39B', '#FFFFFF'], kind = 'star') {
+function burst(x, y, n = 18, colors = ['#FFD84D', '#F57F87', '#8FD0F2', '#B6E39B', '#FFFFFF'], kind = 'star', layer = $('fx')) {
   for (let i = 0; i < n; i++) {
     const a = rnd(0, Math.PI * 2), sp = rnd(160, 420);
-    const e = kind === 'heart' ? el('path', { d: 'M0 8 C-14 -6 -10 -18 0 -10 C10 -18 14 -6 0 8Z', fill: pick(['#F57F87', '#FF9AA8', '#F2575E']) }, $('fx'))
-      : el('path', { d: star(0, 0, rnd(8, 14), rnd(4, 6)), fill: pick(colors) }, $('fx'));
+    const e = kind === 'heart' ? el('path', { d: 'M0 8 C-14 -6 -10 -18 0 -10 C10 -18 14 -6 0 8Z', fill: pick(['#F57F87', '#FF9AA8', '#F2575E']) }, layer)
+      : el('path', { d: star(0, 0, rnd(8, 14), rnd(4, 6)), fill: pick(colors || ['#FFD84D', '#F57F87', '#8FD0F2', '#B6E39B', '#FFFFFF']) }, layer);
     PARTS.push({ e, x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 200, life: rnd(.8, 1.4), t: 0, r: rnd(0, 360), vr: rnd(-300, 300), g: kind === 'heart' ? -120 : 600 });
   }
 }
@@ -895,8 +938,9 @@ function onHome() {
 
 /* ----- Titel ----- */
 function showTitle() {
-  RUN++; stopVoice(); MODE = 'title'; MODAL_BUSY = false;
-  clear($('pop')); clear($('drag')); clear($('tray')); clear($('fx')); PARTS.length = 0;
+  RUN++; stopVoice(); MODE = 'title'; MODAL_BUSY = false; MINI = null;
+  clear($('pop')); clear($('drag')); clear($('tray')); clear($('fx')); clear($('mini')); clear($('fx2')); PARTS.length = 0;
+  if (HUD.nf) HUD.nf.style.display = 'none';
   hudGame(false);
   $('patWrap').style.display = 'none'; $('clipL').style.display = 'none';
   setBelle(1005, 788, 1);
@@ -922,7 +966,7 @@ function showTitle() {
     });
   }
   TITLE_PULSE = bp;
-  if (unlocked) guard(say('titel', { instr: true }));
+  if (unlocked && !has) guard(say('titel', { instr: true }));
 }
 let TITLE_PULSE = null;
 
@@ -932,6 +976,7 @@ function startGame() {
   if (!SAVE.buch) SAVE.buch = {};
   clear($('modal')); TITLE_PULSE = null;
   if (!SAVE.kontrollen) SAVE.kontrollen = []; if (!SAVE.station) SAVE.station = [];
+  if (!SAVE.erklaert) { altesErklaert(); save(); }
   hudGame(true); drawAusbau();
   guard(mainLoop());
 }
@@ -939,7 +984,7 @@ function startGame() {
 async function mainLoop() {
   for (;;) {
     if (!SAVE.list) {
-      SAVE.list = makeDay(SAVE.day); SAVE.pat = 0;
+      SAVE.list = makeDay(SAVE.day); SAVE.pat = 0; SAVE.tagSterne = 0;
       // Geräte des Tages ins Buch
       for (const t of frei(SAVE.day).geraete) SAVE.buch['g_' + t] = SAVE.buch['g_' + t] || 1;
       save();
@@ -969,7 +1014,7 @@ async function dayIntro(day) {
     <g transform="translate(0,170)">${SAVE.list.map((_, i, a) => `<g transform="translate(${(i - (a.length - 1) / 2) * 50},0) scale(.6)" fill="#F57F87">${pawShape()}</g>`).join('')}</g>`;
   await tween(500, t => card.setAttribute('transform', `translate(600,430) scale(${t})`), easeBack);
   SFX.ding();
-  await say(day === 1 ? 'tag_1' : 'tag');
+  if (day === 1) await sayErst('tag_1'); else await wait(1100);
   await wait(300);
   await tween(300, t => card.setAttribute('transform', `translate(600,430) scale(${1 - t})`));
   clear(m);
@@ -978,7 +1023,7 @@ async function dayIntro(day) {
   if (day === 1) {
     drawTray(frei(day).geraete);
     const tr = $('tray'); await tween(400, t => tr.setAttribute('transform', `translate(0,${(1 - t) * 140})`), easeBack);
-    await say('koffer_1');
+    await sayErst('koffer_1');
   }
   if (neu) {
     for (const t of neu.geraete) await revealTool(t);
@@ -1075,7 +1120,7 @@ async function stationMorgen() {
   const card = stationSzene(false, SAVE.station, true);
   await tween(500, t => card.setAttribute('transform', `translate(600,430) scale(${t})`), easeBack);
   floatHearts(600, 420, 8); SFX.yay();
-  await say('station_morgen');
+  if (!erstmal('station_morgen')) await wait(900); else await say('station_morgen');
   await say(SAVE.station[0].a + '_tschuess', { who: 'none' });
   await wait(300);
   await tween(300, t => card.setAttribute('transform', `translate(600,430) scale(${1 - t})`));
@@ -1132,37 +1177,45 @@ async function patientFlow(p) {
   SFX.hop();
   await tween(650, t => { P.x = lerp(410, SEAT[0], t); P.y = lerp(788, SEAT[1], t); P.s = lerp(.92, PS, t); P.hop = Math.sin(t * Math.PI) * 120; placePat(); }, t => t);
   P.hop = 0; placePat();
-  if (!p.notfall) await say('kommt_' + p.a);
   if (p.kontrolle) await say(p.a + '_kontrolle', { who: 'tier' });
   else for (const k of p.ks) await say(p.a + '_klage_' + k, { who: 'tier' });
-  if (p.ks.length > 1) await say('zwei_hinweis');
+  if (p.ks.length > 1) await sayErst('zwei_hinweis');
   // Untersuchen
   MODE = 'exam'; CUR = { r: RUN };
-  const first = SAVE.pat === 0;
-  if (p.kontrolle) await say('kontrolle_start', { instr: true });
-  else if (first || p.ks.length > 1) await say('untersuchen', { instr: true }); else { V.last = 'untersuchen'; V.rep = 0; }
+  if (p.notfall) {  // Notfall: gegen die Zeit (läuft bis zum Ende der Behandlung)
+    const n = [].concat(...p.ks.map(k => KRANK[k].schritte)).length;
+    P.t0 = performance.now(); P.limit = (40 + 24 * n) * 1000 * (1 - lvl() * .25);
+  }
+  if (p.kontrolle) await sayErst('kontrolle_start', { instr: true });
+  else await sayErst('untersuchen', { instr: true });
   await new Promise(res => { CUR.diagnosed = res; });
   // Behandeln (in der Reihenfolge der Diagnosen)
   MODE = 'treat';
   const order = p.kontrolle ? ['kontrolle'] : P.diag.slice();
   const steps = [].concat(...order.map(k => KRANK[k].schritte));
   P.steps = steps;
-  drawTray(shuffleSome([...new Set(steps.map(s => s.item))]));
+  drawTray(treatTray(steps));
   for (let i = 0; i < steps.length; i++) {
     P.step = i; P.prog = 0; P.stepDone = null;
-    await say('schritt_' + steps[i].item, { instr: true });
+    const sid = 'schritt_' + steps[i].item;
+    if (erstmal(sid)) { TRAY_HINT = steps[i].item; await say(sid, { instr: true }); } else { V.last = sid; V.rep = 0; }
     await new Promise(res => { P.stepDone = res; });
     SFX.yay(); burst(...zielXY(steps[i].ziel), 14);
-    await say(pick(['lob_1', 'lob_2', 'lob_3', 'lob_4']));
+    await wait(350);
   }
   // Gesund!
   MODE = 'healed'; TRAY_HINT = null;
   heal();
   floatHearts(SEAT[0], SEAT[1] - 260, 7);
   BELLE.bounce = 1; SFX.yay();
-  if (p.kontrolle) await say('kontrolle_fertig');
+  if (p.kontrolle) await sayErst('kontrolle_fertig');
   await say(p.a + '_danke', { who: 'tier' });
-  if (p.notfall) { burst(SEAT[0], SEAT[1] - 200, 30); await say('notfall_gut'); }
+  if (p.notfall) { burst(SEAT[0], SEAT[1] - 200, 30); if (!P.zuSpaet) await sayErst('notfall_gut'); }
+  // Sterne: 3 ohne Fehler, weniger bei falscher Diagnose / Fehlern im Minispiel / zu langsam im Notfall
+  const sterne = Math.max(1, (P.fehler === 0 ? 3 : P.fehler <= 2 ? 2 : 1) - (P.zuSpaet ? 1 : 0));
+  SAVE.sterne = (SAVE.sterne || 0) + sterne; SAVE.tagSterne = (SAVE.tagSterne || 0) + sterne;
+  await showStars(sterne);
+  drawDayBadge();
   let neuK = false;
   for (const k of p.ks) {
     if (k === 'kontrolle') continue;
@@ -1174,8 +1227,8 @@ async function patientFlow(p) {
   const bleibt = frei(SAVE.day).ausbau.station && p.ks.some(k => KRANK[k].station) && SAVE.station.length < 3;
   if (bleibt) SAVE.station.push({ a: p.a, ks: p.ks.slice() });
   save();
-  if (!p.kontrolle) await say(neuK ? 'neue_karte' : 'gesund');
-  if (bleibt) await say('station_bleibt');
+  if (neuK) await say('neue_karte');
+  if (bleibt) await sayErst('station_bleibt');
   // Tier geht wieder
   SFX.hop();
   await tween(600, t => { P.x = lerp(SEAT[0], 410, t); P.y = lerp(SEAT[1], 788, t); P.s = lerp(PS, .92, t); P.hop = Math.sin(t * Math.PI) * 100; placePat(); }, t => t);
@@ -1192,13 +1245,38 @@ async function notfallAlarm() {
   const lamp = el('g', { transform: 'translate(140,292)' }, g, `<rect x="-26" y="-6" width="52" height="16" rx="5" fill="#9AA7AF"/><path d="M-20 -6 Q0 -40 20 -6Z" fill="#3D7BFF"/><circle class="gl" cy="-16" r="34" fill="#7FB0FF" opacity=".6"/>`);
   const gl = lamp.querySelector('.gl');
   SFX.siren();
-  const said = say('notfall');
+  const said = sayErst('notfall');
   await tween(2600, t => { const on = Math.sin(t * Math.PI * 14) > 0; flash.setAttribute('opacity', on ? .16 : 0); gl.setAttribute('opacity', on ? .9 : .2); gl.setAttribute('fill', on ? '#7FB0FF' : '#FF8A8A'); }, t => t);
   await said;
   await tween(300, t => flash.setAttribute('opacity', 0));
   g.remove();
 }
 function shuffleSome(a) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; }
+// Koffer zum Behandeln: die richtigen Hilfsmittel plus ein paar falsche (ab Tag 2)
+function treatTray(steps) {
+  const need = [...new Set(steps.map(s => s.item))];
+  if (SAVE.day < 2) return shuffleSome(need);
+  const pool = [...new Set([].concat(...TREAT_ALL(frei(SAVE.day).krank)))].filter(i => !need.includes(i));
+  const extra = Math.min(pool.length, 2 + Math.floor(SAVE.day / 4), 7 - need.length);
+  return shuffleSome(need.concat(shuffleSome(pool).slice(0, extra)));
+}
+const TREAT_ALL = ks => ks.map(k => KRANK[k].schritte.map(s => s.item));
+async function showStars(n) {
+  const g = el('g', {}, $('fx2'));
+  const st = [0, 1, 2].map(i => {
+    const x = SEAT[0] + (i - 1) * 100, y = 196 - (i === 1 ? 26 : 0), on = i < n;
+    const e = el('g', { transform: `translate(${x},${y}) scale(0)` }, g, `<path d="${star(0, 0, 46, 21)}" fill="${on ? '#FFD84D' : '#E3ECEA'}" stroke="${on ? '#E8A93A' : '#C9D5DE'}" stroke-width="6" stroke-linejoin="round"/>`);
+    e._x = x; e._y = y; return e;
+  });
+  for (let i = 0; i < 3; i++) {
+    const e = st[i]; (i < n ? SFX.ding : SFX.pop)();
+    await tween(260, t => e.setAttribute('transform', `translate(${e._x},${e._y}) scale(${t})`), easeBack);
+    if (i < n) burst(e._x, e._y, 8, null, 'star', $('fx2'));
+  }
+  await wait(800);
+  await tween(500, t => st.forEach(e => { e.setAttribute('transform', `translate(${lerp(e._x, 690, t)},${lerp(e._y, 58, t)}) scale(${1 - t * .7})`); e.setAttribute('opacity', 1 - t * .6); }));
+  g.remove(); SFX.pop();
+}
 function doorAnimClose() { guard(tween(450, t => doorOpen(1 - t))); }
 async function walk(x1, y1, x2, y2, s1, s2, ms) {
   await tween(ms, t => { P.x = lerp(x1, x2, t); P.y = lerp(y1, y2, t); P.s = lerp(s1, s2, t); P.hop = Math.abs(Math.sin(t * Math.PI * 4)) * 22; placePat(); }, t => t);
@@ -1246,11 +1324,14 @@ async function dayEnd() {
     <g transform="translate(40,200) scale(.62)">${belleSVG()}</g>`;
   }
   const cy = mitStation ? 430 : 420;
+  // Sterne des Tages
+  el('g', { transform: mitStation ? 'translate(360,-210)' : 'translate(160,-120)' }, card, `<circle r="78" fill="#FFFFFF" opacity=".18"/><path d="${star(0, 0, 66, 30)}" fill="#FFD84D" stroke="#E8A93A" stroke-width="6" stroke-linejoin="round"/>
+    <text y="15" text-anchor="middle" font-size="42" fill="#9A6A00">${SAVE.tagSterne || 0}</text>`);
   BELLE.bounce = 1;
   await tween(500, t => card.setAttribute('transform', `translate(600,${cy}) scale(${t})`), easeBack);
-  burst(600, 300, 30);
-  await say('feierabend');
-  if (mitStation && SAVE.station.length) { SFX.snore(); await say('station_nacht'); }
+  burst(600, 300, 30); SFX.yay();
+  if (!erstmal('feierabend')) await wait(900); else await say('feierabend');
+  if (mitStation && SAVE.station.length) { SFX.snore(); await sayErst('station_nacht'); }
   const next = SAVE.day + 1, neu = neuAmTag(next);
   const by = mitStation ? 800 : 720;
   const b = el('g', { class: 'btn', transform: `translate(600,${by}) scale(0)` }, m, `<circle r="74" fill="#5BBF4A" stroke="#FFFFFF" stroke-width="10" filter="url(#sh)"/><path d="M-20 -34 L38 0 L-20 34Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="8" stroke-linejoin="round"/>`);
@@ -1258,7 +1339,7 @@ async function dayEnd() {
   TITLE_PULSE = b;
   const r = RUN;
   const pressed = new Promise(res => b.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.yay(); res(); }));
-  say(neu ? 'morgen_neu' : 'morgen', { instr: true }).catch(() => {});
+  (neu ? say('morgen_neu', { instr: true }) : sayErst('morgen', { instr: true })).catch(() => {});
   await pressed; if (r !== RUN) throw ABORT;
   TITLE_PULSE = null; stopVoice(); clear(m);
 }
@@ -1269,8 +1350,7 @@ async function dayEnd() {
 function onClip() {
   if (MODE !== 'exam' || !CUR) return;
   SFX.pop();
-  if (P.kontrolle) { say('kontrolle_start', { instr: true }); wiggle(CLIP.g); return; }
-  if (!CLIP.n) { say('untersuchen', { instr: true }); wiggle(CLIP.g); return; }
+  if (P.kontrolle || !CLIP.n) { wiggle(CLIP.g); SFX.boing(); return; }
   guard(openDiagnose());
 }
 function wiggle(g) { const t0 = g.getAttribute('transform'); guard(tween(400, t => g.setAttribute('transform', t0 + ` rotate(${Math.sin(t * Math.PI * 4) * 6})`)).then(() => g.setAttribute('transform', t0))); }
@@ -1292,7 +1372,11 @@ async function runExam(tool, fromX, fromY) {
   const c = await showPopup(befundBild(tool, det));
   if (tool === 'thermo') animThermo(c, good);
   if (tool === 'stetho') animStetho(c, good);
-  await say(key);
+  // Zeichen am Befund: rot ! = da stimmt was nicht, grün ✓ = alles gut
+  el('g', { transform: 'translate(118,-118)' }, c.parentNode, good
+    ? `<circle r="30" fill="#F2575E" stroke="#FFF" stroke-width="6"/><rect x="-5" y="-17" width="10" height="22" rx="4" fill="#FFF"/><circle cy="13" r="5" fill="#FFF"/>`
+    : `<circle r="30" fill="#5BBF4A" stroke="#FFF" stroke-width="6"/><path d="M-13 0 l9 9 l17 -18" stroke="#FFF" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`);
+  if (erstmal(key)) await say(key); else await wait(1500);
   await wait(400);
   if (gh.isConnected) gh.remove();
   await hidePopup();
@@ -1300,10 +1384,10 @@ async function runExam(tool, fromX, fromY) {
   if (good && P.kontrolle) { P.found = true; if (CUR && CUR.diagnosed) CUR.diagnosed(); return; }
   if (good) {
     P.found = true; CLIP.pulse = 1;
-    if (!P.saidKlemm) { P.saidKlemm = true; MODE = 'exam'; await say('klemmbrett', { instr: true }); }
+    if (!P.saidKlemm) { P.saidKlemm = true; MODE = 'exam'; await sayErst('klemmbrett', { instr: true }); }
   } else if (!P.found) {
     MODE = 'exam'; V.last = 'noch_ein_geraet'; V.rep = 0;
-    await wait(500); if (MODE === 'exam' && !V.speaking) await say('noch_ein_geraet', { instr: true });
+    await wait(300); if (MODE === 'exam' && !V.speaking) await sayErst('noch_ein_geraet', { instr: true });
   }
   if (MODE === 'busy') MODE = 'exam';
 }
@@ -1396,7 +1480,8 @@ async function openDiagnose() {
   const bg = el('rect', { x: 0, y: 0, width: 1200, height: 900, fill: '#2F4A44', opacity: 0 }, m);
   const unl = frei(SAVE.day).krank;
   const offen = P.ks.filter(k => !P.diag.includes(k));
-  let opts = shuffleSome(unl.filter(k => !P.ks.includes(k))).slice(0, offen.length > 1 ? 2 : 2).concat(offen);
+  const nOpt = SAVE.day <= 2 ? 3 : 4;   // ab Tag 3 vier Karten zur Auswahl
+  let opts = shuffleSome(unl.filter(k => !P.ks.includes(k))).slice(0, Math.max(2, nOpt - offen.length)).concat(offen);
   opts = shuffleSome(opts);
   const n = opts.length, W = n > 3 ? 250 : 300, H = n > 3 ? 340 : 400, gap = n > 3 ? 26 : 40, x0 = 600 - ((n - 1) * (W + gap)) / 2, sc = n > 3 ? .82 : 1;
   const cards = opts.map((k, i) => {
@@ -1417,9 +1502,10 @@ async function openDiagnose() {
   await tween(250, t => bg.setAttribute('opacity', .45 * t));
   for (const c of cards) { if (DIAG !== my) return; await tween(220, t => c.setAttribute('transform', `translate(${c._x},470) scale(${t})`), easeBack); }
   if (!alive()) return;
-  await say('diagnose', { instr: true });
-  for (const c of cards) {
+  await sayErst('diagnose', { instr: true });
+  for (const c of cards) {   // nur Karten vorlesen, die das Kind noch nicht kennt
     if (!alive()) return;
+    if (!erstmal('karte_' + c._k)) continue;
     c.querySelector('.hl').setAttribute('opacity', 1);
     await say('karte_' + c._k);
     c.querySelector('.hl').setAttribute('opacity', 0);
@@ -1438,23 +1524,23 @@ async function chooseCard(g, cards) {
     g.querySelector('.hl').setAttribute('opacity', 1); g.querySelector('.ok').style.display = '';
     SFX.yay(); burst(g._x, 470, 24); BELLE.bounce = 1;
     await guard(tween(300, t => g.setAttribute('transform', `translate(${g._x},470) scale(${1 + .08 * Math.sin(t * Math.PI)})`)));
-    await guard(say('richtig_' + g._k));
+    if (erstmal('richtig_' + g._k)) await guard(say('richtig_' + g._k)); else await guard(wait(500));
     if (DIAG !== my) return;
     if (P.diag.length < P.ks.length) {
       g.querySelector('.hl').setAttribute('opacity', 0);
       my.busy = false;
-      await guard(say('noch_was', { instr: true }));
+      await guard(sayErst('noch_was', { instr: true }));
       return;
     }
     clear($('modal')); DIAG = null;
     CLIP.pulse = 0; clipReset();
     if (CUR && CUR.diagnosed) CUR.diagnosed();
   } else {
-    SFX.boing();
+    SFX.boing(); P.fehler++;
     const t0 = g.getAttribute('transform');
     await guard(tween(500, t => g.setAttribute('transform', `translate(${g._x + Math.sin(t * Math.PI * 6) * 14 * (1 - t)},470)`)));
     g.setAttribute('transform', t0);
-    await guard(say('falsch', { instr: true }));
+    if (erstmal('falsch')) await guard(say('falsch', { instr: true })); else await guard(wait(300));
     if (DIAG === my) closeDiagnose();
   }
 }
@@ -1490,8 +1576,8 @@ ST.addEventListener('pointerdown', unlockAudio, true);
 ['touchend', 'click'].forEach(ev => document.addEventListener(ev, unlockAudio, true));
 ST.addEventListener('pointerdown', e => {
   e.preventDefault(); idle = 0;
-  if (MODE === 'title' && !V.speaking && !TITLE_SAID) { TITLE_SAID = true; guard(say('titel', { instr: true })); }
-  if (MODE === 'tropfen') { tropfenTap(); return; }
+  if (MODE === 'title' && !V.speaking && !TITLE_SAID && !loadSave()) { TITLE_SAID = true; guard(say('titel', { instr: true })); }
+  if (MODE === 'mini') { miniDown(e); return; }
   const slot = e.target.closest && e.target.closest('.slot');
   if (!slot || DRAG) return;
   if (MODE !== 'exam' && MODE !== 'treat') return;
@@ -1503,6 +1589,7 @@ ST.addEventListener('pointerdown', e => {
   try { ST.setPointerCapture(e.pointerId); } catch (er) {}
 });
 ST.addEventListener('pointermove', e => {
+  if (MINI) { miniMove(e); return; }
   if (!DRAG || e.pointerId !== DRAG.pid) return;
   const p = svgPt(e), dx = p.x - DRAG.x, dy = p.y - DRAG.y;
   DRAG.x = p.x; DRAG.y = p.y; idle = 0;
@@ -1516,17 +1603,6 @@ ST.addEventListener('pointermove', e => {
       const now = performance.now(); if (now - DRAG.lastRub > 120) { DRAG.lastRub = now; SFX.rub(); }
       if (P.prog >= st.menge) { endDrag(true); stepOk(); }
     }
-  } else if (st.art === 'ziehen') {
-    const tip = [p.x, p.y + 36];
-    const sym = st.item === 'zeckenzange' ? P.sym.zecke : P.sym.splitter;
-    if (!DRAG.grab && dist(tip[0], tip[1], tx, ty) < 55) {
-      DRAG.grab = true; SFX.pick(); sym.style.display = 'none';
-      DRAG.spl = el('g', {}, DRAG.gh, st.item === 'zeckenzange' ? `<g transform="translate(0,34) scale(.8)">${krankBild('zecke').replace('scale(3.4)', 'scale(1)')}</g>` : `<path d="M-12 26 L6 44" stroke="#8A5A2B" stroke-width="7" stroke-linecap="round"/>`);
-    }
-    if (DRAG.grab && dist(tip[0], tip[1], tx, ty) > 130) {
-      SFX.plop(); sym.remove(); if (st.item === 'pinzette' && P.sym.rot) P.sym.rot.setAttribute('opacity', .3);
-      flyAway(DRAG.gh); DRAG.gh = null; endDrag(true); stepOk();
-    }
   }
 });
 function endUp(e) {
@@ -1534,8 +1610,8 @@ function endUp(e) {
   const p = svgPt(e);
   resolveDrop(p.x, p.y);
 }
-ST.addEventListener('pointerup', endUp);
-ST.addEventListener('pointercancel', e => { if (DRAG && e.pointerId === DRAG.pid) endDrag(false); });
+ST.addEventListener('pointerup', e => { if (MINI) miniUp(e); endUp(e); });
+ST.addEventListener('pointercancel', e => { if (MINI) miniUp(e); if (DRAG && e.pointerId === DRAG.pid) endDrag(false); });
 let TITLE_SAID = false;
 
 function endDrag(keep) {
@@ -1547,10 +1623,6 @@ function endDrag(keep) {
   const fx = d.x, fy = d.y, g = d.gh;
   guard(tween(250, t => g.setAttribute('transform', `translate(${lerp(fx, d.sx, t)},${lerp(fy, d.sy, t)}) scale(${lerp(1.1, .82, t)})`)).then(() => g.remove()));
   setTimeout(() => { if (g.isConnected) g.remove(); }, 600);
-}
-function flyAway(g) {
-  const tr = g.getAttribute('transform'), m = /translate\(([-\d.]+),([-\d.]+)\)/.exec(tr), x = +m[1], y = +m[2];
-  guard(tween(400, t => { g.setAttribute('transform', `translate(${x + t * 60},${y - t * 80}) scale(1.1)`); g.setAttribute('opacity', 1 - t); }).then(() => g.remove()));
 }
 function nearPatient(x, y) { return dist(x, y, SEAT[0], SEAT[1] - 140 * PS) < 210; }
 
@@ -1564,26 +1636,25 @@ function resolveDrop(x, y) {
   if (MODE !== 'treat' || !P.stepDone) { endDrag(false); return; }
   const st = curStep();
   const [tx, ty] = zielXY(st.ziel);
-  if (d.it !== st.item) {
+  if (d.it !== st.item) {   // falsches Hilfsmittel: kostet einen Fehler, aber keine Ansage
     endDrag(false);
-    if (nearPatient(x, y)) { SFX.boing(); TRAY_HINT = st.item; guard(say('schritt_' + st.item, { instr: true })); }
+    if (nearPatient(x, y)) { SFX.boing(); P.fehler++; wrongMark(x, y); }
     return;
   }
-  if (st.art === 'reiben') { endDrag(false); if (P.prog > 0) { if (!V.speaking) guard(say('weiter_reiben')); } return; }
-  if (st.art === 'ziehen') {
-    if (d.grab) { (st.item === 'zeckenzange' ? P.sym.zecke : P.sym.splitter).style.display = ''; endDrag(false); guard(say('weiter_ziehen')); }
+  if (st.art === 'mini') {
+    if (dist(x, y, tx, ty) < 160 || nearPatient(x, y)) { endDrag(true); guard(startMini(st)); }
     else endDrag(false);
     return;
   }
-  const d0 = dist(x, y, tx, ty);
-  const near = st.art === 'drauf'
-    ? d0 < 120 || (['stirn', 'hals', 'mund'].includes(st.ziel) && nearPatient(x, y))
-    : d0 < 140 || nearPatient(x, y);
+  if (st.art === 'reiben') { endDrag(false); return; }
+  const near = dist(x, y, tx, ty) < 120 || (['stirn', 'hals', 'mund'].includes(st.ziel) && nearPatient(x, y));
   if (!near) { endDrag(false); return; }
   const g = d.gh; d.gh = null; endDrag(true);
-  if (st.art === 'drauf') { guard(dropOn(g, x, y, tx, ty, st.item)); }
-  else if (st.art === 'loeffel') { guard(spoon(g, x, y, tx, ty)); }
-  else if (st.art === 'tropfen') { guard(dockDropper(g, x, y, tx, ty)); }
+  guard(dropOn(g, x, y, tx, ty, st.item));
+}
+function wrongMark(x, y) {
+  const g = el('g', { transform: `translate(${x},${y})` }, $('fx2'), `<circle r="30" fill="#F2575E" stroke="#FFF" stroke-width="6"/><path d="M-11 -11 L11 11 M11 -11 L-11 11" stroke="#FFF" stroke-width="7" stroke-linecap="round"/>`);
+  guard(tween(700, t => { g.setAttribute('transform', `translate(${x},${y - t * 30})`); g.setAttribute('opacity', 1 - t * t); }).then(() => g.remove()));
 }
 async function dropOn(g, x, y, tx, ty, item) {
   MODE = 'busy';
@@ -1591,45 +1662,672 @@ async function dropOn(g, x, y, tx, ty, item) {
   g.remove(); placeTreat(item); SFX.stick();
   MODE = 'treat'; stepOk();
 }
-async function spoon(g, x, y, tx, ty) {
-  MODE = 'busy';
-  await tween(300, t => g.setAttribute('transform', `translate(${lerp(x, tx - 30, t)},${lerp(y, ty + 10, t)}) scale(1.1)`));
+async function gulp() {
   P.mO.style.display = ''; P.mH.style.display = 'none'; P.mS.style.display = 'none';
-  SFX.gulp();
-  await tween(500, t => g.setAttribute('opacity', 1 - t));
-  g.remove();
+  SFX.gulp(); await wait(500);
   P.mO.style.display = 'none'; setMood(P.mood);
   await say(P.a + '_mmm', { who: 'tier' });
   const it = curStep().item;
   if (it === 'fiebersaft' && P.sym.hitze) P.sym.hitze.setAttribute('opacity', .3);
   if (it === 'hustensaft') P.cough = .3;
   if (it === 'tee' && P.sym.bauch) P.sym.bauch.setAttribute('opacity', .4);
+}
+
+/* =========================================================
+   MINISPIELE: jede Behandlung ist ein kleines Geschicklichkeitsspiel
+   im großen Fenster. Beim ersten Mal zeigt eine Hand, wie es geht
+   (danach nur, wenn lange nichts passiert). Fehler kosten Sterne.
+   ========================================================= */
+const MX = 600, MY = 440;     // Mitte des Fensters
+let MINI = null;
+function lvl() { return clamp(((SAVE ? SAVE.day : 1) - 2) / 10, 0, 1); }   // 0 leicht … 1 schwer (ab Tag 12)
+const HAND = `<g transform="rotate(-18)"><rect x="-11" y="-4" width="22" height="58" rx="11" fill="#FFE3C8" stroke="#6E5240" stroke-width="4"/>
+  <rect x="-30" y="34" width="62" height="58" rx="24" fill="#FFE3C8" stroke="#6E5240" stroke-width="4"/><path d="M-8 6 q8 -6 16 0" stroke="#F2C9A6" stroke-width="4" fill="none"/></g>`;
+const FLOH = `<g transform="scale(1.7)"><ellipse rx="14" ry="10" fill="#2E1E18"/><circle cx="12" cy="-4" r="6" fill="#1E120E"/><path d="M-6 6 l-10 14 M2 8 l-4 14 M8 6 l10 12" stroke="#1E120E" stroke-width="3" stroke-linecap="round"/><circle cx="14" cy="-6" r="1.8" fill="#FFF"/></g>`;
+const ZAHN = 'M-26 -30 C-34 -8 -24 10 -18 36 C-14 46 -6 44 -4 30 C-2 18 2 18 4 30 C6 44 14 46 18 36 C24 10 34 -8 26 -30 C16 -40 8 -30 0 -32 C-8 -30 -16 -40 -26 -30Z';
+function furBg(a) {
+  const c = TIERE[a];
+  return `<rect x="-400" y="-300" width="800" height="600" fill="${c.fur}"/>` + [...Array(90)].map(() => `<path d="M${rnd(-390, 390).toFixed(0)} ${rnd(-290, 290).toFixed(0)} q8 -12 16 0" stroke="${c.dark}" stroke-width="4" fill="none" opacity=".22"/>`).join('');
+}
+const wrapA = a => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
+const angDiff = (a, b) => ((a - b + 540) % 360) - 180;   // Grad
+function segDist(px, py, x1, y1, x2, y2) { const dx = x2 - x1, dy = y2 - y1, t = clamp(((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy), 0, 1); return dist(px, py, x1 + dx * t, y1 + dy * t); }
+function arcPath(r1, r2, a0, a1) {   // Grad, 0 = oben, im Uhrzeigersinn
+  const q = (r, a) => `${(Math.sin(a * Math.PI / 180) * r).toFixed(1)} ${(-Math.cos(a * Math.PI / 180) * r).toFixed(1)}`, big = a1 - a0 > 180 ? 1 : 0;
+  return `M${q(r2, a0)} A${r2} ${r2} 0 ${big} 1 ${q(r2, a1)} L${q(r1, a1)} A${r1} ${r1} 0 ${big} 0 ${q(r1, a0)}Z`;
+}
+
+async function startMini(st) {
+  MODE = 'busy';
+  await runMini(st);
+  await afterMini(st);
   MODE = 'treat'; stepOk();
 }
-let DROPPER = null;
-async function dockDropper(g, x, y, tx, ty) {
-  MODE = 'busy';
-  await tween(250, t => g.setAttribute('transform', `translate(${lerp(x, tx - 10, t)},${lerp(y, ty - 70, t)}) scale(1.1) rotate(${-30 * t})`));
-  $('fx').appendChild(g);
-  DROPPER = { g, x: tx - 10, y: ty - 70, n: 0, tx, ty };
-  MODE = 'tropfen';
-  await say('tippen_tropfen');
+async function runMini(st) {
+  MODE = 'mini'; TRAY_HINT = null;
+  const g = $('mini'); clear(g);
+  const bg = el('rect', { x: 0, y: 0, width: 1200, height: 900, fill: '#2F4A44', opacity: 0 }, g);
+  const w = el('g', { transform: `translate(${MX},${MY}) scale(0)` }, g);
+  el('rect', { x: -400, y: -300, width: 800, height: 600, rx: 44, fill: '#FFFFFF', filter: 'url(#sh)' }, w);
+  const c = el('g', { 'clip-path': 'url(#clipMini)' }, w);
+  el('rect', { x: -384, y: -284, width: 768, height: 568, rx: 34, fill: 'none', stroke: '#8FC7B8', 'stroke-width': 8 }, w);
+  const ui = el('g', {}, w);
+  el('g', { transform: 'translate(-336,-236)' }, w, `<circle r="46" fill="#FFFFFF" stroke="#8FC7B8" stroke-width="6"/><g transform="scale(.6)">${toolIcon(st.item)}</g>`);
+  const pipG = el('g', {}, w);
+  const hand = el('g', { opacity: 0, 'pointer-events': 'none' }, w);
+  const ring = el('circle', { r: 26, fill: '#FFD84D', opacity: 0 }, hand);
+  el('g', {}, hand, HAND);
+  const m = { id: st.mg, item: st.item, c, ui, w, hand, ring, fehler: 0, idle: 0, dk: null, held: false, over: false, lx: 0, ly: 0 };
+  m.pips = (n, k) => {
+    clear(pipG); if (!n) return;
+    el('rect', { x: -n * 19 - 14, y: -270, width: n * 38 + 28, height: 44, rx: 22, fill: '#FFFFFF', opacity: .92 }, pipG);
+    for (let i = 0; i < n; i++) el('circle', { cx: (i - (n - 1) / 2) * 38, cy: -248, r: 13, fill: i < k ? '#5BBF4A' : '#E3ECEA', stroke: i < k ? '#3E9C3A' : '#C9D5DE', 'stroke-width': 3 }, pipG);
+  };
+  m.fail = (x, y) => {
+    m.fehler++; SFX.boing();
+    x = clamp(x, -340, 340); y = clamp(y, -240, 240);
+    const xg = el('g', { transform: `translate(${x},${y})` }, ui, `<circle r="30" fill="#F2575E" stroke="#FFF" stroke-width="6"/><path d="M-11 -11 L11 11 M11 -11 L-11 11" stroke="#FFF" stroke-width="7" stroke-linecap="round"/>`);
+    guard(tween(700, t => { xg.setAttribute('transform', `translate(${x},${y - t * 30}) scale(${1 + t * .2})`); xg.setAttribute('opacity', 1 - t * t); }).then(() => xg.remove()));
+  };
+  m.later = (ms, f) => { const r = RUN; setTimeout(() => { if (r === RUN && MINI === m && !m.over) f(); }, FAST ? 30 : ms); };
+  m.win = () => {
+    if (m.over) return; m.over = true; m.held = false; m.hand.setAttribute('opacity', 0);
+    SFX.yay(); burst(MX, MY - 40, 26, null, 'star', $('fx2'));
+    const r = RUN; setTimeout(() => { if (r === RUN && m.finish) m.finish(); }, FAST ? 30 : 700);
+  };
+  Object.assign(m, MG[st.mg](m));
+  await tween(220, t => bg.setAttribute('opacity', .45 * t));
+  await tween(380, t => w.setAttribute('transform', `translate(${MX},${MY}) scale(${t})`), easeBack);
+  MINI = m;
+  const first = erstmal('mg_' + m.id);
+  if (first) guard(say('mg_' + m.id, { instr: true })); else { V.last = 'mg_' + m.id; V.rep = 0; }
+  m.idle = first ? 7 : 0;     // beim ersten Mal zeigt die Hand gleich, wie es geht
+  await new Promise(res => { m.finish = res; });
+  MINI = null; stopVoice();
+  await tween(280, t => { w.setAttribute('transform', `translate(${MX},${MY}) scale(${1 - t})`); bg.setAttribute('opacity', .45 * (1 - t)); });
+  clear(g);
+  P.fehler += m.fehler;
 }
-function tropfenTap() {
-  const d = DROPPER; if (!d || d.busy) return;
-  d.busy = true; d.n++;
-  const drop = el('path', { d: 'M0 -8 C-6 0 -6 6 0 6 C6 6 6 0 0 -8Z', fill: '#5FA9D0' }, $('fx'));
-  SFX.drip();
-  guard(tween(380, t => { drop.setAttribute('transform', `translate(${d.tx - 4},${lerp(d.y + 34, d.ty, t)})`); d.g.setAttribute('transform', `translate(${d.x},${d.y}) scale(${1.1 - Math.sin(t * Math.PI) * .08}) rotate(-30)`); }, t => t * t).then(() => {
-    drop.remove(); d.busy = false;
-    burst(d.tx, d.ty, 4, ['#8FD0F2', '#FFFFFF']);
-    if (d.n >= curStep().menge) {
-      d.g.remove(); DROPPER = null;
-      if (P.sym.ohr) P.sym.ohr.setAttribute('opacity', .4);
-      MODE = 'treat'; stepOk();
-    }
-  }));
+function miniLocal(e) { const p = svgPt(e); return { x: p.x - MX, y: p.y - MY, dx: 0, dy: 0, dt: 1 / 60 }; }
+function miniDown(e) {
+  const m = MINI; if (!m || m.over) return;
+  const p = miniLocal(e);
+  m.pid = e.pointerId; m.held = true; m.idle = 0; m.dk = null; m.hand.setAttribute('opacity', 0);
+  m.lx = p.x; m.ly = p.y; m.lt = performance.now();
+  try { ST.setPointerCapture(e.pointerId); } catch (er) {}
+  if (m.down) m.down(p);
 }
+function miniMove(e) {
+  const m = MINI; if (!m || m.over || !m.held || e.pointerId !== m.pid) return;
+  const p = miniLocal(e), now = performance.now();
+  p.dt = Math.max(1 / 120, (now - m.lt) / 1000); p.dx = p.x - m.lx; p.dy = p.y - m.ly;
+  m.lx = p.x; m.ly = p.y; m.lt = now; m.idle = 0;
+  if (m.move) m.move(p);
+}
+function miniUp(e) {
+  const m = MINI; if (!m || !m.held || e.pointerId !== m.pid) return;
+  m.held = false;
+  if (!m.over && m.up) m.up(miniLocal(e));
+}
+function miniTick(dt) {
+  const m = MINI; if (!m || m.over) return;
+  if (m.tick) m.tick(dt);
+  if (!m.held) m.idle += dt;
+  if (m.dk) {   // die Hand zeigt, wie es geht: Wegpunkte {x, y, p = gedrückt, ms}
+    m.dt += dt * 1000;
+    const k = m.dk;
+    while (m.di < k.length - 1 && m.dt > k[m.di + 1].ms) { m.dt -= k[m.di + 1].ms; m.di++; }
+    if (m.di >= k.length - 1) { m.dk = null; m.hand.setAttribute('opacity', 0); m.idle = 0; return; }
+    const a = k[m.di], b = k[m.di + 1], t = easeIO(clamp(m.dt / (b.ms || 1), 0, 1));
+    m.hand.setAttribute('transform', `translate(${lerp(a.x, b.x, t).toFixed(1)},${lerp(a.y, b.y, t).toFixed(1)})`);
+    m.hand.setAttribute('opacity', .92); m.ring.setAttribute('opacity', a.p ? .6 : 0);
+  } else if (m.demo && !m.held && m.idle > 9 && !(m.demoNur1 && m.demoDone)) {
+    const k = m.demo(); m.idle = 0;
+    if (k && k.length > 1) { m.dk = k; m.di = 0; m.dt = 0; m.demoDone = true; }
+  }
+}
+const kf = (x, y, p, ms) => ({ x, y, p, ms });
+
+/* Was nach dem Minispiel am Tier zu sehen ist */
+async function afterMini(st) {
+  switch (st.mg) {
+    case 'splitter': if (P.sym.splitter) P.sym.splitter.remove(); if (P.sym.rot) P.sym.rot.setAttribute('opacity', .3); SFX.plop(); break;
+    case 'dreck': rubVisual('tupfer', 1); break;
+    case 'dosis': if (st.item === 'waermflasche') { placeTreat('waermflasche'); SFX.stick(); } else await gulp(); break;
+    case 'kraeuter': await gulp(); break;
+    case 'atem': P.cough = .12; break;
+    case 'knochen': if (P.sym.blau) P.sym.blau.setAttribute('opacity', .25); break;
+    case 'wickeln': rubVisual('gips', 1); SFX.stick(); break;
+    case 'tropfen': if (P.sym.ohr) P.sym.ohr.setAttribute('opacity', .4); break;
+    case 'bohren': if (P.sym.backe) P.sym.backe.setAttribute('opacity', .5); break;
+    case 'zecke': if (P.sym.zecke) P.sym.zecke.remove(); SFX.plop(); break;
+    case 'floehe': if (P.fleas) { P.fleas.forEach(f => f.e.remove()); P.fleas = null; } break;
+    case 'schnitt': rubVisual('gipsschere', 1); break;
+  }
+}
+
+const MG = {};
+
+/* Splitter: langsam herausziehen – wer zu schnell zieht, rutscht ab */
+MG.splitter = m => {
+  m.c.innerHTML = furBg(P.a) + `<ellipse cx="0" cy="80" rx="250" ry="175" fill="#F5A9B6" stroke="#E58A9A" stroke-width="6"/>` +
+    [[-240, -140], [-90, -210], [90, -210], [240, -140]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="62" ry="58" fill="#F5A9B6" stroke="#E58A9A" stroke-width="6"/>`).join('');
+  const n = SAVE.day >= 5 ? 2 : 1, L = 190, OUT = 70, vmax = lerp(700, 380, lvl());
+  let cur = 0, s = null, grab = false, g0 = 0, sp = 0;
+  const meter = el('g', { transform: 'translate(334,30)' }, m.ui);
+  el('rect', { x: -22, y: -150, width: 44, height: 300, rx: 22, fill: '#FFFFFF', stroke: '#C9D5DE', 'stroke-width': 4 }, meter);
+  const mFill = el('rect', { x: -14, y: 142, width: 28, height: 0, rx: 14, fill: '#5BBF4A' }, meter);
+  el('path', { d: 'M-30 -85 h60', stroke: '#F2575E', 'stroke-width': 6, 'stroke-linecap': 'round' }, meter);
+  const along = p => (p.x - s.E[0]) * s.d[0] + (p.y - s.E[1]) * s.d[1];
+  const tip = () => [s.E[0] + s.d[0] * (OUT + s.pulled), s.E[1] + s.d[1] * (OUT + s.pulled)];
+  function neu() {
+    const a = rnd(-150, -30) * Math.PI / 180, d = [Math.cos(a), Math.sin(a)], E = [rnd(-90, 90), rnd(60, 130)];
+    const g = el('g', {}, m.c);
+    const shadow = el('line', { stroke: '#7A4B26', 'stroke-width': 18, 'stroke-linecap': 'round', opacity: .2 }, g);
+    el('ellipse', { cx: E[0], cy: E[1], rx: 30, ry: 22, fill: '#F27A7A', opacity: .55 }, g);
+    const rod = el('line', { stroke: '#8A5A2B', 'stroke-width': 16, 'stroke-linecap': 'round' }, g);
+    const hl = el('line', { stroke: '#C08A50', 'stroke-width': 5, 'stroke-linecap': 'round' }, g);
+    const tw = el('g', { opacity: 0 }, g, `<g transform="scale(1.3)">${toolIcon('pinzette')}</g>`);
+    s = { d, E, g, shadow, rod, hl, tw, pulled: 0, rot: Math.atan2(d[0], -d[1]) * 180 / Math.PI };
+    draw();
+  }
+  function draw() {
+    const [tx, ty] = tip(), ix = s.E[0] - s.d[0] * (L - s.pulled), iy = s.E[1] - s.d[1] * (L - s.pulled);
+    const set = (e, a, b, c, d) => { e.setAttribute('x1', a); e.setAttribute('y1', b); e.setAttribute('x2', c); e.setAttribute('y2', d); };
+    set(s.shadow, s.E[0], s.E[1], ix, iy); set(s.rod, s.E[0], s.E[1], tx, ty); set(s.hl, s.E[0] + s.d[0] * 10, s.E[1] + s.d[1] * 10, tx - s.d[0] * 10, ty - s.d[1] * 10);
+    s.tw.setAttribute('transform', `translate(${tx + s.d[0] * 44},${ty + s.d[1] * 44}) rotate(${s.rot})`);
+  }
+  function out() {
+    grab = false; SFX.plop(); cur++; m.pips(n > 1 ? n : 0, cur);
+    const g = s.g, [tx, ty] = tip(), d = s.d; s = null;
+    burst(MX + tx, MY + ty, 10, null, 'star', $('fx2'));
+    guard(tween(450, t => { g.setAttribute('transform', `translate(${d[0] * 120 * t},${d[1] * 120 * t})`); g.setAttribute('opacity', 1 - t); }).then(() => g.remove()));
+    if (cur >= n) m.win(); else m.later(600, neu);
+  }
+  neu(); m.pips(n > 1 ? n : 0, 0);
+  return {
+    down(p) { if (s && dist(p.x, p.y, ...tip()) < 75) { grab = true; g0 = along(p) - s.pulled; s.tw.setAttribute('opacity', 1); SFX.pick(); sp = 0; } },
+    move(p) {
+      if (!grab || !s) return;
+      const perp = Math.abs((p.x - s.E[0]) * s.d[1] - (p.y - s.E[1]) * s.d[0]);
+      if (perp > 120) { grab = false; s.tw.setAttribute('opacity', 0); return; }
+      const np = clamp(along(p) - g0, s.pulled, L);
+      sp = sp * .6 + (np - s.pulled) / p.dt * .4;
+      if (sp > vmax) {   // zu schnell: rutscht ab und flutscht ein Stück zurück
+        m.fail(...tip()); s.pulled = Math.max(0, s.pulled - 70); grab = false; sp = 0; s.tw.setAttribute('opacity', 0); draw(); return;
+      }
+      s.pulled = np; draw();
+      if (s.pulled >= L) out();
+    },
+    up() { grab = false; if (s) s.tw.setAttribute('opacity', 0); },
+    tick(dt) {
+      sp *= Math.max(0, 1 - dt * 5);
+      const k = clamp(sp / vmax / 1.25, 0, 1), h = 284 * k;
+      mFill.setAttribute('y', 142 - h); mFill.setAttribute('height', h); mFill.setAttribute('fill', sp > vmax * .75 ? '#F2A33A' : '#5BBF4A');
+    },
+    demo() { if (!s) return null; const [tx, ty] = tip(); return [kf(tx, ty, 0, 0), kf(tx, ty, 1, 500), kf(tx + s.d[0] * 170, ty + s.d[1] * 170, 0, 2800), kf(tx + s.d[0] * 170, ty + s.d[1] * 170, 0, 300)]; },
+  };
+};
+
+/* Schramme: jeden Schmutzfleck wegwischen, aber nicht auf die Wunde drücken */
+MG.dreck = m => {
+  const c = TIERE[P.a];
+  m.c.innerHTML = furBg(P.a) + `<ellipse cx="0" cy="20" rx="320" ry="220" fill="#F7CFC6" stroke="${c.dark}" stroke-width="5"/>`;
+  const segs = [-1, 0, 1].map(i => { const y = i * 95 + rnd(-15, 15) + 20, a = rnd(-.25, .25); return [-200 + rnd(-20, 20), y - 200 * a, 200 + rnd(-20, 20), y + 200 * a]; });
+  segs.forEach(s => el('g', {}, m.c, `<path d="M${s[0]} ${s[1]} L${s[2]} ${s[3]}" stroke="#E2575E" stroke-width="14" stroke-linecap="round"/><path d="M${s[0] + 10} ${s[1]} L${s[2] - 10} ${s[3]}" stroke="#F7A0A0" stroke-width="4" stroke-linecap="round"/>`));
+  const N = 7 + Math.round(lvl() * 5), specks = [];
+  for (let tries = 0; specks.length < N && tries < 800; tries++) {
+    const x = rnd(-280, 280), y = rnd(-170, 210);
+    if ((x / 300) ** 2 + ((y - 20) / 205) ** 2 > 1) continue;
+    if (segs.some(s => segDist(x, y, ...s) < 46)) continue;
+    if (specks.some(o => dist(x, y, o.x, o.y) < 64)) continue;
+    const g = el('g', { transform: `translate(${x.toFixed(0)},${y.toFixed(0)})` }, m.c, `<circle r="${rnd(14, 19).toFixed(0)}" fill="#8B6A45"/><circle cx="${rnd(-14, 14).toFixed(0)}" cy="${rnd(-14, 14).toFixed(0)}" r="7" fill="#6E5236"/><circle cx="${rnd(-12, 12).toFixed(0)}" cy="${rnd(-12, 12).toFixed(0)}" r="5" fill="#A0805A"/>`);
+    specks.push({ x, y, g, hp: 1 });
+  }
+  const cursor = el('g', { opacity: 0 }, m.ui, `<g transform="scale(.9)">${toolIcon('tupfer')}</g>`);
+  let done = 0, lastOw = 0, lastRub = 0;
+  m.pips(specks.length, 0);
+  return {
+    down(p) { cursor.setAttribute('opacity', 1); cursor.setAttribute('transform', `translate(${p.x},${p.y})`); },
+    move(p) {
+      cursor.setAttribute('transform', `translate(${p.x},${p.y})`);
+      const d = Math.hypot(p.dx, p.dy), now = performance.now();
+      if (d > 1.5 && now - lastOw > 1200 && segs.some(s => segDist(p.x, p.y, ...s) < 12)) { lastOw = now; m.fail(p.x, p.y - 50); }
+      for (const s of specks) if (s.hp > 0 && dist(p.x, p.y, s.x, s.y) < 40) {
+        s.hp -= d / 170; s.g.setAttribute('opacity', Math.max(0, s.hp).toFixed(2));
+        if (now - lastRub > 110) { lastRub = now; SFX.rub(); }
+        if (s.hp <= 0) { done++; m.pips(specks.length, done); SFX.pop(); burst(MX + s.x, MY + s.y, 6, ['#FFFFFF', '#BFE3F5'], 'star', $('fx2')); if (done >= specks.length) m.win(); }
+      }
+    },
+    up() { cursor.setAttribute('opacity', 0); },
+    demo() {
+      const s = specks.find(o => o.hp > 0); if (!s) return null;
+      const k = [kf(s.x - 30, s.y, 0, 0), kf(s.x - 30, s.y, 1, 400)];
+      for (let i = 0; i < 6; i++) k.push(kf(s.x + (i % 2 ? -30 : 30), s.y + rnd(-8, 8), 1, 230));
+      k.push(kf(s.x, s.y, 0, 200), kf(s.x, s.y, 0, 300)); return k;
+    },
+  };
+};
+
+/* Medizin dosieren: Finger halten, dann fließt es – genau im grünen Streifen loslassen */
+MG.dosis = m => {
+  const col = { fiebersaft: '#F57F87', hustensaft: '#E89A3C', waermflasche: '#7EC8F0' }[m.item] || '#8FD0F2';
+  m.c.innerHTML = `<rect x="-400" y="-300" width="800" height="600" fill="#EAF7F2"/><rect x="-400" y="196" width="800" height="110" fill="#F3D9B6"/><rect x="-400" y="196" width="800" height="8" fill="#E2BE8E"/>`;
+  const CX = 130, TOP = -170, BOT = 190, H = BOT - TOP, W = 170;
+  const band = lerp(.16, .08, lvl()), mid = rnd(.42, .8), lo = mid - band / 2, hi = mid + band / 2, base = lerp(.17, .27, lvl());
+  el('rect', { x: CX - W / 2, y: TOP, width: W, height: H, rx: 18, fill: '#FFFFFF', opacity: .85 }, m.c);
+  const liq = el('rect', { x: CX - W / 2 + 6, y: BOT, width: W - 12, height: 0, rx: 12, fill: col }, m.c);
+  el('rect', { x: CX - W / 2 - 8, y: BOT - hi * H, width: W + 16, height: band * H, rx: 6, fill: '#5BBF4A', opacity: .32 }, m.c);
+  el('path', { d: `M${CX - W / 2 - 14} ${BOT - hi * H} h${W + 28} M${CX - W / 2 - 14} ${BOT - lo * H} h${W + 28}`, stroke: '#3E9C3A', 'stroke-width': 5, 'stroke-linecap': 'round' }, m.c);
+  for (let i = 1; i < 10; i++) el('rect', { x: CX - W / 2, y: BOT - i * H / 10 - 2, width: i % 5 ? 22 : 36, height: 4, rx: 2, fill: '#9AA7AF' }, m.c);
+  el('rect', { x: CX - W / 2, y: TOP, width: W, height: H, rx: 18, fill: 'none', stroke: '#9AA7AF', 'stroke-width': 6 }, m.c);
+  const stream = el('path', { stroke: col, 'stroke-width': 12, fill: 'none', 'stroke-linecap': 'round', opacity: 0 }, m.c);
+  const bot = el('g', {}, m.c);
+  const bIn = el('g', {}, bot, `<g transform="scale(2.6)">${m.item === 'waermflasche' ? `<g transform="translate(0,-40)">${toolIcon('waermflasche')}</g>` : bottle(0, 0, col, 1)}</g>`);
+  let lev = 0, ht = 0, lock = false, ang = 0;
+  const render = () => {
+    const h = Math.max(0, lev) * (H - 12);
+    liq.setAttribute('y', BOT - 6 - h); liq.setAttribute('height', h);
+    bot.setAttribute('transform', `translate(-150,30) rotate(${ang.toFixed(1)} 0 -90)`);
+    const a = ang * Math.PI / 180, nx = -150 + 100 * Math.sin(a), ny = 30 - 90 - 100 * Math.cos(a);
+    stream.setAttribute('d', `M${nx.toFixed(0)} ${ny.toFixed(0)} Q${CX - 60} ${ny - 20} ${CX - 30} ${(BOT - 6 - h).toFixed(0)}`);
+  };
+  render();
+  return {
+    tick(dt) {
+      const pour = m.held && !lock;
+      ang += ((pour ? 112 : 0) - ang) * Math.min(1, dt * 10);
+      const flowing = pour && ang > 95;
+      stream.setAttribute('opacity', flowing ? .9 : 0);
+      if (flowing) { ht += dt; lev += base * (1 + ht * 1.6) * dt; if (Math.random() < dt * 8) tone(rnd(500, 700), .05, 'sine', .08); }
+      if (lock) lev = Math.max(0, lev - dt * 1.4);
+      if (!lock && lev > hi + .004) {   // übergelaufen
+        lock = true; m.fail(CX, TOP - 20);
+        for (let i = 0; i < 8; i++) burst(MX + CX + rnd(-60, 60), MY + TOP, 1, [col], 'star', $('fx2'));
+        m.later(900, () => { lev = 0; ht = 0; lock = false; });
+      }
+      render();
+    },
+    up() { ht = 0; if (!lock && lev >= lo && lev <= hi) { SFX.ding(); m.win(); } },
+    demo() {
+      const c = Math.max(.05, mid - lev), t = (-base + Math.sqrt(base * base + 3.2 * base * c)) / (1.6 * base);
+      return [kf(-150, 40, 0, 0), kf(-150, 40, 1, 400), kf(-150, 40, 0, t * 1000 + 230), kf(-150, 40, 0, 500)];
+    },
+  };
+};
+
+/* Inhalieren: tippen, wenn der Zeiger im grünen Feld ist */
+MG.atem = m => {
+  m.c.innerHTML = `<rect x="-400" y="-300" width="800" height="600" fill="#EAF4FB"/>` +
+    [[-280, -180, 40], [-240, -200, 30], [270, 170, 46], [300, 140, 30], [-300, 190, 34]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#FFFFFF" opacity=".9"/>`).join('');
+  const CY = 40, R = 170;
+  const g = el('g', { transform: `translate(0,${CY})` }, m.c);
+  el('circle', { r: R, fill: '#FFFFFF', stroke: '#8FC7B8', 'stroke-width': 12 }, g);
+  for (let i = 0; i < 12; i++) el('rect', { x: -3, y: -R + 14, width: 6, height: 18, rx: 3, fill: '#C9D5DE', transform: `rotate(${i * 30})` }, g);
+  const zone = el('path', { fill: '#5BBF4A', opacity: .75 }, g);
+  const needle = el('g', {}, g, `<path d="M-9 0 L0 ${-R + 26} L9 0Z" fill="#4E6F68"/><circle r="22" fill="#4E6F68"/><circle r="10" fill="#FFFFFF"/>`);
+  el('g', { transform: 'translate(0,0) scale(.7)', opacity: .9 }, g, toolIcon('inhalator'));
+  let ang = rnd(0, 360), z = 0, spd = lerp(140, 230, lvl()), dir = 1, hits = 0, cool = 0, flash = 0;
+  const wz = lerp(66, 36, lvl()), need = 4 + Math.round(lvl() * 2);
+  function newZone() { let a; do { a = rnd(0, 360); } while (Math.abs(angDiff(a, ang)) < 100); z = a; zone.setAttribute('d', arcPath(R - 64, R - 8, z - wz / 2, z + wz / 2)); }
+  newZone(); m.pips(need, 0);
+  return {
+    tick(dt) {
+      ang = (ang + dir * spd * dt + 360) % 360; cool -= dt; flash = Math.max(0, flash - dt * 3);
+      needle.setAttribute('transform', `rotate(${ang.toFixed(1)})`);
+      needle.firstChild.setAttribute('fill', flash > 0 ? '#F2575E' : '#4E6F68');
+    },
+    down() {
+      if (cool > 0) return; cool = .25;
+      if (Math.abs(angDiff(ang, z)) <= wz / 2 + 4) {
+        hits++; m.pips(need, hits); SFX.ding();
+        burst(MX, MY + CY - 60, 10, ['#FFFFFF', '#DDF3FF', '#BFE3F5'], 'star', $('fx2'));
+        spd *= 1.07; if (lvl() > .4) dir = -dir;
+        if (hits >= need) m.win(); else newZone();
+      } else { flash = 1; m.fail(0, CY - R - 20); }
+    },
+    demo() { return [kf(0, CY + R + 70, 0, 0), kf(0, CY + R + 70, 1, 500), kf(0, CY + R + 70, 0, 180), kf(0, CY + R + 70, 0, 600)]; },
+  };
+};
+
+/* Knochenbruch: das Knochenstück an die richtige Stelle schieben und gerade drehen */
+MG.knochen = m => {
+  m.c.innerHTML = `<rect x="-400" y="-300" width="800" height="600" fill="url(#gXray)"/><path d="M-120 -300 C-110 -100 -140 120 -100 300 L100 300 C140 120 110 -100 120 -300Z" fill="#5C7FB8" opacity=".35"/>`;
+  const JAG = 'L30 -8 L14 6 L0 -10 L-14 4 L-30 -6';
+  const T = [0, -40];
+  el('path', { d: `M-30 -330 L30 -330 ${JAG} Z`, fill: '#EAF4FF', transform: `translate(${T[0]},${T[1]})` }, m.c);
+  const lower = `<path d="M-30 -6 L-14 4 L0 -10 L14 6 L30 -8 L30 150 L-30 150Z" fill="#EAF4FF"/><ellipse cy="176" rx="64" ry="38" fill="#EAF4FF"/>${[[-48, 222], [-17, 236], [17, 236], [48, 222]].map(([x, y]) => `<rect x="${x - 11}" y="${y - 24}" width="22" height="46" rx="11" fill="#EAF4FF"/>`).join('')}`;
+  el('g', { transform: `translate(${T[0]},${T[1]})`, opacity: lerp(.45, .14, lvl()) }, m.c, lower.replace(/fill="#EAF4FF"/g, 'fill="none" stroke="#FFFFFF" stroke-width="4" stroke-dasharray="10 8"'));
+  const KN = [86, 110];
+  let px = pick([-1, 1]) * rnd(120, 170), py = rnd(-20, 20), a = lvl() > .15 ? pick([-1, 1]) * rnd(18, 34) : 0;
+  const hasKnob = a !== 0;
+  const piece = el('g', {}, m.c, lower + (hasKnob ? `<line x1="0" y1="110" x2="${KN[0]}" y2="${KN[1]}" stroke="#FFD84D" stroke-width="6"/><g transform="translate(${KN[0]},${KN[1]})"><circle r="30" fill="#FFD84D" stroke="#FFFFFF" stroke-width="5"/><path d="M-12 -6 A13 13 0 1 1 -6 12" stroke="#9A6A00" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M-18 -12 L-12 -4 L-4 -10" stroke="#9A6A00" stroke-width="5" fill="none" stroke-linecap="round"/></g>` : ''));
+  let mode = null, ox = 0, oy = 0, done = false;
+  const k0 = Math.atan2(KN[1], KN[0]) * 180 / Math.PI;
+  const tol = lerp(26, 14, lvl());
+  const render = () => piece.setAttribute('transform', `translate(${px.toFixed(1)},${py.toFixed(1)}) rotate(${a.toFixed(1)})`);
+  const toLocal = p => { const r = -a * Math.PI / 180, dx = p.x - px, dy = p.y - py; return [dx * Math.cos(r) - dy * Math.sin(r), dx * Math.sin(r) + dy * Math.cos(r)]; };
+  const knobWorld = () => { const r = a * Math.PI / 180; return [px + KN[0] * Math.cos(r) - KN[1] * Math.sin(r), py + KN[0] * Math.sin(r) + KN[1] * Math.cos(r)]; };
+  function check() {
+    if (done || dist(px, py, ...T) > tol || Math.abs(a) > 7) return;
+    done = true; mode = null; SFX.stick();
+    const [x0, y0, a0] = [px, py, a];
+    guard(tween(200, t => { px = lerp(x0, T[0], t); py = lerp(y0, T[1], t); a = lerp(a0, 0, t); render(); }).then(() => {
+      el('circle', { cx: 0, cy: T[1], r: 60, fill: 'none', stroke: '#8FF0FF', 'stroke-width': 8, opacity: .8 }, m.c); m.win();
+    }));
+  }
+  render();
+  return {
+    down(p) {
+      if (done) return;
+      const [lx, ly] = toLocal(p);
+      if (hasKnob && dist(lx, ly, ...KN) < 46) { mode = 'rot'; SFX.pick(); return; }
+      if (Math.abs(lx) < 75 && ly > -30 && ly < 262) { mode = 'move'; ox = p.x - px; oy = p.y - py; SFX.pick(); }
+    },
+    move(p) {
+      if (mode === 'move') { px = clamp(p.x - ox, -300, 300); py = clamp(p.y - oy, -120, 40); render(); check(); }
+      else if (mode === 'rot') { a = angDiff(Math.atan2(p.y - py, p.x - px) * 180 / Math.PI - k0, 0); render(); check(); }
+    },
+    up() { mode = null; check(); },
+    demo() {
+      if (done) return null;
+      const k = [];
+      if (Math.abs(a) > 7) {
+        const [kx, ky] = knobWorld(); k.push(kf(kx, ky, 0, 0), kf(kx, ky, 1, 400));
+        for (let i = 1; i <= 4; i++) { const aa = (a * (1 - i / 4) + k0) * Math.PI / 180, r = Math.hypot(...KN); k.push(kf(px + r * Math.cos(aa), py + r * Math.sin(aa), i < 4 ? 1 : 0, 300)); }
+      }
+      k.push(kf(px, py + 80, 0, k.length ? 400 : 0), kf(px, py + 80, 1, 400), kf(T[0], T[1] + 80, 0, 1300), kf(T[0], T[1] + 80, 0, 300));
+      return k;
+    },
+  };
+};
+
+/* Gips wickeln: im Kreis um die Pfote fahren – nicht zu schnell */
+MG.wickeln = m => {
+  const c = TIERE[P.a], CY = 10, R = 175;
+  m.c.innerHTML = `<rect x="-400" y="-300" width="800" height="600" fill="#EAF7F2"/>
+    <rect x="-70" y="-330" width="140" height="460" rx="60" fill="${c.fur}" stroke="${c.dark}" stroke-width="6"/>
+    <ellipse cx="0" cy="170" rx="96" ry="72" fill="${c.fur}" stroke="${c.dark}" stroke-width="6"/><ellipse cx="0" cy="${CY}" rx="60" ry="46" fill="#8E7CC3" opacity=".45"/>`;
+  el('circle', { cx: 0, cy: CY, r: R, fill: 'none', stroke: '#FFFFFF', 'stroke-width': 10, 'stroke-dasharray': '18 14', opacity: .9 }, m.c);
+  const layers = el('g', {}, m.c);
+  const need = 4 + Math.round(lvl() * 2), lim = lerp(2.8, 1.8, lvl()) * 2 * Math.PI;
+  const roll = el('g', { opacity: 0 }, m.ui, `<g transform="scale(.8)">${toolIcon('gips')}</g>`);
+  let acc = 0, la = null, dir = 0, done = 0, lastF = 0, sp = 0;
+  m.pips(need, 0);
+  function addLayer() {
+    const i = done++, h = 300 / need, y = 120 - (i + 1) * h;
+    el('rect', { x: -80, y: y.toFixed(0), width: 160, height: (h + 16).toFixed(0), rx: 16, fill: '#FFFFFF', stroke: '#D5DDE4', 'stroke-width': 4, transform: `rotate(${i % 2 ? 6 : -6} 0 ${y + h / 2})` }, layers);
+    m.pips(need, done); SFX.stick();
+    if (done >= need) { m.c.querySelector('ellipse[fill="#8E7CC3"]').remove(); m.win(); }
+  }
+  return {
+    down(p) { la = null; sp = 0; roll.setAttribute('opacity', 1); roll.setAttribute('transform', `translate(${p.x},${p.y})`); },
+    move(p) {
+      roll.setAttribute('transform', `translate(${p.x},${p.y})`);
+      const r = dist(p.x, p.y, 0, CY);
+      if (r < 90 || r > 340) { la = null; return; }
+      const an = Math.atan2(p.y - CY, p.x), now = performance.now();
+      if (la !== null) {
+        const da = wrapA(an - la);
+        if (!dir && Math.abs(da) > .02) dir = Math.sign(da);
+        if (Math.sign(da) === dir) {
+          sp = sp * .7 + Math.abs(da) / p.dt * .3;
+          if (sp > lim && now - lastF > 1000) { lastF = now; sp = 0; m.fail(p.x, p.y - 40); acc = done * 2 * Math.PI; la = an; return; }   // zu schnell: die Binde verrutscht
+          acc += Math.abs(da);
+          while (acc >= (done + 1) * 2 * Math.PI && done < need) addLayer();
+        }
+      }
+      la = an;
+    },
+    up() { la = null; roll.setAttribute('opacity', 0); },
+    demo() { const k = [kf(R, CY, 0, 0), kf(R, CY, 1, 400)]; for (let i = 1; i <= 14; i++) { const an = i / 12 * 2 * Math.PI; k.push(kf(R * Math.cos(an), CY + R * Math.sin(an), i < 14 ? 1 : 0, 220)); } k.push(kf(R, CY, 0, 300)); return k; },
+  };
+};
+
+/* Ohrentropfen: die Flasche wackelt – tippen, wenn sie genau über dem Ohr ist */
+MG.tropfen = m => {
+  const c = TIERE[P.a], CR = lerp(50, 32, lvl());
+  m.c.innerHTML = furBg(P.a) + `<ellipse cx="0" cy="190" rx="250" ry="130" fill="${c.inner}" stroke="${c.dark}" stroke-width="6"/><ellipse cx="0" cy="186" rx="160" ry="84" fill="url(#gEarRed)"/>
+    <ellipse cx="0" cy="182" rx="${CR}" ry="${(CR * .6).toFixed(0)}" fill="#3A0A10" stroke="#FFD84D" stroke-width="4" stroke-dasharray="8 6"/>`;
+  const drp = el('g', {}, m.ui, `<g transform="rotate(180) scale(1.6)">${toolIcon('tropfen')}</g>`);
+  const w = lerp(1.7, 2.9, lvl()), wild = lvl() > .5;
+  let t = 0, x = 0, hits = 0, drop = null;
+  m.pips(3, 0);
+  return {
+    tick(dt) {
+      t += dt;
+      x = clamp(250 * Math.sin(t * w) + (wild ? 70 * Math.sin(t * w * 2.3 + 1) : 0), -310, 310);
+      drp.setAttribute('transform', `translate(${x.toFixed(1)},-190)`);
+      if (drop) {
+        drop.t += dt; const k = clamp(drop.t / .5, 0, 1);
+        drop.e.setAttribute('transform', `translate(${drop.x.toFixed(1)},${lerp(-118, 178, k * k).toFixed(1)})`);
+        if (k >= 1) {
+          const hit = Math.abs(drop.x) < CR; drop.e.remove();
+          if (hit) { hits++; m.pips(3, hits); SFX.drip(); SFX.ding(); burst(MX + drop.x, MY + 180, 8, ['#8FD0F2', '#FFFFFF'], 'star', $('fx2')); if (hits >= 3) m.win(); }
+          else { m.fail(drop.x, 120); burst(MX + drop.x, MY + 180, 6, ['#5FA9D0'], 'star', $('fx2')); }
+          drop = null;
+        }
+      }
+    },
+    down() { if (drop) return; SFX.drip(); drop = { x, t: 0, e: el('path', { d: 'M0 -14 C-10 0 -10 10 0 10 C10 10 10 0 0 -14Z', fill: '#5FA9D0', stroke: '#FFF', 'stroke-width': 3 }, m.ui) }; },
+    demo() { return [kf(260, 60, 0, 0), kf(260, 60, 1, 500), kf(260, 60, 0, 160), kf(260, 60, 0, 700)]; },
+  };
+};
+
+/* Loch im Zahn: auf den Fleck drücken bis er weg ist – dann sofort loslassen */
+MG.bohren = m => {
+  m.c.innerHTML = `<rect x="-400" y="-300" width="800" height="600" fill="#8E2A3A"/><ellipse cx="0" cy="230" rx="400" ry="140" fill="#E07A86"/><ellipse cx="0" cy="-250" rx="400" ry="120" fill="#E07A86"/>`;
+  const TX = [-255, -85, 85, 255], TY = 30;
+  const teeth = TX.map(x => el('path', { d: ZAHN, fill: '#FFFFFF', stroke: '#E6DCD2', 'stroke-width': 1.4, transform: `translate(${x},${TY}) scale(2.4)` }, m.c));
+  const n = 1 + (lvl() > .3 ? 1 : 0) + (lvl() > .7 ? 1 : 0), dt0 = 1.2, lim = lerp(.6, .3, lvl());
+  const spots = shuffleSome([0, 1, 2, 3]).slice(0, n).map(i => {
+    const x = TX[i] + rnd(-22, 22), y = TY + rnd(-56, -22);
+    const ring = el('circle', { cx: x, cy: y, r: 34, fill: 'none', stroke: '#FFD84D', 'stroke-width': 6, opacity: 0 }, m.c);
+    return { i, x, y, hp: 1, clean: false, ov: 0, ring, e: el('circle', { cx: x, cy: y, r: 24, fill: '#4A2F25' }, m.c) };
+  });
+  const drill = el('g', { opacity: 0 }, m.ui, `<g transform="translate(34,-40) scale(1.2)">${toolIcon('bohrer')}</g>`);
+  let act = null, done = 0, buzz = 0;
+  m.pips(n, 0);
+  return {
+    down(p) { act = spots.find(s => !s.clean && dist(p.x, p.y, s.x, s.y) < 52) || null; drill.setAttribute('opacity', 1); drill.setAttribute('transform', `translate(${p.x},${p.y})`); },
+    move(p) { drill.setAttribute('transform', `translate(${p.x},${p.y})`); },
+    up() {
+      drill.setAttribute('opacity', 0);
+      if (act) act.ring.setAttribute('opacity', 0);
+      act = null; if (done >= n) m.win();
+    },
+    tick(dt) {
+      if (!m.held || !act || dist(m.lx, m.ly, act.x, act.y) > 70) return;
+      buzz -= dt; if (buzz < 0) { buzz = .07; tone(rnd(1700, 1900), .05, 'square', .03); }
+      if (!act.clean) {
+        act.hp -= dt / dt0; act.e.setAttribute('r', (4 + 20 * Math.max(0, act.hp)).toFixed(1));
+        if (act.hp <= 0) { act.clean = true; act.e.setAttribute('fill', '#F2EDE6'); act.e.setAttribute('stroke', '#C9BBAA'); act.e.setAttribute('stroke-width', 3); act.e.setAttribute('r', 14); done++; m.pips(n, done); SFX.ding(); }
+      } else {   // weiterbohren tut weh
+        act.ov += dt; act.ring.setAttribute('opacity', 1); act.ring.setAttribute('stroke', act.ov > lim * .5 ? '#F2575E' : '#FFD84D');
+        if (act.ov > lim) {
+          m.fail(act.x, act.y - 70); act.ring.setAttribute('opacity', 0);
+          const tooth = teeth[act.i]; tooth.setAttribute('fill', '#FFC9C9'); m.later(500, () => tooth.setAttribute('fill', '#FFFFFF'));
+          act = null;
+        }
+      }
+    },
+    demo() { const s = spots.find(o => !o.clean); if (!s) return null; return [kf(s.x, s.y, 0, 0), kf(s.x, s.y, 1, 400), kf(s.x, s.y, 0, (s.hp * dt0 * 1000) + 120), kf(s.x, s.y, 0, 500)]; },
+  };
+};
+
+/* Zecke: festhalten, im Kreis drehen bis sie grün leuchtet, dann herausziehen */
+MG.zecke = m => {
+  m.c.innerHTML = furBg(P.a) + `<circle cx="0" cy="0" r="90" fill="#F27A7A" opacity=".35"/>`;
+  const glow = el('circle', { r: 72, fill: 'none', stroke: '#5BBF4A', 'stroke-width': 10, opacity: 0 }, m.c);
+  const tk = el('g', {}, m.c, `<g transform="scale(5)">${krankBild('zecke').replace('scale(3.4)', 'scale(1)')}</g>`);
+  const tong = el('line', { x1: 0, y1: 0, stroke: '#3E9C6E', 'stroke-width': 12, 'stroke-linecap': 'round', opacity: 0 }, m.ui);
+  const turns = 2 + Math.round(lvl()), need = turns * 2 * Math.PI;
+  let grab = false, acc = 0, la = null, dir = 0, loose = false;
+  m.pips(turns, 0);
+  return {
+    down(p) { if (dist(p.x, p.y, 0, 0) < 85) { grab = true; la = null; SFX.pick(); tong.setAttribute('opacity', .9); tong.setAttribute('x2', p.x); tong.setAttribute('y2', p.y); } },
+    move(p) {
+      if (!grab) return;
+      tong.setAttribute('x2', p.x); tong.setAttribute('y2', p.y);
+      const r = Math.hypot(p.x, p.y);
+      if (r > 240) {
+        grab = false; tong.setAttribute('opacity', 0);
+        if (loose) { SFX.plop(); guard(tween(450, t => { tk.setAttribute('transform', `translate(${p.x * t},${p.y * t}) rotate(${acc * 57 * dir})`); tk.setAttribute('opacity', 1 - t); })); glow.remove(); m.win(); }
+        else { m.fail(0, -120); tk.setAttribute('transform', `rotate(${acc * 57 * dir})`); }   // noch fest: rutscht ab
+        return;
+      }
+      if (!loose && r > 45) {
+        const an = Math.atan2(p.y, p.x);
+        if (la !== null) {
+          const da = wrapA(an - la);
+          if (!dir && Math.abs(da) > .02) dir = Math.sign(da);
+          if (Math.sign(da) === dir) {
+            acc += Math.abs(da); m.pips(turns, Math.min(turns, Math.floor(acc / (2 * Math.PI))));
+            if (acc >= need) { loose = true; glow.setAttribute('opacity', .9); SFX.ding(); }
+          }
+        }
+        la = an;
+      } else if (r <= 45) la = null;
+      tk.setAttribute('transform', `translate(${clamp(p.x, -30, 30) * .3},${clamp(p.y, -30, 30) * .3}) rotate(${(acc * 57 * (dir || 1)).toFixed(1)})`);
+    },
+    up() { grab = false; la = null; tong.setAttribute('opacity', 0); },
+    demo() {
+      const k = [kf(0, 0, 0, 0), kf(0, 0, 1, 400)];
+      if (!loose) { k.push(kf(110, 0, 1, 300)); const n = Math.ceil(((need - acc) / (2 * Math.PI) + .25) * 8); for (let i = 1; i <= n; i++) { const an = i / 8 * 2 * Math.PI; k.push(kf(110 * Math.cos(an), 110 * Math.sin(an), 1, 170)); } }
+      k.push(kf(290, -40, 0, 600), kf(290, -40, 0, 300)); return k;
+    },
+  };
+};
+
+/* Flöhe fangen: schnell antippen, bevor sie weghüpfen */
+MG.floehe = m => {
+  m.c.innerHTML = furBg(P.a);
+  el('g', { transform: 'translate(318,-226)' }, m.ui, `<circle r="44" fill="#FFFFFF" opacity=".9"/><g transform="scale(.9)">${toolIcon('fangglas')}</g>`);
+  const need = 8 + Math.round(lvl() * 4), max = 3 + Math.round(lvl() * 2), life = lerp(6, 3.6, lvl()), sitT = lerp(1, .55, lvl());
+  const F = []; let caught = 0, esc = 0;
+  function spawn() { const f = { x: rnd(-300, 300), y: rnd(-190, 230), t: 0, age: 0, mode: 'sit', d: rnd(.4, 1) * sitT, e: el('g', {}, m.c, FLOH) }; f.e.setAttribute('transform', `translate(${f.x},${f.y})`); F.push(f); }
+  m.pips(need, 0);
+  return {
+    tick(dt) {
+      while (F.filter(f => f.mode !== 'weg').length < max && caught + F.filter(f => f.mode !== 'weg').length < need) spawn();
+      for (let i = F.length - 1; i >= 0; i--) {
+        const f = F[i]; f.age += dt; f.t += dt;
+        if (f.mode === 'sit') {
+          if (f.t > f.d) {
+            f.t = 0; f.x0 = f.x; f.y0 = f.y;
+            if (f.age > life) { f.mode = 'weg'; f.x1 = f.x + rnd(-200, 200); f.y1 = -420; esc++; if (esc > 2) m.fail(f.x, f.y); }
+            else { f.mode = 'hop'; f.x1 = clamp(f.x + rnd(-220, 220), -320, 320); f.y1 = clamp(f.y + rnd(-180, 180), -200, 240); }
+          }
+        } else {
+          const dur = f.mode === 'weg' ? .5 : .3, k = clamp(f.t / dur, 0, 1);
+          f.x = lerp(f.x0, f.x1, k); f.y = lerp(f.y0, f.y1, k) - Math.sin(k * Math.PI) * 70;
+          if (k >= 1) { if (f.mode === 'weg') { f.e.remove(); F.splice(i, 1); continue; } f.mode = 'sit'; f.t = 0; f.d = rnd(.4, 1) * sitT; }
+        }
+        f.e.setAttribute('transform', `translate(${f.x.toFixed(1)},${f.y.toFixed(1)})`);
+      }
+    },
+    down(p) {
+      let best = null, bd = 62;
+      for (const f of F) if (f.mode !== 'weg') { const d = dist(p.x, p.y, f.x, f.y); if (d < bd) { bd = d; best = f; } }
+      if (!best) return;
+      F.splice(F.indexOf(best), 1); caught++; m.pips(need, caught); SFX.pop();
+      const e = best.e, x0 = best.x, y0 = best.y;
+      guard(tween(350, t => e.setAttribute('transform', `translate(${lerp(x0, 318, t)},${lerp(y0, -226, t)}) scale(${1 - t * .7})`)).then(() => e.remove()));
+      if (caught >= need) m.win();
+    },
+    demo() { const f = F.find(o => o.mode === 'sit'); if (!f) return null; return [kf(f.x + 60, f.y + 60, 0, 0), kf(f.x, f.y + 10, 0, 300), kf(f.x, f.y + 10, 1, 150), kf(f.x, f.y + 10, 0, 150), kf(f.x, f.y + 10, 0, 400)]; },
+  };
+};
+
+/* Kräutertee: Rezept merken, dann die Kräuter in der richtigen Reihenfolge antippen */
+const KRAUT = {
+  kamille: `${[...Array(8)].map((_, i) => `<ellipse cx="0" cy="-22" rx="9" ry="18" fill="#FFFFFF" stroke="#DDE3EA" stroke-width="2" transform="rotate(${i * 45})"/>`).join('')}<circle r="14" fill="#FFD84D" stroke="#E8A93A" stroke-width="3"/>`,
+  minze: `<path d="M0 40 V-30" stroke="#3E8E4A" stroke-width="5"/>${[[-1, -16], [1, 0], [-1, 16]].map(([s, y]) => `<ellipse cx="${s * 18}" cy="${y}" rx="20" ry="11" fill="#6DBF62" stroke="#3E8E4A" stroke-width="3" transform="rotate(${s * -30} ${s * 18} ${y})"/>`).join('')}<ellipse cx="0" cy="-32" rx="11" ry="18" fill="#6DBF62" stroke="#3E8E4A" stroke-width="3"/>`,
+  zitrone: `<circle r="34" fill="#FFE27A" stroke="#E8B93A" stroke-width="5"/><circle r="26" fill="#FFF3B0"/>${[...Array(8)].map((_, i) => `<path d="M0 0 L${(Math.sin(i * Math.PI / 4) * 24).toFixed(1)} ${(-Math.cos(i * Math.PI / 4) * 24).toFixed(1)}" stroke="#E8C64A" stroke-width="3"/>`).join('')}`,
+  honig: `<path d="M-26 -14 L26 -14 L30 30 Q0 42 -30 30Z" fill="#F2A93A" stroke="#C9822A" stroke-width="4"/><rect x="-30" y="-26" width="60" height="14" rx="5" fill="#C9822A"/><path d="M-14 0 l8 -5 l8 5 v9 l-8 5 l-8 -5Z" fill="#FFD27A"/>`,
+  ingwer: `<path d="M-34 10 C-30 -10 -10 -14 0 -4 C8 -20 26 -24 32 -8 C40 10 20 24 4 18 C-6 30 -30 30 -34 10Z" fill="#E8C48A" stroke="#B88A4E" stroke-width="4"/><path d="M-20 6 q6 -4 12 0 M10 0 q6 -4 12 0" stroke="#B88A4E" stroke-width="3" fill="none"/>`,
+  beere: `${[[-14, 6], [12, 8], [0, -12], [-2, 22]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="15" fill="#B03A5A" stroke="#7A2440" stroke-width="3"/><circle cx="${x - 5}" cy="${y - 5}" r="4" fill="#FFF" opacity=".6"/>`).join('')}<path d="M0 -26 q6 -14 18 -16" stroke="#3E8E4A" stroke-width="4" fill="none"/>`,
+};
+MG.kraeuter = m => {
+  m.demoNur1 = true;
+  m.c.innerHTML = `<rect x="-400" y="-300" width="800" height="600" fill="#FFF6EA"/><rect x="-400" y="110" width="800" height="200" fill="#F3D9B6"/>`;
+  const ids = Object.keys(KRAUT), K = 3 + (lvl() > .4 ? 1 : 0), rez = shuffleSome(ids).slice(0, K), order = shuffleSome(ids);
+  const card = el('g', { transform: 'translate(0,-160)' }, m.c);
+  el('rect', { x: -K * 60 - 20, y: -70, width: K * 120 + 40, height: 140, rx: 26, fill: '#FFFFFF', stroke: '#F2D5C2', 'stroke-width': 6 }, card);
+  const slots = rez.map((id, i) => {
+    const g = el('g', { transform: `translate(${(i - (K - 1) / 2) * 120},0)` }, card);
+    el('g', { transform: 'scale(.95)' }, g, KRAUT[id]);
+    const cover = el('g', { opacity: 0 }, g, `<rect x="-48" y="-52" width="96" height="104" rx="18" fill="#8FC7B8"/><text y="20" text-anchor="middle" font-size="56" fill="#FFFFFF">?</text>`);
+    const ok = el('g', { opacity: 0 }, g, `<circle cx="38" cy="-40" r="18" fill="#5BBF4A" stroke="#FFF" stroke-width="4"/><path d="M30 -40 l6 6 l10 -12" stroke="#FFF" stroke-width="5" fill="none" stroke-linecap="round"/>`);
+    return { cover, ok };
+  });
+  const pot = el('g', { transform: 'translate(0,20) scale(1.5)' }, m.c, toolIcon('tee'));
+  const jars = order.map((id, j) => {
+    const x = (j - 2.5) * 122, y = 196;
+    const g = el('g', { transform: `translate(${x},${y})` }, m.c, `<circle r="54" fill="#FFFFFF" stroke="#E2BE8E" stroke-width="5"/><g transform="scale(.85)">${KRAUT[id]}</g>`);
+    return { id, x, y, g };
+  });
+  let idx = 0, show = true, tok = 0;
+  function showRez(ms) {
+    show = true; const my = ++tok;
+    slots.forEach((s, i) => s.cover.setAttribute('opacity', 0));
+    m.later(ms, () => { if (my !== tok) return; slots.forEach((s, i) => { if (i >= idx) s.cover.setAttribute('opacity', 1); }); show = false; SFX.whoosh(); });
+  }
+  showRez(lerp(3600, 2400, lvl()) + K * 300);
+  m.pips(K, 0);
+  return {
+    down(p) {
+      if (show) return;
+      const j = jars.find(o => dist(p.x, p.y, o.x, o.y) < 60); if (!j) return;
+      if (j.id === rez[idx]) {
+        const fly = el('g', {}, m.ui, KRAUT[j.id]);
+        guard(tween(400, t => fly.setAttribute('transform', `translate(${lerp(j.x, 0, t)},${lerp(j.y, 10, t) - Math.sin(t * Math.PI) * 80}) scale(${1 - t * .5})`)).then(() => fly.remove()));
+        slots[idx].cover.setAttribute('opacity', 0); slots[idx].ok.setAttribute('opacity', 1);
+        idx++; m.pips(K, idx); SFX.plop();
+        if (idx >= K) { burst(MX, MY, 14, ['#FFFFFF', '#F2C14E', '#9BD47F'], 'star', $('fx2')); m.win(); }
+      } else {
+        m.fail(j.x, j.y - 70);
+        const g = j.g; guard(tween(400, t => g.setAttribute('transform', `translate(${j.x + Math.sin(t * Math.PI * 6) * 10 * (1 - t)},${j.y})`)));
+        showRez(1500);
+      }
+    },
+    demo() { const j = jars.find(o => o.id === rez[idx]); return [kf(0, -160, 0, 0), kf(0, -160, 0, 900), kf(j.x, j.y, 0, 700), kf(j.x, j.y, 1, 300), kf(j.x, j.y, 0, 150), kf(j.x, j.y, 0, 400)]; },
+  };
+};
+
+/* Gips aufschneiden: genau an der gestrichelten Linie entlangfahren */
+MG.schnitt = m => {
+  m.c.innerHTML = furBg(P.a) + `<rect x="-420" y="-120" width="840" height="240" rx="44" fill="#FFFFFF" stroke="#D5DDE4" stroke-width="6"/>` +
+    [-300, -180, -60, 60, 180, 300].map(x => `<path d="M${x} -116 q20 120 0 232" stroke="#E6ECF0" stroke-width="5" fill="none"/>`).join('');
+  const A = lerp(14, 46, lvl()), f = rnd(.8, 1.4), ph = rnd(0, 6), pts = [];
+  for (let x = -330; x <= 330; x += 15) pts.push([x, A * Math.sin(x / 70 * f + ph)]);
+  const D = a => 'M' + a.map(q => q[0] + ' ' + q[1].toFixed(1)).join(' L');
+  el('path', { d: D(pts), stroke: '#9AA7AF', 'stroke-width': 6, fill: 'none', 'stroke-dasharray': '14 10', 'stroke-linecap': 'round' }, m.c);
+  const cut = el('path', { stroke: '#5E6B75', 'stroke-width': 10, fill: 'none', 'stroke-linecap': 'round' }, m.c);
+  const mark = el('circle', { r: 26, fill: '#5BBF4A', opacity: .55 }, m.c);
+  const sc = el('g', { opacity: 0 }, m.ui, `<g transform="scale(1.1)">${toolIcon('gipsschere')}</g>`);
+  const tol = lerp(34, 20, lvl());
+  let prog = 0, cutting = false, lastF = 0, t = 0;
+  const render = () => { cut.setAttribute('d', D(pts.slice(0, prog + 1)) + (prog === 0 ? ' l0 0' : '')); mark.setAttribute('cx', pts[prog][0]); mark.setAttribute('cy', pts[prog][1]); };
+  render();
+  return {
+    tick(dt) { t += dt; mark.setAttribute('r', (24 + Math.sin(t * 6) * 5).toFixed(1)); },
+    down(p) { sc.setAttribute('opacity', 1); sc.setAttribute('transform', `translate(${p.x},${p.y})`); if (dist(p.x, p.y, ...pts[prog]) < 60) cutting = true; },
+    move(p) {
+      sc.setAttribute('transform', `translate(${p.x},${p.y})`);
+      if (!cutting) return;
+      let best = prog, bd = 1e9;
+      for (let i = Math.max(0, prog - 2); i <= Math.min(pts.length - 1, prog + 5); i++) { const d = dist(p.x, p.y, ...pts[i]); if (d < bd) { bd = d; best = i; } }
+      if (bd > tol * 2.2) {   // von der Linie abgerutscht
+        const now = performance.now(); if (now - lastF > 700) { lastF = now; m.fail(p.x, p.y - 40); }
+        cutting = false; prog = Math.max(0, prog - 3); render(); return;
+      }
+      if (bd < tol && best > prog) { prog = best; SFX.rub(); render(); if (prog >= pts.length - 1) m.win(); }
+    },
+    up() { cutting = false; sc.setAttribute('opacity', 0); },
+    demo() { const k = [kf(...pts[prog], 0, 0), kf(...pts[prog], 1, 400)]; for (let i = prog + 3; i < Math.min(pts.length - 1, prog + 18); i += 3) k.push(kf(...pts[i], 1, 300)); k.push(kf(...pts[Math.min(pts.length - 1, prog + 18)], 1, 300)); const l = k[k.length - 1]; k.push(kf(l.x, l.y, 0, 200)); return k; },
+  };
+};
 function foam(n, area, host) {
   // Schaumblasen (bleiben über Schritte hinweg in P.foam)
   if (!P.foam) P.foam = el('g', {}, host || P.ovTop);
@@ -1702,7 +2400,7 @@ function openBook() {
   const x = el('g', { class: 'btn', transform: 'translate(1110,150)' }, m, `<circle r="40" fill="#FFFFFF" filter="url(#shS)"/><path d="M-14 -14 L14 14 M14 -14 L-14 14" stroke="#9AA7AF" stroke-width="8" stroke-linecap="round"/>`);
   x.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.pop(); closeBook(); });
   BOOK_VLAST = V.last;
-  guard(say('buch_auf'));
+  guard(sayErst('buch_auf'));
 }
 let BOOK_VLAST = null;
 function closeBook() {
@@ -1761,11 +2459,21 @@ function frame(now) {
   // Titel-Knopf
   if (TITLE_PULSE && TITLE_PULSE.isConnected) { const k = 1 + Math.sin(TIME * 4) * .05; const tr = TITLE_PULSE.getAttribute('transform').replace(/ scale\([^)]*\)/, ''); TITLE_PULSE.setAttribute('transform', tr + ` scale(${k})`); }
   if (REVEAL) REVEAL.setAttribute('transform', `rotate(${TIME * 20})`);
-  // Hinweis im Koffer
-  const hint = (MODE === 'treat' && idle > 8 && P && P.stepDone) ? curStep().item : TRAY_HINT;
+  // Hinweis im Koffer (erst nach längerem Warten)
+  const hint = (MODE === 'treat' && idle > 14 && P && P.stepDone) ? curStep().item : TRAY_HINT;
   $('tray').querySelectorAll('.slot').forEach(s => { const on = s.getAttribute('data-item') === hint; s.querySelector('.slotHi').setAttribute('opacity', on ? (.6 + .4 * Math.sin(TIME * 8)).toFixed(2) : 0); });
-  // Automatisch wiederholen
-  if ((MODE === 'exam' || MODE === 'treat' || MODE === 'diag' || MODE === 'tropfen') && !V.speaking && idle > 15 && V.last && V.rep < 2) { V.rep++; idle = 0; guard(say(V.last)); }
+  // Notfall: Zeitbalken
+  if (HUD.nf) {
+    const on = P && P.notfall && P.t0 && !P.healed && MODE !== 'title';
+    HUD.nf.style.display = on ? '' : 'none';
+    if (on) {
+      const k = clamp(1 - (performance.now() - P.t0) / P.limit, 0, 1);
+      if (k <= 0) P.zuSpaet = true;
+      HUD.nfF.setAttribute('width', (364 * k).toFixed(1));
+      HUD.nfF.setAttribute('fill', k < .25 ? (Math.sin(TIME * 12) > 0 ? '#F2575E' : '#FFB0B0') : k < .5 ? '#F2A33A' : '#5BBF4A');
+    }
+  }
+  if (MINI) { miniTick(dt); idle = 0; }
   updParts(dt);
   requestAnimationFrame(frame);
 }
@@ -1788,7 +2496,7 @@ window.__T = {
   get mode() { return MODE; }, get save() { return SAVE; }, get P() { return P; }, get V() { return V; },
   zielXY, frei, KRANK, SEAT, PS, GERAETE, get step() { return P && P.stepDone ? curStep() : null; },
   endBtn() { const b = [...document.querySelectorAll('#modal g.btn')].pop(); if (!b) return null; const m = /translate\(([-\d.]+),([-\d.]+)\)/.exec(b.getAttribute('transform')); return [+m[1], +m[2]]; },
-  get diagBusy() { return !DIAG || DIAG.busy; },
+  get diagBusy() { return !DIAG || DIAG.busy; }, get mini() { return MINI; }, MG,
   cards() { return [...document.querySelectorAll('#modal g.btn')].filter(g => g._k).map(g => [g._k, g._x, 470]); },
   slotXY(it) { const s = traySlot(it); return s ? [s._x, s._y] : null; },
 };
