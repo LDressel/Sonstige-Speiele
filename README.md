@@ -97,6 +97,9 @@ Jeden Tag kommen kranke Tiere in ihre Praxis, und Belle (also das Kind) findet h
 | 9 | Patienten mit **zwei Krankheiten** gleichzeitig | beide Behandlungen nacheinander |
 | 10 | **Notfälle** mit Blaulicht, Sirene und **Zeitbalken** (zu langsam = ein Stern weniger) | |
 | ab 11 | alles gemischt, 6 Patienten am Tag | |
+| ab 11, jeder 3. Tag | **Besuch auf dem Bauernhof** | Pferd: Steine aus dem Huf · Hufeisen annageln · Schaf: Wolle scheren + Salbe · Kuh: Melken + Salbe · Ziege: Futter sortieren · Kräutertee |
+| jeder Hofbesuch | **Tierbaby-Geburt** | Geburt begleiten (im Takt halten) · Fläschchen geben |
+| danach | **Tierbabys zur Vorsorge** in der Praxis (zweimal) | Wiegen · Fläschchen · Impfen. Sie wachsen auf der Wiese am Bauernhof. |
 
 Die Minispiele werden mit jedem Tag schwerer (bis Tag 12): schmalere Zielbereiche, schnellere Zeiger und Flöhe,
 mehr Schmutzflecken, längere Kräuterrezepte, zwei Splitter, Knochen, die man auch drehen muss.
@@ -109,6 +112,9 @@ Außerdem:
 
 Neue Krankheiten kommen in `tierarzt/index.html` in die Listen `KRANK`, `BEFUND`, `KARTE` und `FREI`,
 die Sprechtexte in `tierarzt/texte.json` (danach Sprachdateien neu erzeugen, siehe unten).
+
+**Laden:** Der Knopf mit dem Stern oben (und auf dem Feierabend-Bild) öffnet den Laden. Dort kauft man mit den gesammelten Sternen
+Deko für die Praxis (`DEKO` in `tierarzt/index.html`). Gekaufte Sachen lassen sich im Laden an- und ausschalten.
 
 ### Für Eltern
 - Die Stimme kommt aus fertigen Sprachdateien (`tierarzt/ton/`), nicht mehr aus der Vorlesestimme des iPads.

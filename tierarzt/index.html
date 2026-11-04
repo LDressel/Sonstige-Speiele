@@ -46,8 +46,10 @@ svg text{font-family:ui-rounded,"SF Pro Rounded","Arial Rounded MT Bold","Nunito
   <clipPath id="clipMini"><rect x="-384" y="-284" width="768" height="568" rx="34"/></clipPath>
 </defs>
 <g id="room"></g>
+<g id="deko"></g>
 <g id="doorL"></g>
 <g id="tableL"></g>
+<g id="farm" style="display:none"></g>
 <g id="patWrap"><g id="pat"></g></g>
 <g id="belleL"></g>
 <g id="clipL"></g>
@@ -58,6 +60,7 @@ svg text{font-family:ui-rounded,"SF Pro Rounded","Arial Rounded MT Bold","Nunito
 <g id="mini"></g>
 <g id="fx2" pointer-events="none"></g>
 <g id="modal"></g>
+<g id="shopL"></g>
 <g id="drag" pointer-events="none"></g>
 </svg>
 <div id="turn">Bitte das iPad quer halten 🙂</div>
@@ -193,10 +196,16 @@ const TIERE = {
   baer:    { fur: '#AE8056', dark: '#77532F', light: '#E5C6A3', inner: '#8B623C', eyes: '#2E2017' },
   fuchs:   { fur: '#F08E43', dark: '#B9601F', light: '#FFF5EA', inner: '#5B3A2B', eyes: '#2E2017' },
   schwein: { fur: '#F8BDC5', dark: '#D9848F', light: '#FDE1E5', inner: '#EE9AA6', eyes: '#3A2328' },
+  // Bauernhof
+  kuh:     { fur: '#F7F3EC', dark: '#6E6259', light: '#FBDDD6', inner: '#F5B5C2', eyes: '#2B2420' },
+  pferd:   { fur: '#B98052', dark: '#7A4E2C', light: '#E9CDAF', inner: '#8B5A36', eyes: '#2B1D14' },
+  schaf:   { fur: '#F4EFE3', dark: '#B3A890', light: '#6B5D50', inner: '#E9B9B4', eyes: '#2B2420' },
+  ziege:   { fur: '#E3D6BE', dark: '#9C8A6C', light: '#F4ECDD', inner: '#E8B7A8', eyes: '#3A2A1E' },
 };
-const TIER_IDS = Object.keys(TIERE);
+const TIER_IDS = ['hase', 'hund', 'maus', 'baer', 'fuchs', 'schwein'];   // Praxis-Patienten
+const HOF_TIERE = ['kuh', 'pferd', 'schaf', 'ziege'];
 // Ohr-Position (lokal) für Ohrenspiegel/Tropfen
-const OHR = { hase: [-30, -318], hund: [-74, -208], maus: [-62, -265], baer: [-56, -262], fuchs: [-46, -268], schwein: [-52, -258] };
+const OHR = { hase: [-30, -318], hund: [-74, -208], maus: [-62, -265], baer: [-56, -262], fuchs: [-46, -268], schwein: [-52, -258], kuh: [-92, -238], pferd: [-40, -300], schaf: [-92, -226], ziege: [-90, -232] };
 const ZIEL = { pfote: [-62, -32], mund: [0, -168], stirn: [0, -248], brust: [0, -98], hals: [0, -134], nacken: [-44, -142], bauch: [0, -72] };
 
 const GERAETE = {
@@ -212,14 +221,14 @@ const GERAETE = {
 const GERAET_ORDER = ['lupe', 'thermo', 'stetho', 'roentgen', 'ohrenspiegel', 'zahnspiegel', 'flohkamm', 'ultraschall'];
 // Befund je Gerät: welche Krankheit wird damit erkannt?
 const BEFUND = {
-  lupe: { splitter: 'befund_lupe_splitter', schramme: 'befund_lupe_schramme', bruch: 'befund_lupe_bruch', zecke: 'befund_lupe_zecke', _: 'befund_lupe_ok' },
+  lupe: { splitter: 'befund_lupe_splitter', schramme: 'befund_lupe_schramme', bruch: 'befund_lupe_bruch', zecke: 'befund_lupe_zecke', huf: 'befund_lupe_huf', _: 'befund_lupe_ok' },
   thermo: { fieber: 'befund_thermo_fieber', _: 'befund_thermo_ok' },
   stetho: { husten: 'befund_stetho_husten', _: 'befund_stetho_ok' },
-  roentgen: { bruch: 'befund_roentgen_bruch', kontrolle: 'befund_roentgen_heil', _: 'befund_roentgen_ok' },
+  roentgen: { bruch: 'befund_roentgen_bruch', kontrolle: 'befund_roentgen_heil', futter: 'befund_roentgen_futter', _: 'befund_roentgen_ok' },
   ohrenspiegel: { ohren: 'befund_ohr_ohren', _: 'befund_ohr_ok' },
   zahnspiegel: { zahnweh: 'befund_zahn_zahnweh', _: 'befund_zahn_ok' },
-  flohkamm: { floh: 'befund_kamm_floh', _: 'befund_kamm_ok' },
-  ultraschall: { bauchweh: 'befund_ultra_bauchweh', _: 'befund_ultra_ok' },
+  flohkamm: { floh: 'befund_kamm_floh', wolle: 'befund_kamm_wolle', _: 'befund_kamm_ok' },
+  ultraschall: { bauchweh: 'befund_ultra_bauchweh', euter: 'befund_ultra_euter', _: 'befund_ultra_ok' },
 };
 // station: Patient bleibt über Nacht auf der Krankenstation
 // art 'mini': Behandlung als Minispiel im großen Fenster (mg = welches, siehe MG)
@@ -236,9 +245,18 @@ const KRANK = {
   bauchweh: { geraet: 'ultraschall', station: true, schritte: [{ item: 'tee', art: 'mini', mg: 'kraeuter', ziel: 'mund' }, { item: 'waermflasche', art: 'mini', mg: 'dosis', ziel: 'bauch' }] },
   // Nachkontrolle nach einem Knochenbruch (keine Diagnose-Karte)
   kontrolle: { geraet: 'roentgen', ort: 'pfote', schritte: [{ item: 'gipsschere', art: 'mini', mg: 'schnitt', ziel: 'pfote' }] },
+  // Bauernhof
+  huf:      { geraet: 'lupe', ort: 'pfote', tier: 'pferd', schritte: [{ item: 'hufkratzer', art: 'mini', mg: 'hufkratzen', ziel: 'pfote' }, { item: 'hufeisen', art: 'mini', mg: 'hammer', ziel: 'pfote' }] },
+  wolle:    { geraet: 'flohkamm', tier: 'schaf', schritte: [{ item: 'schere', art: 'mini', mg: 'scheren', ziel: 'brust' }, { item: 'salbe', art: 'drauf', ziel: 'brust' }] },
+  euter:    { geraet: 'ultraschall', tier: 'kuh', schritte: [{ item: 'eimer', art: 'mini', mg: 'melken', ziel: 'bauch' }, { item: 'salbe', art: 'drauf', ziel: 'bauch' }] },
+  futter:   { geraet: 'roentgen', tier: 'ziege', schritte: [{ item: 'trog', art: 'mini', mg: 'sortieren', ziel: 'mund' }, { item: 'tee', art: 'mini', mg: 'kraeuter', ziel: 'mund' }] },
+  // Tierbabys (keine Diagnose und keine Karte)
+  geburt:   { direkt: true, schritte: [{ item: 'handschuh', art: 'mini', mg: 'geburt', ziel: 'bauch' }, { item: 'flasche', art: 'mini', mg: 'flasche', ziel: 'mund' }] },
+  baby:     { direkt: true, schritte: [{ item: 'waage', art: 'mini', mg: 'wiegen', ziel: 'bauch' }, { item: 'flasche', art: 'mini', mg: 'flasche', ziel: 'mund' }, { item: 'spritze', art: 'mini', mg: 'impfen', ziel: 'brust' }] },
 };
-const KRANK_ORDER = ['splitter', 'schramme', 'fieber', 'husten', 'bruch', 'ohren', 'zahnweh', 'zecke', 'floh', 'bauchweh'];
-const KARTE = { splitter: 'Splitter', schramme: 'Schramme', fieber: 'Fieber', husten: 'Husten', bruch: 'Knochenbruch', ohren: 'Ohrenentzündung', zahnweh: 'Loch im Zahn', zecke: 'Zecke', floh: 'Flöhe', bauchweh: 'Bauchweh' };
+const HOF_KRANK = ['huf', 'wolle', 'euter', 'futter'];
+const KRANK_ORDER = ['splitter', 'schramme', 'fieber', 'husten', 'bruch', 'ohren', 'zahnweh', 'zecke', 'floh', 'bauchweh', ...HOF_KRANK];
+const KARTE = { splitter: 'Splitter', schramme: 'Schramme', fieber: 'Fieber', husten: 'Husten', bruch: 'Knochenbruch', ohren: 'Ohrenentzündung', zahnweh: 'Loch im Zahn', zecke: 'Zecke', floh: 'Flöhe', bauchweh: 'Bauchweh', huf: 'Steine im Huf', wolle: 'Verfilzte Wolle', euter: 'Volles Euter', futter: 'Falsches Futter' };
 // Erlaubte Paare für Patienten mit zwei Krankheiten (verschiedene Geräte und Körperstellen)
 const PAARE = [['fieber', 'splitter'], ['husten', 'schramme'], ['ohren', 'splitter'], ['fieber', 'schramme'], ['husten', 'bruch'], ['zahnweh', 'splitter'],
   ['bauchweh', 'schramme'], ['zecke', 'fieber'], ['floh', 'ohren'], ['zahnweh', 'husten'], ['bauchweh', 'ohren'], ['zecke', 'zahnweh'], ['floh', 'zahnweh'], ['bauchweh', 'splitter']];
@@ -265,7 +283,19 @@ function frei(day) {
   return { geraete: g, krank: k, ausbau: aus, zwei, notfall };
 }
 function neuAmTag(day) { return day < FREI.length && day > 1 ? FREI[day] : null; }
+// Ab Tag 11 ist jeder dritte Tag ein Besuch auf dem Bauernhof (auch für alte Spielstände: der nächste neue Tag zuerst)
+function hofTag(day) {
+  if (day < 11 || !SAVE) return false;
+  if (!SAVE.hofSeit) SAVE.hofSeit = day;
+  return (day - SAVE.hofSeit) % 3 === 0;
+}
+function makeHofTag() {
+  const list = shuffleSome(HOF_KRANK).map(k => ({ a: KRANK[k].tier, ks: [k], hof: true }));
+  list.push({ a: pick(HOF_TIERE), ks: ['geburt'], hof: true, direkt: true, geburt: true });
+  return list;
+}
 function makeDay(day) {
+  if (hofTag(day)) return makeHofTag();
   const f = frei(day), n = day === 1 ? 3 : day < 6 ? 4 : day < FREI.length ? 5 : 6, list = [];
   const neu = neuAmTag(day) || {};
   const paare = PAARE.filter(([x, y]) => f.krank.includes(x) && f.krank.includes(y));
@@ -299,13 +329,16 @@ function makeDay(day) {
     const j = list[i].kontrolle ? i - 1 : i, nb = [list[j - 1], list[j + 1]].filter(Boolean).map(p => p.a);
     list[j].a = pick(TIER_IDS.filter(t => !nb.includes(t)));
   }
+  // Tierbaby vom Bauernhof kommt zur Vorsorge (höchstens eins pro Tag)
+  const b = (SAVE.babys || []).find(x => x.stufe < 2 && x.tag < day);
+  if (b) list.splice(Math.min(2, list.length), 0, { a: b.a, ks: ['baby'], direkt: true, baby: true, id: b.id });
   return list;
 }
 
 /* ---------------- Spielstand ---------------- */
 const SAVEKEY = 'belle-tierarzt-v1';
 let SAVE = null;
-function newSave() { return { day: 1, pat: 0, list: null, buch: {}, geheilt: 0, kontrollen: [], station: [], erklaert: {}, sterne: 0, tagSterne: 0 }; }
+function newSave() { return { day: 1, pat: 0, list: null, buch: {}, geheilt: 0, kontrollen: [], station: [], erklaert: {}, sterne: 0, tagSterne: 0, deko: {}, babys: [] }; }
 function save() { try { localStorage.setItem(SAVEKEY, JSON.stringify(SAVE)); } catch (e) {} }
 function loadSave() { try { return JSON.parse(localStorage.getItem(SAVEKEY)); } catch (e) { return null; } }
 
@@ -537,7 +570,7 @@ function clipAdd(tool, good) {
 /* ---------- Tiere ---------- */
 function tierSVG(a) {
   const c = TIERE[a], o = `stroke="${c.dark}" stroke-width="4" stroke-linejoin="round"`;
-  let tail = '', ears = '', muzzle = '', extra = '', nose = '';
+  let tail = '', ears = '', muzzle = '', extra = '', nose = '', fell = '';
   switch (a) {
     case 'hase':
       tail = `<circle cx="84" cy="-34" r="24" fill="${c.light}" ${o}/>`;
@@ -572,6 +605,38 @@ function tierSVG(a) {
       muzzle = `<path d="M-74 -200 C-50 -150 -20 -150 0 -168 C20 -150 50 -150 74 -200 C50 -180 20 -186 0 -196 C-20 -186 -50 -180 -74 -200Z" fill="${c.light}"/>`;
       nose = `<ellipse cx="0" cy="-190" rx="11" ry="8" fill="#2E2017"/>`;
       break;
+    case 'kuh':
+      tail = `<path d="M70 -36 C118 -40 122 -90 112 -116" stroke="${c.dark}" stroke-width="9" fill="none" stroke-linecap="round"/><ellipse cx="112" cy="-124" rx="11" ry="17" fill="#4A403A"/>`;
+      ears = `<ellipse cx="-92" cy="-238" rx="30" ry="15" fill="${c.fur}" ${o} transform="rotate(-14 -92 -238)"/><ellipse cx="-92" cy="-238" rx="17" ry="7" fill="${c.inner}" transform="rotate(-14 -92 -238)"/>
+              <ellipse cx="92" cy="-238" rx="30" ry="15" fill="${c.fur}" ${o} transform="rotate(14 92 -238)"/><ellipse cx="92" cy="-238" rx="17" ry="7" fill="${c.inner}" transform="rotate(14 92 -238)"/>
+              <path d="M-40 -270 Q-58 -300 -36 -312 Q-40 -292 -22 -274Z M40 -270 Q58 -300 36 -312 Q40 -292 22 -274Z" fill="#F0DFC0" ${o}/>`;
+      muzzle = `<ellipse cx="0" cy="-174" rx="48" ry="33" fill="${c.light}"/><path d="M-76 -220 C-50 -270 -8 -270 -10 -232 C-12 -204 -60 -196 -76 -220Z" fill="#4A403A"/>`;
+      nose = `<ellipse cx="-13" cy="-182" rx="6" ry="4.5" fill="#B9707C"/><ellipse cx="13" cy="-182" rx="6" ry="4.5" fill="#B9707C"/>`;
+      fell = `<path d="M-72 -128 C-40 -150 -30 -96 -60 -78 C-74 -82 -82 -108 -72 -128Z M62 -70 C32 -82 42 -130 70 -112 C82 -96 78 -76 62 -70Z" fill="#4A403A"/>`;
+      break;
+    case 'pferd':
+      tail = `<path d="M66 -34 C126 -26 136 -90 118 -132 C150 -86 148 -14 96 -6 C84 -6 72 -18 66 -34Z" fill="#5C3A22" ${o}/>`;
+      ears = `<path d="M-52 -266 L-46 -326 L-16 -272Z M52 -266 L46 -326 L16 -272Z" fill="${c.fur}" ${o}/><path d="M-44 -272 L-42 -310 L-26 -276Z M44 -272 L42 -310 L26 -276Z" fill="${c.inner}"/>`;
+      muzzle = `<ellipse cx="0" cy="-168" rx="44" ry="34" fill="${c.light}"/>`;
+      nose = `<ellipse cx="-14" cy="-178" rx="5" ry="7" fill="#6E4A32"/><ellipse cx="14" cy="-178" rx="5" ry="7" fill="#6E4A32"/>`;
+      extra = `<path d="M-24 -282 C-40 -262 -28 -238 -10 -232 C-4 -250 2 -256 14 -262 C8 -276 -8 -292 -24 -282Z" fill="#5C3A22"/>`;
+      break;
+    case 'schaf':
+      tail = `<circle cx="84" cy="-34" r="22" fill="${c.fur}" ${o}/>`;
+      ears = `<ellipse cx="-92" cy="-226" rx="29" ry="14" fill="${c.light}" transform="rotate(16 -92 -226)"/><ellipse cx="92" cy="-226" rx="29" ry="14" fill="${c.light}" transform="rotate(-16 92 -226)"/>`;
+      muzzle = `<ellipse cx="0" cy="-208" rx="56" ry="66" fill="${c.light}"/>`;
+      nose = `<path d="M-9 -180 Q0 -172 9 -180 Q0 -166 -9 -180Z" fill="#2B2420"/>`;
+      extra = [[-50, -270], [-20, -286], [14, -288], [46, -272], [0, -268], [-72, -240], [72, -240]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="24" fill="${c.fur}" stroke="${c.dark}" stroke-width="3"/>`).join('');
+      fell = [[-58, -140], [-20, -158], [22, -158], [58, -140], [-68, -96], [68, -96], [-36, -112], [0, -118], [36, -112], [-54, -60], [-14, -70], [24, -70], [58, -58]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="24" fill="#FBF8F0" stroke="${c.dark}" stroke-width="2.5"/>`).join('');
+      break;
+    case 'ziege':
+      tail = `<path d="M70 -46 Q98 -66 92 -94 Q80 -76 62 -66Z" fill="${c.fur}" ${o}/>`;
+      ears = `<path d="M-34 -270 C-48 -304 -28 -336 -2 -336 C-22 -318 -22 -296 -14 -274Z M34 -270 C48 -304 28 -336 2 -336 C22 -318 22 -296 14 -274Z" fill="#B3A488" ${o}/>
+              <ellipse cx="-90" cy="-232" rx="29" ry="13" fill="${c.fur}" ${o} transform="rotate(-20 -90 -232)"/><ellipse cx="90" cy="-232" rx="29" ry="13" fill="${c.fur}" ${o} transform="rotate(20 90 -232)"/>`;
+      muzzle = `<ellipse cx="0" cy="-176" rx="34" ry="28" fill="${c.light}"/>`;
+      nose = `<path d="M-10 -188 Q0 -180 10 -188 Q0 -174 -10 -188Z" fill="#6E5A44"/>`;
+      extra = `<path d="M-12 -150 Q0 -104 12 -150Z" fill="#B3A488" ${o}/>`;
+      break;
     case 'schwein':
       tail = `<path d="M72 -40 c20 0 26 -20 12 -26 c-12 -4 -16 12 -4 16 c14 4 24 -6 26 -16" stroke="${c.dark}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
       ears = `<path d="M-72 -244 L-52 -292 L-24 -262Z" fill="${c.fur}" ${o}/><path d="M72 -244 L52 -292 L24 -262Z" fill="${c.fur}" ${o}/>`;
@@ -585,7 +650,8 @@ function tierSVG(a) {
   <g class="body">
     <ellipse cx="-56" cy="-42" rx="44" ry="46" fill="${c.fur}" ${o}/><ellipse cx="56" cy="-42" rx="44" ry="46" fill="${c.fur}" ${o}/>
     <ellipse cx="0" cy="-92" rx="78" ry="96" fill="${c.fur}" ${o}/>
-    <ellipse cx="0" cy="-80" rx="50" ry="66" fill="${c.light}"/>
+    <ellipse cx="0" cy="-80" rx="50" ry="66" fill="${a === 'schaf' ? c.fur : c.light}"/>
+    ${fell}
     <ellipse cx="-50" cy="-6" rx="34" ry="16" fill="${c.fur}" ${o}/><ellipse cx="50" cy="-6" rx="34" ry="16" fill="${c.fur}" ${o}/>
     <g class="ov0"></g>
     <path d="M42 -150 C62 -110 64 -70 54 -40" stroke="${c.dark}" stroke-width="34" fill="none" stroke-linecap="round"/>
@@ -632,8 +698,9 @@ function makePatient(a, ks, opt = {}) {
     ov0: q('.ov0'), ovArm: q('.ovArm'), ovHead: q('.ovHead'), ovTop: q('.ovTop'),
     mood: 'sick', x: 140, y: 790, s: .7, hop: 0, cough: 0, coughT: 2, talk: false, sym: null, healed: false,
     befunde: {}, found: false, step: 0, prog: 0, saidKlemm: false, fehler: 0, t0: 0, limit: 0, zuSpaet: false,
+    hof: !!opt.hof, baby: !!opt.baby, direkt: !!opt.direkt, S: opt.baby ? PS * .66 : PS,
   };
-  setMood(P.kontrolle ? 'happy' : 'sick');
+  setMood(P.kontrolle || P.direkt ? 'happy' : 'sick');
   drawSymptoms();
   placePat();
 }
@@ -646,7 +713,7 @@ function setMood(m) {
   P.mH.style.display = m === 'sick' ? 'none' : '';
   P.mO.style.display = 'none';
 }
-function L2S(lx, ly) { return [SEAT[0] + lx * PS, SEAT[1] + ly * PS]; }  // lokale Patientenkoordinate -> Bühne
+function L2S(lx, ly) { const s = P ? P.S : PS; return [SEAT[0] + lx * s, SEAT[1] + ly * s]; }  // lokale Patientenkoordinate -> Bühne
 function zielXY(z) { const p = z === 'ohr' ? OHR[P.a] : ZIEL[z]; return L2S(p[0], p[1]); }
 function zielLocal(z) { return z === 'ohr' ? OHR[P.a] : ZIEL[z]; }
 
@@ -668,6 +735,18 @@ function drawSymptom(k) {
   }
   if (k === 'floh') {
     P.fleas = [...Array(6)].map(() => ({ e: el('circle', { r: 3.4, fill: '#2E1E18' }, P.ovTop), x: rnd(-60, 60), y: rnd(-170, -30), t: rnd(0, 1) }));
+  }
+  if (k === 'huf') {
+    P.sym.huf = el('g', {}, P.ovArm, `<ellipse cx="-62" cy="-32" rx="24" ry="17" fill="#F27A7A" opacity=".45"/><path d="M-72 -28 l9 -9 l11 4 l2 10 l-12 5Z" fill="#8E8E96" stroke="#5E5E66" stroke-width="2"/>`);
+  }
+  if (k === 'wolle') {
+    P.sym.wolle = el('g', {}, P.ovTop, [[-40, -120], [30, -100], [-10, -70], [50, -60], [-56, -66]].map(([x, y]) => `<path d="M${x - 18} ${y} q10 -18 20 -4 q10 -14 16 6 q-8 14 -20 6 q-10 10 -16 -8Z" fill="#B7A98D" stroke="#8C7F68" stroke-width="2.5"/>`).join(''));
+  }
+  if (k === 'euter') {
+    P.sym.euter = el('g', {}, P.ovTop, `<ellipse cx="0" cy="-30" rx="44" ry="26" fill="#F3A3B4" stroke="#D9778D" stroke-width="4"/><path d="M-20 -8 v14 M20 -8 v14" stroke="#D9778D" stroke-width="9" stroke-linecap="round"/>`);
+  }
+  if (k === 'futter') {
+    P.sym.futter = el('g', {}, P.ovTop, `<path d="M-14 -84 c10 -10 22 0 14 10 c-8 8 -20 -2 -12 -12 M14 -54 c10 -10 22 0 14 10" stroke="#8F9A6A" stroke-width="4" fill="none" stroke-linecap="round"/>`);
   }
   if (k === 'bauchweh') {
     P.sym.bauch = el('g', {}, P.ovTop, `<path d="M-14 -84 c10 -10 22 0 14 10 c-8 8 -20 -2 -12 -12 M14 -54 c10 -10 22 0 14 10" stroke="#C9A0D8" stroke-width="4" fill="none" stroke-linecap="round"/>`);
@@ -767,6 +846,15 @@ function toolIcon(t) {
       <path d="M26 -32 A40 40 0 0 1 34 18" stroke="#F57F87" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M42 8 L34 22 L22 12" stroke="#F57F87" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
     case 'bohrer': return `<g transform="rotate(35)"><rect x="-10" y="-22" width="20" height="66" rx="9" fill="#DDE3EA" stroke="#7F93A3" stroke-width="3"/><rect x="-10" y="22" width="20" height="7" fill="#8FC7B8"/>
       <path d="M-10 -20 Q-10 -40 -28 -40 L-28 -28 Q-18 -28 -18 -20Z" fill="#DDE3EA" stroke="#7F93A3" stroke-width="3" stroke-linejoin="round"/><rect x="-36" y="-30" width="5" height="22" rx="2" fill="#7F93A3"/><circle cx="-33.5" cy="-8" r="5" fill="#FFD84D" stroke="#E8A93A" stroke-width="2"/></g>`;
+    case 'hufkratzer': return `<g transform="rotate(-35)"><rect x="-8" y="-6" width="16" height="50" rx="7" fill="#C9553D" stroke="#8E3A28" stroke-width="3"/><path d="M0 -6 V-30 Q0 -44 -14 -42" stroke="#9AA7AF" stroke-width="8" fill="none" stroke-linecap="round"/></g>`;
+    case 'hufeisen': return `<path d="M-30 34 C-44 -4 -34 -38 0 -38 C34 -38 44 -4 30 34 L14 34 C24 4 18 -20 0 -20 C-18 -20 -24 4 -14 34Z" fill="#9AA7AF" stroke="#5E6B75" stroke-width="4" stroke-linejoin="round"/>${[[-29, 8], [-26, -14], [29, 8], [26, -14]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3" fill="#3E4A52"/>`).join('')}`;
+    case 'schere': return `<g transform="rotate(30)"><path d="M-3 0 L-14 -46 Q-6 -48 2 -8Z" fill="#DDE3EA" stroke="#7F93A3" stroke-width="3"/><path d="M3 0 L14 -46 Q6 -48 -2 -8Z" fill="#C7D2DA" stroke="#7F93A3" stroke-width="3"/><circle cx="-14" cy="22" r="13" fill="none" stroke="#5BBF8A" stroke-width="7"/><circle cx="14" cy="22" r="13" fill="none" stroke="#5BBF8A" stroke-width="7"/><path d="M-7 10 L3 -4 M7 10 L-3 -4" stroke="#5BBF8A" stroke-width="7"/></g>`;
+    case 'eimer': return `<path d="M-30 -18 L30 -18 L22 36 Q0 44 -22 36Z" fill="#C7D2DA" stroke="#7F93A3" stroke-width="4" stroke-linejoin="round"/><ellipse cx="0" cy="-18" rx="30" ry="9" fill="#FFFFFF" stroke="#7F93A3" stroke-width="3"/><path d="M-30 -18 Q0 -60 30 -18" stroke="#7F93A3" stroke-width="4" fill="none"/>`;
+    case 'trog': return `<path d="M-42 -6 L42 -6 L32 30 L-32 30Z" fill="#B98052" stroke="#7A4E2C" stroke-width="4" stroke-linejoin="round"/><path d="M-34 -8 q10 -22 22 -6 q12 -22 22 -4 q10 -16 22 8Z" fill="#E9C85A" stroke="#BE9B34" stroke-width="3"/><path d="M-32 38 v-8 M32 38 v-8" stroke="#7A4E2C" stroke-width="7" stroke-linecap="round"/>`;
+    case 'handschuh': return `<path d="M-20 40 V-8 Q-34 -22 -30 -30 Q-22 -34 -12 -18 V-40 Q-6 -46 0 -40 V-18 V-44 Q6 -50 12 -44 V-18 V-38 Q18 -44 24 -38 V8 Q24 28 14 40Z" fill="#8FD0F2" stroke="#5FA9D0" stroke-width="4" stroke-linejoin="round"/>`;
+    case 'flasche': return `<g transform="rotate(25)"><rect x="-17" y="-20" width="34" height="64" rx="12" fill="#FFFDF6" stroke="#9AA7AF" stroke-width="4"/><rect x="-12" y="4" width="24" height="36" rx="7" fill="#FFF3D0"/><rect x="-18" y="-28" width="36" height="12" rx="5" fill="#F57F87"/><path d="M-8 -28 Q-6 -40 0 -46 Q6 -40 8 -28Z" fill="#F7C9A8" stroke="#D9A07A" stroke-width="3"/></g>`;
+    case 'waage': return `<path d="M0 -36 V30 M-20 34 H20" stroke="#7F93A3" stroke-width="8" stroke-linecap="round"/><path d="M-40 -26 H40" stroke="#5E6B75" stroke-width="7" stroke-linecap="round"/><path d="M-54 2 Q-40 20 -26 2Z M26 2 Q40 20 54 2Z" fill="#FFD27A" stroke="#C9963A" stroke-width="3"/><path d="M-40 -26 L-54 2 M-40 -26 L-26 2 M40 -26 L26 2 M40 -26 L54 2" stroke="#7F93A3" stroke-width="2.5"/>`;
+    case 'spritze': return `<g transform="rotate(40)"><rect x="-13" y="-22" width="26" height="52" rx="4" fill="#E9F7FF" stroke="#7F93A3" stroke-width="4"/><rect x="-9" y="2" width="18" height="24" fill="#8FD0F2"/><path d="M0 -22 V-50" stroke="#7F93A3" stroke-width="4"/><rect x="-5" y="30" width="10" height="16" fill="#9AA7AF"/><rect x="-14" y="44" width="28" height="7" rx="3" fill="#7F93A3"/></g>`;
     case 'fangglas': return `<rect x="-26" y="-20" width="52" height="58" rx="14" fill="#E9F7FF" stroke="#9FC7DA" stroke-width="4"/><rect x="-30" y="-34" width="60" height="16" rx="6" fill="#F2A35E" stroke="#B86E2E" stroke-width="3"/>
       <g transform="translate(4,14)"><ellipse rx="10" ry="7" fill="#2E1E18"/><circle cx="9" cy="-3" r="4.5" fill="#1E120E"/><path d="M-4 5 l-6 9 M4 5 l6 9" stroke="#1E120E" stroke-width="2.5" stroke-linecap="round"/></g>
       <path d="M-16 -8 v32" stroke="#FFFFFF" stroke-width="5" opacity=".8" stroke-linecap="round"/>`;
@@ -808,6 +896,10 @@ function krankBild(k) {
     case 'floh': return `<rect x="-96" y="20" width="192" height="50" rx="20" fill="#E6B276"/>${[...Array(14)].map((_, i) => `<path d="M${-88 + i * 13} 26 q6 -10 12 0" stroke="#A8733F" stroke-width="3" fill="none"/>`).join('')}
       ${[[-40, -40, 1.5], [30, -10, 1.1], [60, -60, .9]].map(([x, y, sc]) => `<g transform="translate(${x},${y}) scale(${sc})"><ellipse rx="14" ry="10" fill="#4A2F25"/><circle cx="12" cy="-4" r="6" fill="#2E1E18"/><path d="M-6 6 l-10 14 M2 8 l-4 14 M8 6 l10 12" stroke="#2E1E18" stroke-width="3" stroke-linecap="round"/><circle cx="14" cy="-6" r="1.8" fill="#FFF"/></g>`).join('')}
       <path d="M-70 10 q20 -60 50 -50 M10 0 q20 -40 40 -30" stroke="#B9C9CF" stroke-width="3" fill="none" stroke-dasharray="6 6"/>`;
+    case 'huf': return `<ellipse cy="6" rx="72" ry="74" fill="#8A7560" stroke="#5E4E3E" stroke-width="6"/><ellipse cy="8" rx="52" ry="54" fill="#A8937C"/><path d="M0 -24 L24 44 Q0 56 -24 44Z" fill="#E8B8A8"/><path d="M-44 -10 l13 -11 l15 6 l-2 14 l-15 5Z M32 18 l11 -10 l14 7 l-3 12 l-14 4Z" fill="#8E8E96" stroke="#5E5E66" stroke-width="3"/>`;
+    case 'wolle': return `${[[-44, -24], [0, -40], [44, -24], [-58, 16], [-16, 8], [28, 10], [62, 18], [-30, 48], [18, 50]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="30" fill="#D2C6AE" stroke="#A3967C" stroke-width="3"/>`).join('')}<path d="M-34 -6 q20 -24 34 0 q18 -22 34 4 M-40 34 q18 -14 34 2" stroke="#8C7F68" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+    case 'euter': return `<ellipse cy="-14" rx="72" ry="48" fill="#F3A3B4" stroke="#D9778D" stroke-width="5"/>${[-42, -14, 14, 42].map(x => `<rect x="${x - 9}" y="24" width="18" height="36" rx="9" fill="#F3A3B4" stroke="#D9778D" stroke-width="4"/>`).join('')}<path d="M-30 -30 q16 -14 30 0" stroke="#FFF" stroke-width="5" fill="none" opacity=".7"/>`;
+    case 'futter': return `<ellipse cy="14" rx="72" ry="58" fill="#E3D6BE" stroke="#9C8A6C" stroke-width="5"/>${[[-26, 12, 16], [10, 30, 13], [20, -4, 11]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#8E8E96" stroke="#5E5E66" stroke-width="3"/>`).join('')}<path d="M-50 -58 l14 -12 l14 12 v16 h-28Z" fill="#D9E4EA" stroke="#7F93A3" stroke-width="3"/><path d="M40 -60 q14 -10 20 8 q-12 14 -22 2Z" fill="#6E8F4A" stroke="#4E6A32" stroke-width="3"/>`;
     case 'bauchweh': return `<ellipse cx="0" cy="10" rx="74" ry="68" fill="#F7D2B0" stroke="#D9A473" stroke-width="5"/><ellipse cx="0" cy="22" rx="46" ry="40" fill="#FBE6D3"/>
       <path d="M-18 6 c14 -14 30 0 20 14 c-10 12 -28 -2 -16 -16 M14 34 c10 -10 22 0 14 10" stroke="#B49AC9" stroke-width="5" fill="none" stroke-linecap="round"/>
       <g transform="translate(70,-50) rotate(20)"><rect x="-18" y="-10" width="36" height="20" rx="10" fill="#F57F87"/><path d="M-18 0 l-12 -10 v20Z M18 0 l12 -10 v20Z" fill="#F57F87"/><path d="M-8 -10 v20 M4 -10 v20" stroke="#FFF" stroke-width="4"/></g>
@@ -823,6 +915,7 @@ function drawHud() {
   g.innerHTML = `
     <g id="bHome" class="btn" transform="translate(66,62)"><circle r="40" fill="#FFFFFF" filter="url(#shS)"/><path d="M-20 4 L0 -16 L20 4 M-14 -2 V18 H14 V-2" stroke="#4E8C7E" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
     <g id="dayBadge" transform="translate(600,58)"></g>
+    <g id="bShop" class="btn" transform="translate(946,62)"><circle r="40" fill="#FFFFFF" filter="url(#shS)"/><path d="M-24 -6 L-16 -22 H16 L24 -6Z" fill="#F57F87"/><rect x="-20" y="-6" width="40" height="28" rx="4" fill="#FFF1DC" stroke="#F57F87" stroke-width="4"/><path d="${star(0, 8, 11, 5)}" fill="#FFD84D" stroke="#E8A93A" stroke-width="2"/></g>
     <g id="bBook" class="btn" transform="translate(1040,62)"><circle r="40" fill="#FFFFFF" filter="url(#shS)"/>
       <rect x="-22" y="-20" width="44" height="40" rx="6" fill="#F57F87"/><rect x="-16" y="-15" width="32" height="30" rx="3" fill="#FFF5F6"/><path d="M0 8 C-14 -2 -12 -14 0 -6 C12 -14 14 -2 0 8Z" fill="#F57F87"/>
       <circle id="bookDot" cx="26" cy="-26" r="11" fill="#FFD84D" stroke="#FFF" stroke-width="4" style="display:none"/></g>
@@ -832,14 +925,15 @@ function drawHud() {
     <g id="nfBar" transform="translate(600,124)" style="display:none"><rect x="-210" y="-18" width="420" height="36" rx="18" fill="#FFFFFF" filter="url(#shS)"/>
       <rect x="-170" y="-9" width="364" height="18" rx="9" fill="#F2E3E3"/><rect class="f" x="-170" y="-9" width="364" height="18" rx="9" fill="#F2575E"/>
       <g transform="translate(-190,0) scale(.5)"><path d="M0 22 C-40 -6 -30 -34 0 -14 C30 -34 40 -6 0 22Z" fill="#F2575E"/><path d="M-26 -2 h12 l6 -10 l8 20 l6 -10 h20" stroke="#FFF" stroke-width="5" fill="none" stroke-linejoin="round"/></g></g>`;
-  HUD.home = $('bHome'); HUD.book = $('bBook'); HUD.speak = $('bSpeak'); HUD.day = $('dayBadge'); HUD.bookDot = $('bookDot');
+  HUD.home = $('bHome'); HUD.book = $('bBook'); HUD.shop = $('bShop'); HUD.speak = $('bSpeak'); HUD.day = $('dayBadge'); HUD.bookDot = $('bookDot');
   HUD.nf = $('nfBar'); HUD.nfF = HUD.nf.querySelector('.f');
   HUD.w1 = HUD.speak.querySelector('.w1'); HUD.w2 = HUD.speak.querySelector('.w2');
   HUD.home.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.pop(); onHome(); });
   HUD.book.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.pop(); openBook(); });
+  HUD.shop.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.pop(); openShop(); });
   HUD.speak.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.pop(); if (V.last && !MODAL_BUSY) say(V.last); });
 }
-function hudGame(on) { for (const k of ['book', 'speak', 'day']) HUD[k].style.display = on ? '' : 'none'; }
+function hudGame(on) { for (const k of ['book', 'shop', 'speak', 'day']) HUD[k].style.display = on ? '' : 'none'; }
 function drawDayBadge() {
   if (!SAVE) return;
   const n = SAVE.list ? SAVE.list.length : 0;
@@ -946,6 +1040,7 @@ function showTitle() {
   setBelle(1005, 788, 1);
   const m = $('modal'); clear(m);
   const has = loadSave();
+  setHof(false); drawDeko(has); clear($('shopL'));
   m.innerHTML = `<rect x="0" y="0" width="1200" height="900" fill="#FFFFFF" opacity=".35" pointer-events="none"/>
     <g transform="translate(600,190)" filter="url(#sh)">
       <path d="M-420 -70 L420 -70 L390 0 L420 70 L-420 70 L-390 0Z" fill="#F57F87"/>
@@ -1011,7 +1106,8 @@ function startGame() {
   clear($('modal')); TITLE_PULSE = null;
   if (!SAVE.kontrollen) SAVE.kontrollen = []; if (!SAVE.station) SAVE.station = [];
   if (!SAVE.erklaert) { altesErklaert(); save(); }
-  hudGame(true); drawAusbau();
+  if (!SAVE.deko) SAVE.deko = {}; if (!SAVE.babys) SAVE.babys = [];
+  hudGame(true); drawAusbau(); drawDeko(SAVE);
   guard(mainLoop());
 }
 
@@ -1022,8 +1118,10 @@ async function mainLoop() {
       // Geräte des Tages ins Buch
       for (const t of frei(SAVE.day).geraete) SAVE.buch['g_' + t] = SAVE.buch['g_' + t] || 1;
       save();
+      setHof(SAVE.list.some(p => p.hof));
       await dayIntro(SAVE.day);
     }
+    setHof(SAVE.list.some(p => p.hof));
     drawDayBadge();
     while (SAVE.pat < SAVE.list.length) {
       await patientFlow(SAVE.list[SAVE.pat]);
@@ -1050,10 +1148,12 @@ async function dayIntro(day) {
   SFX.ding();
   if (day === 1) await sayErst('tag_1'); else await wait(1100);
   await wait(300);
+  const hofHeute = SAVE.list.some(p => p.hof);
   await tween(300, t => card.setAttribute('transform', `translate(600,430) scale(${1 - t})`));
   clear(m);
   const neu = neuAmTag(day);
-  if (SAVE.station && SAVE.station.length) await stationMorgen();
+  if (hofHeute && erstmal('hof_start')) await revealBild(`<g transform="translate(0,16) scale(.72)"><path d="M-120 -40 L0 -130 L120 -40Z" fill="#8E3A32"/><rect x="-100" y="-44" width="200" height="170" fill="#C9553D"/><rect x="-46" y="26" width="92" height="100" fill="#7A3026" stroke="#E8D9C0" stroke-width="6"/></g>`, 'hof_start');
+  if (SAVE.station && SAVE.station.length && !hofHeute) await stationMorgen();
   if (day === 1) {
     drawTray(frei(day).geraete);
     const tr = $('tray'); await tween(400, t => tr.setAttribute('transform', `translate(0,${(1 - t) * 140})`), easeBack);
@@ -1205,27 +1305,32 @@ async function patientFlow(p) {
   // Tür auf, Tier kommt herein
   SFX.bell(); await tween(p.notfall ? 300 : 500, doorOpen);
   P.g.style.opacity = 1;
-  await walk(140, 788, 410, 788, .78, .92, p.notfall ? 650 : 1100);
+  const klein = p.baby ? .6 : 1;   // Tierbabys sind kleiner
+  await walk(140, 788, 410, 788, .78 * klein, .92 * klein, p.notfall ? 650 : 1100);
   doorAnimClose();
   // Auf den Tisch hüpfen
   SFX.hop();
-  await tween(650, t => { P.x = lerp(410, SEAT[0], t); P.y = lerp(788, SEAT[1], t); P.s = lerp(.92, PS, t); P.hop = Math.sin(t * Math.PI) * 120; placePat(); }, t => t);
+  await tween(650, t => { P.x = lerp(410, SEAT[0], t); P.y = lerp(788, SEAT[1], t); P.s = lerp(.92 * klein, P.S, t); P.hop = Math.sin(t * Math.PI) * 120; placePat(); }, t => t);
   P.hop = 0; placePat();
   if (p.kontrolle) await say(p.a + '_kontrolle', { who: 'tier' });
-  else for (const k of p.ks) await say(p.a + '_klage_' + k, { who: 'tier' });
+  else if (p.geburt) await sayErst('geburt_start');
+  else if (p.baby) await sayErst('baby_kommt');
+  else for (const k of p.ks) await Promise.all([say(p.a + '_klage_' + k, { who: 'tier' }), p.hof ? klageBlase(k) : null]);
   if (p.ks.length > 1) await sayErst('zwei_hinweis');
-  // Untersuchen
-  MODE = 'exam'; CUR = { r: RUN };
-  if (p.notfall) {  // Notfall: gegen die Zeit (läuft bis zum Ende der Behandlung)
-    const n = [].concat(...p.ks.map(k => KRANK[k].schritte)).length;
-    P.t0 = performance.now(); P.limit = (40 + 24 * n) * 1000 * (1 - lvl() * .25);
+  if (!p.direkt) {
+    // Untersuchen
+    MODE = 'exam'; CUR = { r: RUN };
+    if (p.notfall) {  // Notfall: gegen die Zeit (läuft bis zum Ende der Behandlung)
+      const n = [].concat(...p.ks.map(k => KRANK[k].schritte)).length;
+      P.t0 = performance.now(); P.limit = (40 + 24 * n) * 1000 * (1 - lvl() * .25);
+    }
+    if (p.kontrolle) await sayErst('kontrolle_start', { instr: true });
+    else await sayErst('untersuchen', { instr: true });
+    await new Promise(res => { CUR.diagnosed = res; });
   }
-  if (p.kontrolle) await sayErst('kontrolle_start', { instr: true });
-  else await sayErst('untersuchen', { instr: true });
-  await new Promise(res => { CUR.diagnosed = res; });
   // Behandeln (in der Reihenfolge der Diagnosen)
   MODE = 'treat';
-  const order = p.kontrolle ? ['kontrolle'] : P.diag.slice();
+  const order = p.kontrolle ? ['kontrolle'] : p.direkt ? p.ks : P.diag.slice();
   const steps = [].concat(...order.map(k => KRANK[k].schritte));
   P.steps = steps;
   drawTray(treatTray(steps));
@@ -1252,7 +1357,7 @@ async function patientFlow(p) {
   drawDayBadge();
   let neuK = false;
   for (const k of p.ks) {
-    if (k === 'kontrolle') continue;
+    if (k === 'kontrolle' || KRANK[k].direkt) continue;
     const neu = !SAVE.buch['k_' + k];
     await cardToBook(k);
     if (neu) { SAVE.buch['k_' + k] = 2; neuK = true; HUD.bookDot.style.display = ''; }
@@ -1260,15 +1365,18 @@ async function patientFlow(p) {
   if (p.ks.includes('bruch')) SAVE.kontrollen.push({ a: p.a, due: SAVE.day + 2 });
   const bleibt = frei(SAVE.day).ausbau.station && p.ks.some(k => KRANK[k].station) && SAVE.station.length < 3;
   if (bleibt) SAVE.station.push({ a: p.a, ks: p.ks.slice() });
+  if (p.geburt) babyNeu(p.a);
+  if (p.baby) { const b = (SAVE.babys || []).find(x => x.id === p.id); if (b) { b.stufe++; b.tag = SAVE.day; } }
   save();
   if (neuK) await say('neue_karte');
   if (bleibt) await sayErst('station_bleibt');
+  if (p.geburt) await babyKarte(p.a);
   // Tier geht wieder
   SFX.hop();
-  await tween(600, t => { P.x = lerp(SEAT[0], 410, t); P.y = lerp(SEAT[1], 788, t); P.s = lerp(PS, .92, t); P.hop = Math.sin(t * Math.PI) * 100; placePat(); }, t => t);
+  await tween(600, t => { P.x = lerp(SEAT[0], 410, t); P.y = lerp(SEAT[1], 788, t); P.s = lerp(P.S, .92 * klein, t); P.hop = Math.sin(t * Math.PI) * 100; placePat(); }, t => t);
   P.hop = 0;
   await tween(450, doorOpen);
-  await walk(410, 788, 140, 788, .92, .78, 900);
+  await walk(410, 788, 140, 788, .92 * klein, .78 * klein, 900);
   await tween(250, t => { P.g.style.opacity = 1 - t; });
   await tween(400, t => doorOpen(1 - t));
   $('patWrap').style.display = 'none';
@@ -1290,11 +1398,126 @@ function shuffleSome(a) { const b = a.slice(); for (let i = b.length - 1; i > 0;
 function treatTray(steps) {
   const need = [...new Set(steps.map(s => s.item))];
   if (SAVE.day < 2) return shuffleSome(need);
-  const pool = [...new Set([].concat(...TREAT_ALL(frei(SAVE.day).krank)))].filter(i => !need.includes(i));
+  const pool = [...new Set([].concat(...TREAT_ALL(P.hof || P.baby ? HOF_KRANK.concat(frei(SAVE.day).krank) : frei(SAVE.day).krank)))].filter(i => !need.includes(i));
   const extra = Math.min(pool.length, 2 + Math.floor(SAVE.day / 4), 7 - need.length);
   return shuffleSome(need.concat(shuffleSome(pool).slice(0, extra)));
 }
 const TREAT_ALL = ks => ks.map(k => KRANK[k].schritte.map(s => s.item));
+
+/* ---------- Bauernhof ---------- */
+function setHof(on) {
+  $('farm').style.display = on ? '' : 'none';
+  if (on) drawWeide();
+}
+function drawFarm() {
+  $('farm').innerHTML = `<rect x="0" y="0" width="1200" height="900" fill="url(#gSky)"/>
+    <circle cx="980" cy="150" r="58" fill="#FFE27A"/><circle cx="980" cy="150" r="82" fill="#FFE27A" opacity=".3"/>
+    <g fill="#FFFFFF" opacity=".95"><ellipse cx="520" cy="150" rx="70" ry="24"/><ellipse cx="570" cy="134" rx="48" ry="26"/><ellipse cx="780" cy="220" rx="56" ry="18"/></g>
+    <ellipse cx="300" cy="620" rx="620" ry="210" fill="#B7E08F"/><ellipse cx="960" cy="640" rx="560" ry="230" fill="#A5D57E"/>
+    <rect x="0" y="600" width="1200" height="300" fill="#92C96A"/>
+    <g transform="translate(1080,430)"><rect x="-14" y="30" width="28" height="130" rx="8" fill="#9A6B3F"/><circle cy="-10" r="72" fill="#6FBF5C"/><circle cx="-50" cy="24" r="48" fill="#7FCB69"/><circle cx="50" cy="20" r="50" fill="#62B04F"/>${[[-30, -30], [20, 0], [44, -30]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="8" fill="#F26D6D"/>`).join('')}</g>
+    <g stroke="#FFFFFF" stroke-width="12" stroke-linecap="round">${[280, 400, 520, 640, 760, 880].map(x => `<path d="M${x} 505 V585"/>`).join('')}<path d="M250 530 H910 M250 562 H910"/></g>
+    <!-- Stall -->
+    <path d="M26 318 L140 208 L254 318Z" fill="#8E3A32" stroke="#6E2A24" stroke-width="6" stroke-linejoin="round"/><rect x="44" y="314" width="192" height="476" fill="#C9553D"/>
+    ${[76, 108, 140, 172, 204].map(x => `<path d="M${x} 314 V790" stroke="#B0442F" stroke-width="4"/>`).join('')}
+    <rect x="72" y="520" width="136" height="270" fill="#7A3026"/><path d="M72 520 L208 790 M208 520 L72 790" stroke="#E8D9C0" stroke-width="10"/><rect x="72" y="520" width="136" height="270" fill="none" stroke="#E8D9C0" stroke-width="10"/>
+    <circle cx="140" cy="400" r="40" fill="#FFF3D0" stroke="#E8D9C0" stroke-width="8"/><path d="M140 362 V438 M102 400 H178" stroke="#E8D9C0" stroke-width="6"/>
+    <g id="weide"></g>
+    <!-- Heuballen statt Behandlungstisch -->
+    <ellipse cx="600" cy="796" rx="280" ry="22" fill="#5E8A3F" opacity=".45"/>
+    <rect x="380" y="584" width="440" height="208" rx="56" fill="#E9C85A" stroke="#BE9B34" stroke-width="6"/>
+    ${[...Array(34)].map(() => { const x = rnd(396, 790), y = rnd(600, 770); return `<path d="M${x.toFixed(0)} ${y.toFixed(0)} l${rnd(-20, 20).toFixed(0)} ${rnd(-8, 8).toFixed(0)}" stroke="#C9A53C" stroke-width="4" stroke-linecap="round"/>`; }).join('')}
+    <path d="M380 660 H820 M380 720 H820" stroke="#B1892B" stroke-width="7" opacity=".6"/>
+    <g transform="translate(300,760)"><ellipse rx="26" ry="20" fill="#FFFFFF" stroke="#C9D5DE" stroke-width="3"/><circle cx="22" cy="-18" r="13" fill="#FFFFFF" stroke="#C9D5DE" stroke-width="3"/><path d="M33 -18 l12 4 l-12 4Z" fill="#F2A33A"/><path d="M18 -32 q4 -9 9 -2 q5 -7 7 3Z" fill="#F2575E"/><circle cx="25" cy="-20" r="2.4" fill="#2B2420"/></g>`;
+}
+function drawWeide() {   // aufgezogene Tierbabys leben auf der Wiese hinter dem Zaun
+  const g = $('weide'); if (!g) return; clear(g);
+  (SAVE && SAVE.babys || []).slice(-8).forEach((b, i) => {
+    const x = 300 + i * 84, y = 590 + (i % 2) * 6, s = .17 + b.stufe * .05;
+    el('g', { transform: `translate(${x},${y}) scale(${i % 2 ? -s : s},${s})` }, g, tierSVG(b.a)).querySelectorAll('.brows,.mSad,.mOpen').forEach(n => n.style.display = 'none');
+  });
+}
+async function klageBlase(k) {   // zeigt das Problem auch ohne Stimme
+  const g = el('g', { transform: 'translate(840,250) scale(0)' }, $('fx'), `<path d="M-120 -96 H120 Q140 -96 140 -76 V76 Q140 96 120 96 H-30 L-90 150 L-76 96 H-120 Q-140 96 -140 76 V-76 Q-140 -96 -120 -96Z" fill="#FFFFFF" stroke="#C9D5DE" stroke-width="5"/><g transform="scale(.95)">${krankBild(k)}</g>`);
+  await tween(260, t => g.setAttribute('transform', `translate(840,250) scale(${t})`), easeBack);
+  await wait(2000);
+  g.remove();
+}
+function babyNeu(a) {
+  if (!SAVE.babys) SAVE.babys = [];
+  SAVE.babyNr = (SAVE.babyNr || 0) + 1;
+  SAVE.babys.push({ id: SAVE.babyNr, a, stufe: 0, tag: SAVE.day });
+  const alt = SAVE.babys.findIndex(b => b.stufe >= 2);
+  if (SAVE.babys.length > 8 && alt >= 0) SAVE.babys.splice(alt, 1);
+}
+async function babyKarte(a) {
+  const m = $('modal'); clear(m);
+  el('rect', { x: 0, y: 0, width: 1200, height: 900, fill: '#FFFFFF', opacity: .55 }, m);
+  const g = el('g', { transform: 'translate(600,430) scale(0)' }, m, `<circle r="210" fill="#FFF3D0" stroke="#FFD84D" stroke-width="10" filter="url(#sh)"/><g transform="translate(0,150) scale(.8)">${tierSVG(a)}</g>`);
+  g.querySelectorAll('.brows,.mSad,.mOpen').forEach(n => n.style.display = 'none');
+  SFX.sparkle();
+  await tween(500, t => g.setAttribute('transform', `translate(600,430) scale(${t})`), easeBack);
+  floatHearts(600, 300, 8); burst(600, 430, 24);
+  await sayErst('baby_da'); await wait(1400);
+  await tween(250, t => g.setAttribute('transform', `translate(600,430) scale(${1 - t})`));
+  clear(m); drawWeide();
+}
+
+/* ---------- Deko für die Praxis, mit Sternen zu kaufen ---------- */
+const DEKO = [
+  { id: 'bild', preis: 5, x: 130, y: 190, svg: `<g filter="url(#shS)"><rect x="-58" y="-48" width="116" height="96" rx="8" fill="#E7B07A"/><rect x="-46" y="-36" width="92" height="72" rx="4" fill="#FFF7E6"/></g><path d="M-22 26 L-20 -18 L-6 -6 L6 -6 L20 -18 L22 26Z" fill="#9C99A3"/><circle cx="-8" cy="6" r="3.4" fill="#2B2420"/><circle cx="8" cy="6" r="3.4" fill="#2B2420"/>` },
+  { id: 'blume', preis: 6, x: 480, y: 352, svg: `<path d="M-20 0 H20 L14 -34 H-14Z" fill="#8FD0F2" stroke="#5FA9D0" stroke-width="3"/><path d="M0 -34 V-70 M0 -44 L-22 -66 M0 -44 L22 -62" stroke="#5AAE52" stroke-width="5"/>${[[0, -78, '#F57F87'], [-26, -72, '#FFD84D'], [26, -68, '#C9A0E8']].map(([x, y, c]) => `<circle cx="${x}" cy="${y}" r="13" fill="${c}"/><circle cx="${x}" cy="${y}" r="5" fill="#FFF3D0"/>`).join('')}` },
+  { id: 'wimpel', preis: 8, x: 600, y: 8, svg: `<path d="M-600 0 Q-300 70 0 34 Q300 70 600 0" stroke="#C9A06C" stroke-width="4" fill="none"/>${[...Array(15)].map((_, i) => { const x = -560 + i * 80, y = 10 + Math.sin((i + .5) / 7.5 * Math.PI) * 42 - (Math.abs(i - 7) < 1 ? 12 : 0); return `<path d="M${x - 22} ${y.toFixed(0)} H${x + 22} L${x} ${(y + 40).toFixed(0)}Z" fill="${['#F57F87', '#FFD84D', '#8FD0F2', '#B6E39B'][i % 4]}"/>`; }).join('')}`, thumb: .17 },
+  { id: 'teppich', preis: 10, x: 600, y: 796, svg: `<ellipse rx="340" ry="52" fill="#F57F87"/><ellipse rx="300" ry="40" fill="#FFD27A"/><ellipse rx="255" ry="29" fill="#8FD0F2"/><g transform="scale(.8)" fill="#FFFFFF" opacity=".85">${pawShape()}</g>`, thumb: .26 },
+  { id: 'schild', preis: 12, x: 140, y: 282, svg: `<rect x="-90" y="-22" width="180" height="44" rx="12" fill="#FFF3D0" stroke="#C9963A" stroke-width="4"/><g transform="translate(-58,2) scale(.55)" fill="#F57F87">${pawShape()}</g><text x="14" y="9" text-anchor="middle" font-size="24" fill="#7A5A28">Praxis</text>` },
+  { id: 'bank', preis: 15, x: 305, y: 690, svg: `<rect x="-76" y="-64" width="152" height="48" rx="14" fill="#8FD0F2" stroke="#5FA9D0" stroke-width="4"/><rect x="-82" y="-20" width="164" height="30" rx="12" fill="#A9DDF6" stroke="#5FA9D0" stroke-width="4"/><path d="M-66 10 V50 M66 10 V50" stroke="#9A6B3F" stroke-width="12" stroke-linecap="round"/>` },
+  { id: 'kratzbaum', preis: 18, x: 860, y: 770, svg: `<ellipse cy="4" rx="56" ry="12" fill="#C9A06C"/><rect x="-13" y="-170" width="26" height="174" fill="#DDBB8A"/>${[-150, -120, -90, -60, -30].map(y => `<path d="M-13 ${y} L13 ${y + 8}" stroke="#B8935E" stroke-width="4"/>`).join('')}<ellipse cy="-90" rx="44" ry="10" fill="#F6A6B2"/><ellipse cy="-176" rx="52" ry="12" fill="#F6A6B2"/><circle cx="34" cy="-152" r="10" fill="#FFD84D"/><path d="M34 -176 V-162" stroke="#9A6B3F" stroke-width="3"/>` , thumb: .5 },
+  { id: 'vogel', preis: 20, x: 872, y: 12, svg: `<path d="M0 0 V70" stroke="#8A9A96" stroke-width="4"/><path d="M-56 170 V110 Q0 30 56 110 V170Z" fill="#FFFFFF" fill-opacity=".35" stroke="#C9963A" stroke-width="5"/>${[-28, 0, 28].map(x => `<path d="M${x} 72 V170" stroke="#C9963A" stroke-width="3"/>`).join('')}<rect x="-62" y="166" width="124" height="12" rx="5" fill="#C9963A"/><path d="M-40 140 H40" stroke="#9A6B3F" stroke-width="5"/><ellipse cy="118" rx="18" ry="22" fill="#8FE0A0" stroke="#4FA868" stroke-width="3"/><circle cx="6" cy="98" r="11" fill="#FFD84D"/><path d="M15 97 l10 4 l-10 4Z" fill="#F2A33A"/><circle cx="8" cy="96" r="2.2" fill="#2B2420"/>`, thumb: .45 },
+  { id: 'regenbogen', preis: 22, x: 400, y: 450, svg: `<g filter="url(#shS)"><rect x="-90" y="-62" width="180" height="124" rx="8" fill="#FFFFFF"/></g><rect x="-80" y="-52" width="160" height="104" fill="#DDF3FF"/>${['#F2575E', '#F2A33A', '#FFD84D', '#7CC36A', '#5FA9D0', '#9B7FD0'].map((c, i) => `<path d="M${-68 + i * 10} 48 A${68 - i * 10} ${68 - i * 10} 0 0 1 ${68 - i * 10} 48" stroke="${c}" stroke-width="10" fill="none"/>`).join('')}` },
+  { id: 'aquarium', preis: 25, x: 710, y: 440, svg: `<rect x="-92" y="52" width="184" height="16" rx="6" fill="#E7B07A"/><rect x="-82" y="-54" width="164" height="106" rx="10" fill="#8FD8F2" stroke="#5FA9D0" stroke-width="5"/><rect x="-78" y="34" width="156" height="14" fill="#E9CFA0"/><path d="M-50 40 q-12 -30 2 -56 M-34 40 q10 -24 -4 -44 M56 40 q-10 -22 4 -40" stroke="#5AAE52" stroke-width="6" fill="none" stroke-linecap="round"/><g transform="translate(14,-16)"><ellipse rx="20" ry="12" fill="#F2A33A"/><path d="M-18 0 l-16 -10 v20Z" fill="#F2A33A"/><circle cx="10" cy="-3" r="2.6" fill="#2B2420"/></g><g transform="translate(-14,16) scale(-.7,.7)"><ellipse rx="20" ry="12" fill="#F57F87"/><path d="M-18 0 l-16 -10 v20Z" fill="#F57F87"/><circle cx="10" cy="-3" r="2.6" fill="#2B2420"/></g>${[[40, -24], [48, -40], [38, -6]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4" fill="#FFFFFF" opacity=".7"/>`).join('')}` },
+  { id: 'pokal', preis: 30, x: 1042, y: 324, svg: `<rect x="-22" y="-10" width="44" height="10" rx="3" fill="#C9963A"/><rect x="-6" y="-30" width="12" height="22" fill="#E8B93A"/><path d="M-26 -78 H26 Q24 -36 0 -32 Q-24 -36 -26 -78Z" fill="#FFD84D" stroke="#C9963A" stroke-width="3"/><path d="M-26 -72 Q-44 -70 -24 -48 M26 -72 Q44 -70 24 -48" stroke="#E8B93A" stroke-width="5" fill="none"/><path d="${star(0, -58, 12, 5)}" fill="#FFFFFF"/>` },
+  { id: 'krone', preis: 40, x: 848, y: 400, svg: `<rect x="-80" y="46" width="160" height="12" rx="5" fill="#E7B07A"/><path d="M-62 34 L-74 -18 L-36 8 L0 -36 L36 8 L74 -18 L62 34Z" fill="#FFD84D" stroke="#C9963A" stroke-width="5" stroke-linejoin="round"/><rect x="-62" y="30" width="124" height="14" rx="5" fill="#E8B93A"/>${[[-30, 37, '#F57F87'], [0, 37, '#8FD0F2'], [30, 37, '#B6E39B']].map(([x, y, c]) => `<circle cx="${x}" cy="${y}" r="5" fill="${c}"/>`).join('')}` },
+];
+function drawDeko(s) {
+  clear($('deko'));
+  const d = s && s.deko || {};
+  for (const it of DEKO) if (d[it.id] === 1) el('g', { transform: `translate(${it.x},${it.y})`, 'pointer-events': 'none' }, $('deko'), it.svg);
+}
+let SHOP_PREV = null, SHOP_CLOSE = null;
+function openShop() {
+  if (!SAVE || !['exam', 'treat', 'end'].includes(MODE) || DRAG) return;
+  SHOP_PREV = MODE; MODE = 'shop'; stopVoice();
+  drawShop();
+  guard(sayErst('laden_start'));
+}
+function closeShop() { clear($('shopL')); MODE = SHOP_PREV || 'exam'; }
+function drawShop() {
+  const g = $('shopL'); clear(g);
+  el('rect', { x: 0, y: 0, width: 1200, height: 900, fill: '#2F4A44', opacity: .6 }, g);
+  el('rect', { x: 50, y: 40, width: 1100, height: 820, rx: 44, fill: '#FFF8EE', stroke: '#FFD84D', 'stroke-width': 10, filter: 'url(#sh)' }, g);
+  el('g', { transform: 'translate(600,100)' }, g, `<rect x="-112" y="-38" width="224" height="76" rx="38" fill="#FFFFFF" stroke="#E9D9C9" stroke-width="4"/><path d="${star(-54, 0, 30, 14)}" fill="#FFD84D" stroke="#E8A93A" stroke-width="4" stroke-linejoin="round"/><text x="26" y="17" text-anchor="middle" font-size="46" fill="#9A6A00">${SAVE.sterne || 0}</text>`);
+  if (!SAVE.deko) SAVE.deko = {};
+  DEKO.forEach((it, i) => {
+    const x = 195 + (i % 4) * 270, y = 262 + Math.floor(i / 4) * 200, st = SAVE.deko[it.id];
+    const c = el('g', { class: 'btn', transform: `translate(${x},${y})` }, g);
+    el('rect', { x: -120, y: -90, width: 240, height: 180, rx: 24, fill: st ? '#FFFFFF' : '#FFF1DC', stroke: st === 1 ? '#5BBF4A' : '#E9D9C9', 'stroke-width': st === 1 ? 7 : 4 }, c);
+    const ic = el('g', { transform: `translate(0,-12)` }, c, `<g transform="scale(${it.thumb || .68})">${it.svg}</g>`);
+    if (st === 2) c.style.opacity = .6;
+    const bb = ic.getBBox();
+    ic.setAttribute('transform', `translate(${-bb.x - bb.width / 2},${-14 - bb.y - bb.height / 2})`);
+    el('g', { transform: 'translate(0,62)' }, c, st ? `<circle r="20" fill="${st === 1 ? '#5BBF4A' : '#C9D5DE'}" stroke="#FFF" stroke-width="4"/>${st === 1 ? '<path d="M-9 0 l7 7 l12 -13" stroke="#FFF" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' : ''}`
+      : `<rect x="-52" y="-20" width="104" height="40" rx="20" fill="${(SAVE.sterne || 0) >= it.preis ? '#FFD84D' : '#E3ECEA'}"/><path d="${star(-24, 0, 14, 6)}" fill="#FFF3D0" stroke="#E8A93A" stroke-width="2"/><text x="14" y="10" text-anchor="middle" font-size="26" fill="#7A5A28">${it.preis}</text>`);
+    c.addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      if (st) { SAVE.deko[it.id] = st === 1 ? 2 : 1; SFX.pop(); }    // gekauft: an- und ausschalten
+      else if ((SAVE.sterne || 0) < it.preis) { SFX.boing(); wiggle(c); return; }
+      else { SAVE.sterne -= it.preis; SAVE.deko[it.id] = 1; SFX.yay(); burst(x, y, 16, null, 'star', $('fx2')); }
+      save(); drawDeko(SAVE); drawShop();
+    });
+  });
+  const x = el('g', { class: 'btn', transform: 'translate(1098,92)' }, g, `<circle r="40" fill="#FFFFFF" filter="url(#shS)"/><path d="M-14 -14 L14 14 M14 -14 L-14 14" stroke="#9AA7AF" stroke-width="8" stroke-linecap="round"/>`);
+  x.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.pop(); closeShop(); });
+}
 async function showStars(n) {
   const g = el('g', {}, $('fx2'));
   const st = [0, 1, 2].map(i => {
@@ -1326,6 +1549,7 @@ function heal() {
   if (P.sym.blau) P.sym.blau.remove();
   if (P.sym.backe) P.sym.backe.remove();
   if (P.sym.bauch) P.sym.bauch.remove();
+  if (P.sym.euter) P.sym.euter.remove();
   if (P.fleas) { P.fleas.forEach(f => f.e.remove()); P.fleas = null; }
   P.cheeks.forEach(c => { c.setAttribute('fill', '#F48A9A'); c.setAttribute('opacity', '.45'); });
 }
@@ -1371,8 +1595,10 @@ async function dayEnd() {
   const b = el('g', { class: 'btn', transform: `translate(600,${by}) scale(0)` }, m, `<circle r="74" fill="#5BBF4A" stroke="#FFFFFF" stroke-width="10" filter="url(#sh)"/><path d="M-20 -34 L38 0 L-20 34Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="8" stroke-linejoin="round"/>`);
   await tween(400, t => b.setAttribute('transform', `translate(600,${by}) scale(${t})`), easeBack);
   TITLE_PULSE = b;
+  const shop = el('g', { class: 'btn', transform: `translate(790,${by})` }, m, `<circle r="56" fill="#FFFFFF" stroke="#FFD84D" stroke-width="8" filter="url(#sh)"/><path d="M-30 -8 L-20 -28 H20 L30 -8Z" fill="#F57F87"/><rect x="-25" y="-8" width="50" height="36" rx="5" fill="#FFF1DC" stroke="#F57F87" stroke-width="5"/><path d="${star(0, 10, 14, 6)}" fill="#FFD84D" stroke="#E8A93A" stroke-width="2"/>`);
+  shop.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.pop(); openShop(); });
   const r = RUN;
-  const pressed = new Promise(res => b.addEventListener('pointerdown', e => { e.stopPropagation(); SFX.yay(); res(); }));
+  const pressed = new Promise(res => b.addEventListener('pointerdown', e => { e.stopPropagation(); if (MODE === 'shop') return; SFX.yay(); res(); }));
   (neu ? say('morgen_neu', { instr: true }) : sayErst('morgen', { instr: true })).catch(() => {});
   await pressed; if (r !== RUN) throw ABORT;
   TITLE_PULSE = null; stopVoice(); clear(m);
@@ -1446,6 +1672,7 @@ function befundBild(tool, det) {
       else if (det === 'schramme') s += `<path d="M-100 -40 L80 0 M-90 20 L90 60 M-70 80 L50 110" stroke="#E2575E" stroke-width="12" stroke-linecap="round"/>${[[-40, -10], [20, 30], [-60, 50], [50, -10], [0, 80], [-20, 10]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="${rnd(9, 14).toFixed(0)}" fill="#8B6A45"/>`).join('')}`;
       else if (det === 'bruch') s += `<ellipse cx="0" cy="0" rx="120" ry="100" fill="#8E7CC3" opacity=".4"/><path d="M-130 -40 Q0 -80 130 -40 M-130 60 Q0 100 130 60" stroke="${c.dark}" stroke-width="6" fill="none" opacity=".5"/>`;
       else if (det === 'zecke') s += `<circle cx="0" cy="10" r="50" fill="#F27A7A" opacity=".3"/><g transform="translate(0,0) scale(6)">${krankBild('zecke').replace('scale(3.4)', 'scale(1)')}</g>`;
+      else if (det === 'huf') s = `<g transform="translate(0,6) scale(1.9)">${krankBild('huf')}</g>`;
       else s += `<g transform="translate(0,20) scale(1.6)" fill="${c.light}" opacity=".6">${pawShape()}</g>`;
       return s + `<circle r="150" fill="#DDF3FF" opacity=".15"/><path d="M-110 -60 a130 130 0 0 1 60 -70" stroke="#FFF" stroke-width="14" fill="none" stroke-linecap="round" opacity=".7"/>`;
     }
@@ -1465,6 +1692,7 @@ function befundBild(tool, det) {
       return `<rect x="-160" y="-160" width="320" height="320" fill="url(#gXray)"/>
         <path d="M-90 -160 C-80 -40 -110 60 -70 160 L70 160 C110 60 80 -40 90 -160Z" fill="#5C7FB8" opacity=".35"/>${det === 'kontrolle' ? `<path d="M-100 -160 C-90 -40 -116 60 -80 160 L80 160 C116 60 90 -40 100 -160Z" fill="#DDE8F5" opacity=".25"/>` : ''}${bones}
         ${det === 'bruch' ? `<path d="M-34 -70 L-8 -60 L-20 -46 L6 -36 L-4 -24 L30 -14" stroke="#F2575E" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="0" cy="-44" r="60" fill="none" stroke="#FFD84D" stroke-width="6" stroke-dasharray="14 10"/>` : ''}
+        ${det === 'futter' ? [[-50, 60, 22], [10, 84, 18], [50, 40, 15], [-10, 30, 13]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#FFFFFF" stroke="#F2575E" stroke-width="5"/>`).join('') : ''}
         ${det === 'kontrolle' ? `<path d="M-24 -44 L24 -40" stroke="#C8D8EE" stroke-width="4" opacity=".7"/><circle cx="96" cy="-96" r="34" fill="#5BBF4A"/><path d="M80 -96 l12 12 l20 -24" stroke="#FFF" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` : ''}`;
     }
     case 'ohrenspiegel':
@@ -1481,7 +1709,8 @@ function befundBild(tool, det) {
     }
     case 'flohkamm': {
       let s = fur + `<g transform="translate(0,-10) scale(3)">${toolIcon('flohkamm')}</g>`;
-      if (good) s += [[-60, 70, 1.2], [40, 90, 1], [90, 30, .8], [-20, 120, .9]].map(([x, y, sc]) => `<g transform="translate(${x},${y}) scale(${sc})"><ellipse rx="14" ry="10" fill="#2E1E18"/><circle cx="12" cy="-4" r="6" fill="#1E120E"/><path d="M-6 6 l-10 14 M2 8 l-4 14 M8 6 l10 12" stroke="#1E120E" stroke-width="3" stroke-linecap="round"/><path d="M-20 -14 q10 -20 24 -10" stroke="#FFF" stroke-width="3" fill="none" stroke-dasharray="4 4"/></g>`).join('');
+      if (det === 'wolle') s += `<g transform="translate(0,70) scale(1.1)">${krankBild('wolle')}</g>`;
+      else if (good) s += [[-60, 70, 1.2], [40, 90, 1], [90, 30, .8], [-20, 120, .9]].map(([x, y, sc]) => `<g transform="translate(${x},${y}) scale(${sc})"><ellipse rx="14" ry="10" fill="#2E1E18"/><circle cx="12" cy="-4" r="6" fill="#1E120E"/><path d="M-6 6 l-10 14 M2 8 l-4 14 M8 6 l10 12" stroke="#1E120E" stroke-width="3" stroke-linecap="round"/><path d="M-20 -14 q10 -20 24 -10" stroke="#FFF" stroke-width="3" fill="none" stroke-dasharray="4 4"/></g>`).join('');
       else s += `<path d="${star(80, 90, 18, 7)}" fill="#FFF" opacity=".85"/><path d="${star(-70, 100, 12, 5)}" fill="#FFF" opacity=".7"/>`;
       return s;
     }
@@ -1489,7 +1718,8 @@ function befundBild(tool, det) {
       return `<rect x="-160" y="-160" width="320" height="320" fill="#151820"/>
         <path d="M0 -150 L-150 110 Q0 170 150 110Z" fill="#3A404E"/>${[...Array(70)].map(() => `<circle cx="${rnd(-110, 110).toFixed(0)}" cy="${rnd(-60, 120).toFixed(0)}" r="${rnd(1.5, 4).toFixed(1)}" fill="#8E97A8" opacity="${rnd(.3, .8).toFixed(2)}"/>`).join('')}
         <ellipse cx="0" cy="40" rx="90" ry="60" fill="none" stroke="#B9C2D2" stroke-width="5" opacity=".7"/>
-        ${good ? [[-30, 30, 26], [20, 50, 20], [40, 10, 16], [-50, 70, 14], [0, 0, 12]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#0E1016" stroke="#DDE3EE" stroke-width="3"/>`).join('') : `<path d="M-50 40 q25 -16 50 0 t50 0" stroke="#DDE3EE" stroke-width="4" fill="none" opacity=".6"/>`}`;
+        ${det === 'euter' ? [[-34, 40, 34], [34, 40, 34]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#EAF0F8" stroke="#DDE3EE" stroke-width="4"/>`).join('')
+          : good ? [[-30, 30, 26], [20, 50, 20], [40, 10, 16], [-50, 70, 14], [0, 0, 12]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#0E1016" stroke="#DDE3EE" stroke-width="3"/>`).join('') : `<path d="M-50 40 q25 -16 50 0 t50 0" stroke="#DDE3EE" stroke-width="4" fill="none" opacity=".6"/>`}`;
   }
   return '';
 }
@@ -1512,7 +1742,7 @@ async function openDiagnose() {
   MODE = 'diag';
   const m = $('modal'); clear(m);
   const bg = el('rect', { x: 0, y: 0, width: 1200, height: 900, fill: '#2F4A44', opacity: 0 }, m);
-  const unl = frei(SAVE.day).krank;
+  const unl = P.hof ? HOF_KRANK : frei(SAVE.day).krank;
   const offen = P.ks.filter(k => !P.diag.includes(k));
   const nOpt = SAVE.day <= 2 ? 3 : 4;   // ab Tag 3 vier Karten zur Auswahl
   let opts = shuffleSome(unl.filter(k => !P.ks.includes(k))).slice(0, Math.max(2, nOpt - offen.length)).concat(offen);
@@ -1705,6 +1935,7 @@ async function gulp() {
   if (it === 'fiebersaft' && P.sym.hitze) P.sym.hitze.setAttribute('opacity', .3);
   if (it === 'hustensaft') P.cough = .3;
   if (it === 'tee' && P.sym.bauch) P.sym.bauch.setAttribute('opacity', .4);
+  if (it === 'tee' && P.sym.futter) P.sym.futter.remove();
 }
 
 /* =========================================================
@@ -1837,6 +2068,13 @@ async function afterMini(st) {
     case 'zecke': if (P.sym.zecke) P.sym.zecke.remove(); SFX.plop(); break;
     case 'floehe': if (P.fleas) { P.fleas.forEach(f => f.e.remove()); P.fleas = null; } break;
     case 'schnitt': rubVisual('gipsschere', 1); break;
+    case 'hufkratzen': if (P.sym.huf) P.sym.huf.setAttribute('opacity', .4); SFX.plop(); break;
+    case 'hammer': if (P.sym.huf) P.sym.huf.remove(); break;
+    case 'scheren': if (P.sym.wolle) P.sym.wolle.remove(); break;
+    case 'melken': if (P.sym.euter) P.sym.euter.setAttribute('opacity', .4); break;
+    case 'sortieren': if (P.sym.futter) P.sym.futter.setAttribute('opacity', .4); break;
+    case 'geburt': el('g', { transform: 'translate(150,0) scale(.42)' }, P.ovTop, tierSVG(P.a)).querySelectorAll('.brows,.mSad,.mOpen').forEach(n => n.style.display = 'none'); break;
+    case 'flasche': if (P.baby) await gulp(); else SFX.gulp(); break;
   }
 }
 
@@ -2290,6 +2528,343 @@ MG.floehe = m => {
   };
 };
 
+/* ---------- Bauernhof ---------- */
+/* Huf auskratzen: Steine nach außen hebeln, den empfindlichen Strahl in der Mitte nicht berühren */
+MG.hufkratzen = m => {
+  m.c.innerHTML = `<rect x="-400" y="-300" width="800" height="600" fill="#D9B98A"/><ellipse cy="14" rx="255" ry="240" fill="#8A7560" stroke="#5E4E3E" stroke-width="10"/><ellipse cy="16" rx="205" ry="190" fill="#A8937C"/>
+    <path d="M0 -80 L72 130 Q0 168 -72 130Z" fill="#E8B8A8" stroke="#C98F7E" stroke-width="5"/>`;
+  const n = 3 + Math.round(lvl() * 3), L = 120, stones = [];
+  const off = rnd(0, 6.28);
+  for (let i = 0; i < n; i++) {
+    let a = off + i / n * 2 * Math.PI;
+    if (Math.sin(a) > .55 && Math.abs(Math.cos(a)) < .5) a += 1.1;   // nicht auf dem Strahl
+    const d = [Math.cos(a), Math.sin(a)], x = d[0] * 148, y = 14 + d[1] * 136;
+    const e = el('g', { transform: `translate(${x},${y})` }, m.c, `<path d="M-30 6 L-16 -24 L18 -28 L32 2 L10 26 L-20 22Z" fill="#8E8E96" stroke="#5E5E66" stroke-width="4"/><path d="M-12 -12 l14 -2" stroke="#B9B9C2" stroke-width="4" stroke-linecap="round"/>`);
+    stones.push({ x, y, d, e, pulled: 0, out: false });
+  }
+  const cur = el('g', { opacity: 0 }, m.ui, toolIcon('hufkratzer'));
+  let act = null, g0 = 0, done = 0, lastF = 0;
+  m.pips(n, 0);
+  const along = (p, s) => (p.x - s.x) * s.d[0] + (p.y - s.y) * s.d[1];
+  return {
+    down(p) {
+      cur.setAttribute('opacity', 1); cur.setAttribute('transform', `translate(${p.x},${p.y})`);
+      act = stones.find(s => !s.out && dist(p.x, p.y, s.x + s.d[0] * s.pulled, s.y + s.d[1] * s.pulled) < 58) || null;
+      if (act) { g0 = along(p, act) - act.pulled; SFX.pick(); }
+    },
+    move(p) {
+      cur.setAttribute('transform', `translate(${p.x},${p.y})`);
+      const now = performance.now();
+      if (Math.abs(p.x) < 58 && p.y > -60 && p.y < 135 && Math.hypot(p.dx, p.dy) > 1.5 && now - lastF > 1200) { lastF = now; m.fail(p.x, p.y - 50); act = null; return; }
+      if (!act) return;
+      const s = act; s.pulled = clamp(along(p, s) - g0, s.pulled, L);
+      s.e.setAttribute('transform', `translate(${s.x + s.d[0] * s.pulled},${s.y + s.d[1] * s.pulled})`);
+      if (s.pulled >= L) {
+        s.out = true; act = null; done++; m.pips(n, done); SFX.plop(); s.e.remove();
+        burst(MX + s.x + s.d[0] * L, MY + s.y + s.d[1] * L, 8, ['#8E8E96', '#FFFFFF'], 'star', $('fx2'));
+        if (done >= n) m.win();
+      }
+    },
+    up() { act = null; cur.setAttribute('opacity', 0); },
+    demo() { const s = stones.find(o => !o.out); if (!s) return null; const x = s.x + s.d[0] * s.pulled, y = s.y + s.d[1] * s.pulled; return [kf(x, y, 0, 0), kf(x, y, 1, 400), kf(s.x + s.d[0] * (L + 20), s.y + s.d[1] * (L + 20), 0, 1300), kf(s.x + s.d[0] * (L + 20), s.y + s.d[1] * (L + 20), 0, 300)]; },
+  };
+};
+
+/* Hufeisen annageln: draufhauen, wenn die Anzeige im grünen Feld ist */
+MG.hammer = m => {
+  m.c.innerHTML = `<rect x="-400" y="-300" width="800" height="600" fill="#D9B98A"/><ellipse cy="-30" rx="215" ry="195" fill="#8A7560" stroke="#5E4E3E" stroke-width="10"/><ellipse cy="-28" rx="170" ry="152" fill="#A8937C"/>
+    <g transform="translate(0,-34) scale(4.4)">${toolIcon('hufeisen').replace(/<circle[^>]*>/g, '')}</g>`;
+  const pts = [[-140, 78], [-152, -10], [-118, -96], [140, 78], [152, -10], [118, -96]];
+  const nails = pts.map(([x, y]) => el('circle', { cx: x, cy: y - 34, r: 11, fill: '#3E4A52', stroke: '#FFD84D', 'stroke-width': 0 }, m.c));
+  const BX = 280, W = 2 * BX;
+  el('rect', { x: -BX - 14, y: 212, width: W + 28, height: 50, rx: 25, fill: '#FFFFFF', stroke: '#C9D5DE', 'stroke-width': 4 }, m.ui);
+  const zone = el('rect', { y: 218, height: 38, rx: 12, fill: '#5BBF4A' }, m.ui);
+  const mark = el('rect', { y: 208, width: 12, height: 58, rx: 6, fill: '#4E6F68' }, m.ui);
+  const hw = lerp(.2, .1, lvl()), spd = lerp(2.3, 3.6, lvl());
+  let t = rnd(0, 6), i = 0, z = 0, cool = 0, x = 0;
+  const neu = () => { z = rnd(-.75, .75); zone.setAttribute('x', BX * (z - hw)); zone.setAttribute('width', 2 * BX * hw); nails[i] && nails[i].setAttribute('stroke-width', 5); };
+  neu(); m.pips(6, 0);
+  return {
+    tick(dt) { t += dt * spd; cool -= dt; x = Math.sin(t); mark.setAttribute('x', BX * x - 6); },
+    down() {
+      if (cool > 0) return; cool = .3;
+      tone(1100, .08, 'square', .1); noise(.08, .2, 3000, 1);
+      if (Math.abs(x - z) <= hw + .02) {
+        nails[i].setAttribute('fill', '#E9EEF2'); nails[i].setAttribute('stroke-width', 0); i++; m.pips(6, i);
+        if (i >= 6) m.win(); else { neu(); t += 1; }
+      } else m.fail(pts[i][0], pts[i][1] - 90);
+    },
+    demo() { return [kf(0, 150, 0, 0), kf(0, 150, 1, 500), kf(0, 150, 0, 160), kf(0, 150, 0, 600)]; },
+  };
+};
+
+/* Schaf scheren: die ganze Wolle abschneiden, aber um die wunden Stellen herumfahren */
+MG.scheren = m => {
+  m.c.innerHTML = `<rect x="-400" y="-300" width="800" height="600" fill="#F6C9BF"/>`;
+  const sores = [];
+  for (let tr = 0; sores.length < 2 + Math.round(lvl() * 2) && tr < 200; tr++) { const x = rnd(-290, 290), y = rnd(-180, 220); if (!sores.some(o => dist(x, y, o[0], o[1]) < 170)) sores.push([x, y]); }
+  const wool = el('g', {}, m.c), cells = [];
+  for (let y = -270, r = 0; y <= 270; y += 42, r++) for (let x = -370 + (r % 2) * 22; x <= 370; x += 46) {
+    if (sores.some(o => dist(x, y, o[0], o[1]) < 56)) continue;
+    cells.push({ x, y, e: el('circle', { cx: x, cy: y, r: 34, fill: '#D2C6AE', stroke: '#B7A98D', 'stroke-width': 2 }, wool) });
+  }
+  sores.forEach(([x, y]) => el('g', { transform: `translate(${x},${y})` }, m.c, `<circle r="30" fill="#F2575E" opacity=".35"/><circle r="17" fill="#E2575E"/>`));
+  const cur = el('g', { opacity: 0 }, m.ui, `<g transform="scale(1.1)">${toolIcon('schere')}</g>`);
+  const need = Math.ceil(cells.length * .93), total = cells.length, R = 50;
+  let off = 0, lastF = 0, lastS = 0;
+  m.pips(5, 0);
+  return {
+    down(p) { cur.setAttribute('opacity', 1); cur.setAttribute('transform', `translate(${p.x},${p.y})`); },
+    move(p) {
+      cur.setAttribute('transform', `translate(${p.x},${p.y})`);
+      const now = performance.now();
+      if (now - lastF > 1000 && sores.some(o => dist(p.x, p.y, o[0], o[1]) < 34)) { lastF = now; m.fail(p.x, p.y - 50); return; }
+      let hit = false;
+      for (let i = cells.length - 1; i >= 0; i--) if (dist(p.x, p.y, cells[i].x, cells[i].y) < R) { cells[i].e.remove(); cells.splice(i, 1); off++; hit = true; }
+      if (hit && now - lastS > 90) { lastS = now; noise(.06, .14, 4200, 2); }
+      m.pips(5, Math.min(5, Math.floor(off / need * 5)));
+      if (off >= need) { wool.remove(); m.win(); }
+    },
+    up() { cur.setAttribute('opacity', 0); },
+    demo() { const c = cells[0]; if (!c) return null; return [kf(c.x, c.y, 0, 0), kf(c.x, c.y, 1, 400), kf(c.x + 300, c.y, 1, 1000), kf(c.x + 300, c.y + 50, 1, 300), kf(c.x, c.y + 50, 0, 1000), kf(c.x, c.y + 50, 0, 200)]; },
+  };
+};
+
+/* Melken: immer abwechselnd an der leuchtenden Zitze nach unten ziehen, bevor die Kuh ungeduldig wird */
+MG.melken = m => {
+  m.c.innerHTML = `<rect x="-400" y="-300" width="800" height="600" fill="#EAF7F2"/><rect x="-400" y="200" width="800" height="110" fill="#E9C85A"/>
+    <path d="M-400 -300 H400 V-210 Q0 -160 -400 -210Z" fill="#F7F3EC" stroke="#B3A890" stroke-width="5"/><ellipse cy="-150" rx="190" ry="94" fill="#F3A3B4" stroke="#D9778D" stroke-width="6"/>`;
+  const T = [[-95, -46], [95, -46]];
+  const te = T.map(([x, y]) => el('rect', { x: x - 28, y: y - 34, width: 56, height: 110, rx: 28, fill: '#F3A3B4', stroke: '#D9778D', 'stroke-width': 6 }, m.c));
+  const ring = el('circle', { r: 66, fill: 'none', stroke: '#FFD84D', 'stroke-width': 9 }, m.c);
+  el('path', { d: 'M-105 110 H105 L84 262 H-84Z', fill: '#C7D2DA', stroke: '#7F93A3', 'stroke-width': 6 }, m.c);
+  const milk = el('rect', { x: -80, y: 250, width: 160, height: 0, rx: 8, fill: '#FFFFFF' }, m.c);
+  const pat = el('rect', { x: -300, y: -278, width: 600, height: 14, rx: 7, fill: '#5BBF4A' }, m.ui);
+  const need = 10 + Math.round(lvl() * 6), max = lerp(3.2, 1.5, lvl());
+  let side = 0, n = 0, wait_ = max, grab = -1, y0 = 0, pulled = false;
+  const zeig = () => { ring.setAttribute('cx', T[side][0]); ring.setAttribute('cy', T[side][1] + 20); };
+  zeig(); m.pips(0, 0);
+  function melk() {
+    const [x, y] = T[side], d = el('rect', { x: x - 5, y: y + 70, width: 10, height: 26, rx: 5, fill: '#FFFFFF' }, m.c), s = side;
+    guard(tween(240, t => { d.setAttribute('x', lerp(x, 0, t) - 5); d.setAttribute('y', lerp(y + 70, 170, t)); }).then(() => d.remove()));
+    te[s].setAttribute('height', 130); m.later(150, () => te[s].setAttribute('height', 110));
+    tone(rnd(700, 900), .07, 'sine', .15); n++;
+    const h = n / need * 120; milk.setAttribute('y', 250 - h); milk.setAttribute('height', h);
+    side = 1 - side; wait_ = max; zeig();
+    if (n >= need) m.win();
+  }
+  return {
+    tick(dt) {
+      wait_ -= dt;
+      if (wait_ <= 0) { m.fail(0, -200); wait_ = max; tone(120, .5, 'sawtooth', .12, 90); }   // Muh!
+      pat.setAttribute('width', 600 * clamp(wait_ / max, 0, 1)); pat.setAttribute('fill', wait_ < max * .3 ? '#F2575E' : '#5BBF4A');
+    },
+    down(p) {
+      grab = T.findIndex(([x, y]) => dist(p.x, p.y, x, y + 20) < 76); y0 = p.y; pulled = false;
+      if (grab >= 0 && grab !== side) { m.fail(p.x, p.y - 60); grab = -1; }
+    },
+    move(p) { if (grab === side && !pulled && p.y - y0 > 45) { pulled = true; melk(); grab = -1; } },
+    up() { grab = -1; },
+    demo() { const [x, y] = T[side]; return [kf(x, y + 10, 0, 0), kf(x, y + 10, 1, 400), kf(x, y + 100, 0, 400), kf(x, y + 100, 0, 300)]; },
+  };
+};
+
+/* Futter sortieren: Falsches antippen, bevor es in den Trog fällt – gutes Futter durchlassen */
+MG.sortieren = m => {
+  const GUT = {
+    heu: `<path d="M-30 18 q10 -44 30 -34 q22 -12 30 34Z" fill="#E9C85A" stroke="#BE9B34" stroke-width="4"/><path d="M-14 12 l6 -22 M4 12 l-2 -28 M18 12 l-6 -20" stroke="#BE9B34" stroke-width="3"/>`,
+    karotte: `<path d="M-12 -18 L12 -18 L0 34Z" fill="#F2A33A" stroke="#C97A1E" stroke-width="3"/><path d="M0 -18 q-14 -16 -18 -24 M0 -18 q0 -18 0 -28 M0 -18 q14 -16 18 -24" stroke="#5AAE52" stroke-width="5" fill="none"/>`,
+    apfel: `<circle r="28" fill="#F2575E" stroke="#C93E45" stroke-width="3"/><path d="M0 -26 q2 -12 12 -16" stroke="#7A4E2C" stroke-width="4" fill="none"/><ellipse cx="14" cy="-36" rx="10" ry="5" fill="#5AAE52"/>`,
+  };
+  const BOES = {
+    stein: `<path d="M-30 12 L-18 -22 L16 -26 L32 6 L12 26 L-20 24Z" fill="#8E8E96" stroke="#5E5E66" stroke-width="4"/>`,
+    dose: `<rect x="-20" y="-28" width="40" height="56" rx="6" fill="#C7D2DA" stroke="#7F93A3" stroke-width="4"/><rect x="-20" y="-10" width="40" height="20" fill="#F57F87"/>`,
+    schraube: `<rect x="-7" y="-14" width="14" height="46" fill="#9AA7AF" stroke="#5E6B75" stroke-width="3"/><rect x="-20" y="-28" width="40" height="16" rx="4" fill="#7F93A3"/>${[0, 10, 20].map(y => `<path d="M-9 ${y} L9 ${y + 6}" stroke="#5E6B75" stroke-width="3"/>`).join('')}`,
+    glas: `<path d="M-24 22 L-10 -24 L8 -12 L26 -22 L18 24Z" fill="#BFE9F2" stroke="#5FA9D0" stroke-width="4"/>`,
+  };
+  m.c.innerHTML = `<rect x="-400" y="-300" width="800" height="600" fill="#BCE4A0"/>`;
+  el('g', { transform: 'translate(0,256) scale(6.4,1.5)' }, m.c, `<path d="M-52 -6 L52 -6 L44 24 L-44 24Z" fill="#B98052" stroke="#7A4E2C" stroke-width="2"/>`);
+  const total = 12 + Math.round(lvl() * 8), v = lerp(170, 300, lvl()), gap = lerp(1.25, .7, lvl()), F = [];
+  let sp = 0, cnt = 0, fertig = 0, t = .6;
+  m.pips(0, 0);
+  const bar = el('rect', { x: -300, y: -278, width: 0, height: 14, rx: 7, fill: '#5BBF4A' }, m.ui);
+  function neu() {
+    const bad = Math.random() < .45, set = bad ? BOES : GUT;
+    const f = { x: rnd(-280, 280), y: -320, bad, e: el('g', {}, m.c, `<g transform="scale(1.5)">${set[pick(Object.keys(set))]}</g>`) };
+    F.push(f); cnt++;
+  }
+  const weg = f => { fertig++; bar.setAttribute('width', 600 * fertig / total); F.splice(F.indexOf(f), 1); if (fertig >= total) m.win(); };
+  return {
+    tick(dt) {
+      t -= dt; if (t < 0 && cnt < total) { neu(); t = gap * rnd(.75, 1.2); }
+      for (const f of F.slice()) {
+        f.y += v * dt; f.e.setAttribute('transform', `translate(${f.x.toFixed(1)},${f.y.toFixed(1)})`);
+        if (f.y > 215) { f.e.remove(); if (f.bad) m.fail(f.x, 150); else { tone(660, .08, 'sine', .15); } weg(f); }
+      }
+    },
+    down(p) {
+      let b = null, bd = 70;
+      for (const f of F) { const d = dist(p.x, p.y, f.x, f.y); if (d < bd) { bd = d; b = f; } }
+      if (!b) return;
+      if (b.bad) { SFX.pop(); burst(MX + b.x, MY + b.y, 8, null, 'star', $('fx2')); } else m.fail(b.x, b.y - 50);
+      b.e.remove(); weg(b);
+    },
+    demo() { const f = F.find(o => o.bad && o.y > -220 && o.y < 60); if (!f) return null; const y = f.y + v * .5; return [kf(f.x, y - 80, 0, 0), kf(f.x, y, 1, 400), kf(f.x, y, 0, 120), kf(f.x, y, 0, 300)]; },
+  };
+};
+
+/* ---------- Tierbabys ---------- */
+/* Geburt: den Finger nur halten, solange die Welle im grünen Bereich ist – dann rutscht das Baby ins Stroh */
+MG.geburt = m => {
+  const c = TIERE[P.a];
+  m.c.innerHTML = `<rect x="-400" y="-300" width="800" height="600" fill="#FFF3D0"/><rect x="-400" y="150" width="800" height="160" fill="#E9C85A"/>
+    ${[...Array(30)].map(() => { const x = rnd(-390, 390), y = rnd(165, 280); return `<path d="M${x.toFixed(0)} ${y.toFixed(0)} l${rnd(-26, 26).toFixed(0)} ${rnd(-8, 8).toFixed(0)}" stroke="#C9A53C" stroke-width="4"/>`; }).join('')}
+    <circle cx="-40" cy="-40" r="190" fill="${c.fur}" stroke="${c.dark}" stroke-width="7"/><circle cx="-40" cy="-40" r="150" fill="#FBE3DC"/>`;
+  const baby = el('g', {}, m.c, `<g transform="scale(.42)">${tierSVG(P.a)}</g>`);
+  baby.querySelectorAll('.brows,.mSad,.mOpen').forEach(n => n.style.display = 'none');
+  const meter = el('g', { transform: 'translate(320,20)' }, m.ui);
+  el('rect', { x: -26, y: -170, width: 52, height: 340, rx: 26, fill: '#FFFFFF', stroke: '#C9D5DE', 'stroke-width': 4 }, meter);
+  el('rect', { x: -18, y: -162, width: 36, height: 130, rx: 16, fill: '#5BBF4A', opacity: .35 }, meter);
+  const dot = el('circle', { cx: 0, r: 22, fill: '#F57F87', stroke: '#FFFFFF', 'stroke-width': 4 }, meter);
+  const per = lerp(3.4, 2.3, lvl()), need = lerp(2.6, 3.6, lvl());
+  let t = 0, v = 0, prog = 0, lastF = 0, tok = 0;
+  const pos = () => { const k = easeIO(clamp(prog, 0, 1)); return [lerp(-40, 150, k), lerp(0, 150, k)]; };
+  const render = () => { const [x, y] = pos(); baby.setAttribute('transform', `translate(${x},${y + 60}) rotate(${lerp(20, 0, prog)})`); };
+  render(); m.pips(0, 0);
+  return {
+    tick(dt) {
+      t += dt; v = Math.pow(Math.sin(t / per * Math.PI), 2);
+      dot.setAttribute('cy', (150 - v * 300).toFixed(1));
+      const gruen = v > .6;
+      dot.setAttribute('fill', gruen ? '#5BBF4A' : '#F57F87');
+      if (m.held) {
+        if (gruen) { prog += dt / need; render(); tok -= dt; if (tok < 0) { tok = .3; tone(90, .12, 'sine', .4); } if (prog >= 1) { SFX.yay(); m.win(); } }
+        else if (v < .4 && performance.now() - lastF > 1400) { lastF = performance.now(); m.fail(-40, -220); }
+      }
+    },
+    demo() {   // wartet auf die nächste grüne Welle, dann gedrückt halten
+      const warten = (per * 1.28 - (t % per)) % per;
+      return [kf(-40, 40, 0, 0), kf(-40, 40, 0, warten * 1000 + 50), kf(-40, 40, 1, 10), kf(-40, 40, 0, per * 400), kf(-40, 40, 0, 300)];
+    },
+  };
+};
+
+/* Fläschchen geben: die Flasche am zappelnden Mäulchen halten, bis sie leer ist */
+MG.flasche = m => {
+  const c = TIERE[P.a];
+  m.c.innerHTML = `<rect x="-400" y="-300" width="800" height="600" fill="#DDF3FF"/><rect x="-400" y="170" width="800" height="140" fill="#BCE4A0"/>`;
+  const G = 1.25, head = el('g', {}, m.c, `<g transform="scale(${G})">${tierSVG(P.a)}</g>`);
+  head.querySelectorAll('.brows,.mSad').forEach(n => n.style.display = 'none');
+  const mO = head.querySelector('.mOpen'); mO.style.display = '';
+  head.querySelector('.mHappy').style.display = 'none';
+  const ring = el('circle', { r: 56, fill: 'none', stroke: '#FFD84D', 'stroke-width': 7, 'stroke-dasharray': '12 9' }, m.c);
+  const fl = el('g', { opacity: 0 }, m.ui, `<g transform="rotate(-150) scale(1.4)"><g transform="rotate(-25)">${toolIcon('flasche')}</g></g>`);
+  const meter = el('g', { transform: 'translate(334,0)' }, m.ui);
+  el('rect', { x: -22, y: -150, width: 44, height: 300, rx: 22, fill: '#FFFFFF', stroke: '#C9D5DE', 'stroke-width': 4 }, meter);
+  const milk = el('rect', { x: -14, y: -142, width: 28, height: 284, rx: 14, fill: '#FFF3D0', stroke: '#E8D29A', 'stroke-width': 2 }, meter);
+  const R = lerp(74, 50, lvl()), spd = lerp(.8, 1.5, lvl()), dur = 5;
+  let t = rnd(0, 6), mx = 0, my = 0, voll = 1, aus = 0, lastF = 0, schluck = 0;
+  return {
+    tick(dt) {
+      t += dt * spd;
+      mx = Math.sin(t) * 170 + Math.sin(t * 2.3) * 50 - 30; my = Math.cos(t * 1.4) * 90 - 40;
+      head.setAttribute('transform', `translate(${mx.toFixed(1)},${(my + 162 * G).toFixed(1)})`);
+      ring.setAttribute('cx', mx); ring.setAttribute('cy', my);
+      if (!m.held) return;
+      if (dist(m.lx, m.ly, mx, my) < R) {
+        voll -= dt / dur; aus = 0; schluck -= dt;
+        if (schluck < 0) { schluck = .45; tone(260, .1, 'sine', .25, 150); }
+        const h = 284 * Math.max(0, voll); milk.setAttribute('y', 142 - h); milk.setAttribute('height', h);
+        if (voll <= 0) m.win();
+      } else {
+        aus += dt;
+        if (aus > 1.2 && performance.now() - lastF > 2000) { lastF = performance.now(); aus = 0; m.fail(mx, my - 80); voll = Math.min(1, voll + .1); }   // daneben gekleckert
+      }
+    },
+    down(p) { fl.setAttribute('opacity', 1); fl.setAttribute('transform', `translate(${p.x},${p.y})`); },
+    move(p) { fl.setAttribute('transform', `translate(${p.x},${p.y})`); },
+    up() { fl.setAttribute('opacity', 0); },
+    demo() { const k = [kf(mx, my, 0, 0), kf(mx, my, 1, 300)]; for (let i = 1; i <= 6; i++) { const tt = t + i * .32 * spd; k.push(kf(Math.sin(tt) * 170 + Math.sin(tt * 2.3) * 50 - 30, Math.cos(tt * 1.4) * 90 - 40, i < 6 ? 1 : 0, 320)); } k.push(kf(k[k.length - 1].x, k[k.length - 1].y, 0, 200)); return k; },
+  };
+};
+
+/* Wiegen: Gewichte auflegen, bis die Waage genau gerade steht */
+MG.wiegen = m => {
+  m.c.innerHTML = `<rect x="-400" y="-300" width="800" height="600" fill="#FFF8EE"/><rect x="-400" y="170" width="800" height="140" fill="#F3D9B6"/>
+    <path d="M0 -176 V140 M-70 150 H70" stroke="#7F93A3" stroke-width="16" stroke-linecap="round"/>`;
+  const w = Math.min(10, 3 + Math.floor(Math.random() * 8 + lvl()));
+  const beam = el('g', { transform: 'translate(0,-176)' }, m.c);
+  el('rect', { x: -250, y: -9, width: 500, height: 18, rx: 9, fill: '#5E6B75' }, beam);
+  el('circle', { r: 20, fill: '#FFD84D', stroke: '#C9963A', 'stroke-width': 4 }, beam);
+  const panL = el('g', {}, m.c), panR = el('g', {}, m.c);
+  const pan = `<path d="M-130 0 L0 -110 L130 0" stroke="#7F93A3" stroke-width="4" fill="none"/><path d="M-130 0 Q0 60 130 0Z" fill="#FFD27A" stroke="#C9963A" stroke-width="4"/>`;
+  panL.innerHTML = pan; panR.innerHTML = pan;
+  panL.setAttribute('transform', 'translate(-200,-66)'); panR.setAttribute('transform', 'translate(200,-66)');
+  const b = el('g', { transform: 'translate(0,-2) scale(.34)' }, panL, tierSVG(P.a));
+  b.querySelectorAll('.brows,.mSad,.mOpen').forEach(n => n.style.display = 'none');
+  const stapel = el('g', {}, panR);
+  const WT = [1, 2, 2, 5].map((n, i) => ({ n, x: -255 + i * 170, y: 232, on: false, e: null }));
+  let ang = 0, gewonnen = false;
+  const draw = () => {
+    clear(stapel); let i = 0;
+    for (const t of WT) {
+      if (t.on) { el('g', { transform: `translate(${-66 + i * 44},-22)` }, stapel, `<rect x="-20" y="-22" width="40" height="42" rx="8" fill="#5E6B75"/><text y="10" text-anchor="middle" font-size="26" fill="#FFFFFF">${t.n}</text>`); i++; }
+      if (!t.e) t.e = el('g', { class: 'btn', transform: `translate(${t.x},${t.y})` }, m.ui);
+      t.e.innerHTML = `<rect x="-52" y="-46" width="104" height="92" rx="16" fill="${t.on ? '#E3ECEA' : '#5E6B75'}"/><text y="18" text-anchor="middle" font-size="54" fill="${t.on ? '#B3C0BD' : '#FFFFFF'}">${t.n}</text>`;
+    }
+  };
+  draw();
+  const sum = () => WT.reduce((a, t) => a + (t.on ? t.n : 0), 0);
+  return {
+    tick(dt) {
+      const ziel = clamp((sum() - w) * 3.5, -13, 13);
+      ang += (ziel - ang) * Math.min(1, dt * 6);
+      beam.setAttribute('transform', `translate(0,-176) rotate(${ang.toFixed(2)})`);
+      const r = ang * Math.PI / 180, dy = Math.sin(r) * 200;
+      panL.setAttribute('transform', `translate(-200,${(-66 - dy).toFixed(1)})`); panR.setAttribute('transform', `translate(200,${(-66 + dy).toFixed(1)})`);
+    },
+    down(p) {
+      if (gewonnen) return;
+      const t = WT.find(o => Math.abs(p.x - o.x) < 60 && Math.abs(p.y - o.y) < 56); if (!t) return;
+      t.on = !t.on; SFX.stick(); draw();
+      if (sum() === w) { gewonnen = true; SFX.ding(); m.later(800, () => m.win()); }
+    },
+    demo() { if (gewonnen) return null; const t = WT.find(o => !o.on) || WT[0]; return [kf(t.x, t.y - 90, 0, 0), kf(t.x, t.y, 1, 400), kf(t.x, t.y, 0, 150), kf(t.x, t.y, 0, 400)]; },
+  };
+};
+
+/* Impfen: tippen, wenn der kleiner werdende Ring genau auf dem Zielkreis liegt */
+MG.impfen = m => {
+  m.c.innerHTML = furBg(P.a);
+  const tgt = el('circle', { r: 36, fill: '#FFFFFF', 'fill-opacity': .35, stroke: '#5BBF4A', 'stroke-width': 7 }, m.c);
+  const ring = el('circle', { fill: 'none', stroke: '#F57F87', 'stroke-width': 8 }, m.c);
+  const spr = el('g', { opacity: 0 }, m.ui, `<g transform="scale(1.3)">${toolIcon('spritze')}</g>`);
+  const T = lerp(1.7, 1.05, lvl()), R0 = 170, tol = lerp(17, 10, lvl()), n = 3;
+  let x = 0, y = 0, t = 0, done = 0, r = R0, pause = .5;
+  function neu() { x = rnd(-280, 280); y = rnd(-170, 210); t = 0; tgt.setAttribute('cx', x); tgt.setAttribute('cy', y); ring.setAttribute('cx', x); ring.setAttribute('cy', y); ring.setAttribute('r', R0); tgt.setAttribute('opacity', 1); ring.setAttribute('opacity', 1); }
+  neu(); m.pips(n, 0);
+  const treffer = () => {
+    done++; m.pips(n, done); SFX.ding(); spr.setAttribute('transform', `translate(${x + 40},${y - 40})`); spr.setAttribute('opacity', 1);
+    burst(MX + x, MY + y, 8, ['#8FD0F2', '#FFFFFF'], 'star', $('fx2'));
+    ring.setAttribute('opacity', 0); tgt.setAttribute('opacity', 0); pause = .7;
+    m.later(450, () => spr.setAttribute('opacity', 0));
+    if (done >= n) m.win(); else neu2();
+  };
+  function neu2() { m.later(600, neu); }
+  return {
+    tick(dt) {
+      if (pause > 0) { pause -= dt; return; }
+      t += dt; r = lerp(R0, 0, t / T); ring.setAttribute('r', Math.max(0, r));
+      if (r <= 8) { m.fail(x, y - 60); pause = .5; neu(); }
+    },
+    down(p) {
+      if (pause > 0 || dist(p.x, p.y, x, y) > 110) return;
+      if (Math.abs(r - 36) <= tol) treffer(); else { m.fail(x, y - 60); pause = .5; neu(); }
+    },
+    demo() { return [kf(x + 90, y + 90, 0, 0), kf(x, y, 0, 400), kf(x, y, 1, Math.max(100, (t < T * .75 ? T * .78 - t : .2) * 1000)), kf(x, y, 0, 150), kf(x, y, 0, 300)]; },
+  };
+};
+
 /* Kräutertee: Rezept merken, dann die Kräuter in der richtigen Reihenfolge antippen */
 const KRAUT = {
   kamille: `${[...Array(8)].map((_, i) => `<ellipse cx="0" cy="-22" rx="9" ry="18" fill="#FFFFFF" stroke="#DDE3EA" stroke-width="2" transform="rotate(${i * 45})"/>`).join('')}<circle r="14" fill="#FFD84D" stroke="#E8A93A" stroke-width="3"/>`,
@@ -2433,10 +3008,10 @@ function openBook() {
 
   entries.forEach((en, i) => {
     const nk = KRANK_ORDER.length, links = i < nk, j = links ? i : i - nk;
-    const col = links ? j % 4 : j % 3, row = links ? Math.floor(j / 4) : Math.floor(j / 3);
-    const x = links ? 168 + col * 122 : 728 + col * 128, y = 252 + row * 196;
+    const col = links ? j % 5 : j % 3, row = links ? Math.floor(j / 5) : Math.floor(j / 3);
+    const x = links ? 150 + col * 100 : 728 + col * 128, y = 252 + row * 196;
     const have = SAVE.buch[en.id], neu = have === 2;
-    const g = el('g', { class: 'btn', transform: `translate(${x},${y})` }, m);
+    const g = el('g', { class: 'btn', transform: `translate(${x},${y}) scale(${links ? .84 : 1})` }, m);
     g.innerHTML = `<rect x="-54" y="-84" width="108" height="168" rx="18" fill="${have ? '#FFFFFF' : '#ECE7E0'}" stroke="${neu ? '#FFD84D' : '#E9D9C9'}" stroke-width="${neu ? 7 : 4}"/>
       ${have ? `<g transform="translate(0,-2) scale(${en.art === 'k' ? .47 : .92})">${en.art === 'k' ? krankBild(en.k) : toolIcon(en.k)}</g>` : `<text y="22" text-anchor="middle" font-size="66" fill="#CFC6BB">?</text>`}`;
     g.addEventListener('pointerdown', e => {
@@ -2537,7 +3112,7 @@ function coughPuff() {
 }
 
 /* ---------------- Start ---------------- */
-drawRoom(); drawDoor(); doorOpen(0); drawTable(); drawBelle(); drawClip(); drawHud();
+drawRoom(); drawDoor(); doorOpen(0); drawTable(); drawFarm(); drawBelle(); drawClip(); drawHud();
 showTitle();
 requestAnimationFrame(frame);
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});

@@ -30,6 +30,22 @@
       "hoehe": 1.22,
       "tempo": 0.97,
       "kommt": "Da kommt das kleine Schweinchen."
+    },
+    "kuh": {
+      "hoehe": 0.82,
+      "tempo": 1.1
+    },
+    "pferd": {
+      "hoehe": 0.9,
+      "tempo": 1.05
+    },
+    "schaf": {
+      "hoehe": 1.2,
+      "tempo": 1.0
+    },
+    "ziege": {
+      "hoehe": 1.15,
+      "tempo": 0.95
     }
   },
   "tiersaetze": {
@@ -45,6 +61,10 @@
     "klage_zecke": "Es juckt mich so am Hals.",
     "klage_floh": "Es juckt und juckt mich überall!",
     "klage_bauchweh": "Oh, mein Bauch tut so weh.",
+    "klage_huf": "Aua! Ich trete mit jedem Schritt auf etwas Spitzes.",
+    "klage_wolle": "Meine Wolle ist ganz verfilzt und juckt.",
+    "klage_euter": "Mein Euter ist so voll, das drückt ganz doll.",
+    "klage_futter": "Ich habe etwas Falsches gefressen. Mein Bauch grummelt.",
     "kontrolle": "Hallo Belle! Ich komme zur Kontrolle. Darf mein Gips heute ab?",
     "tschuess": "Tschüss, Belle! Danke für alles!"
   },
@@ -184,6 +204,45 @@
     "mg_zecke": "Pack die Zecke mit der Zange ganz nah an der Haut. Dann zieh sie langsam und gerade nach oben heraus. Nicht drehen und nicht quetschen!",
     "mg_floehe": "Fang die Flöhe! Tippe sie schnell an, bevor sie weghüpfen.",
     "mg_kraeuter": "Merk dir die Kräuter für den Tee. Dann tippe sie in der richtigen Reihenfolge an.",
+    "befund_lupe_huf": "Schau mal! Im Huf stecken Steine fest.",
+    "befund_kamm_wolle": "Der Kamm kommt nicht durch. Die Wolle ist ganz verfilzt.",
+    "befund_ultra_euter": "Das Euter ist randvoll mit Milch.",
+    "befund_roentgen_futter": "Auf dem Röntgenbild sieht man Steine im Bauch. Das war falsches Futter.",
+    "karte_huf": "Steine im Huf",
+    "karte_wolle": "Verfilzte Wolle",
+    "karte_euter": "Volles Euter",
+    "karte_futter": "Falsches Futter",
+    "richtig_huf": "Richtig! Steine im Huf.",
+    "richtig_wolle": "Richtig! Die Wolle muss ab.",
+    "richtig_euter": "Richtig! Das Euter ist zu voll.",
+    "richtig_futter": "Richtig! Falsches Futter.",
+    "buch_huf": "Pferde laufen auf Hufen. Wenn sich ein Stein darin verklemmt, tut jeder Schritt weh. Mit dem Hufkratzer holt man ihn heraus, und ein Hufeisen schützt den Huf.",
+    "buch_wolle": "Schafe werden einmal im Jahr geschoren. Sonst verfilzt die Wolle und juckt. Das Scheren tut gar nicht weh, es ist wie Haare schneiden.",
+    "buch_euter": "Im Euter macht die Kuh Milch. Wird sie nicht gemolken, drückt es. Nach dem Melken geht es ihr wieder gut.",
+    "buch_futter": "Ziegen knabbern alles an. Steine, Dosen und Schrauben gehören aber nicht in den Bauch. Darum sortiert man das Futter gut aus.",
+    "hof_start": "Heute machst du einen Hausbesuch auf dem Bauernhof. Die Tiere warten schon auf dich!",
+    "geburt_start": "Hier bekommt gleich ein Tier ein Baby. Du hilfst dabei!",
+    "baby_da": "Ein Tierbaby ist da! Es zieht auf die Wiese am Bauernhof. Bald kommt es zur Vorsorge in deine Praxis.",
+    "baby_kommt": "Dein Tierbaby kommt zur Vorsorge. Wiegen, füttern, impfen!",
+    "laden_start": "Das ist dein Laden. Mit deinen Sternen kaufst du schöne Sachen für deine Praxis.",
+    "schritt_hufkratzer": "Nimm den Hufkratzer und hol die Steine aus dem Huf.",
+    "schritt_hufeisen": "Jetzt bekommt der Huf ein neues Hufeisen.",
+    "schritt_schere": "Nimm die Schere. Die Wolle muss ab.",
+    "schritt_eimer": "Stell den Eimer hin und melke die Kuh.",
+    "schritt_trog": "Das Futter im Trog muss sortiert werden.",
+    "schritt_handschuh": "Zieh die Handschuhe an. Jetzt hilfst du bei der Geburt.",
+    "schritt_flasche": "Das Baby hat Hunger. Gib ihm das Fläschchen.",
+    "schritt_waage": "Zuerst wird das Baby gewogen.",
+    "schritt_spritze": "Jetzt kommt die Impfung. Die schützt vor Krankheiten.",
+    "mg_hufkratzen": "Zieh die Steine nach außen aus dem Huf. Die rosa Mitte nicht berühren, die ist empfindlich!",
+    "mg_hammer": "Hau drauf, wenn der Zeiger im grünen Feld ist.",
+    "mg_scheren": "Schneide die ganze Wolle ab. Fahr aber um die roten Stellen herum!",
+    "mg_melken": "Zieh an der Zitze, die leuchtet, nach unten. Immer abwechselnd. Die Kuh wird sonst ungeduldig!",
+    "mg_sortieren": "Tippe alles an, was nicht in den Trog gehört. Gutes Futter lässt du durch.",
+    "mg_geburt": "Halte den Finger nur drauf, wenn der Punkt oben im Grünen ist. Dann rutscht das Baby heraus.",
+    "mg_flasche": "Halte die Flasche genau am Mäulchen, auch wenn das Baby zappelt.",
+    "mg_wiegen": "Leg Gewichte auf, bis die Waage genau gerade steht.",
+    "mg_impfen": "Tippe, wenn der rosa Ring genau auf dem grünen Kreis liegt.",
     "mg_schnitt": "Fahr mit der Gipsschere genau an der gestrichelten Linie entlang."
   }
 }
