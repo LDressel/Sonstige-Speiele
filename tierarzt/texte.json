@@ -46,6 +46,22 @@
     "ziege": {
       "hoehe": 1.15,
       "tempo": 0.95
+    },
+    "elefant": {
+      "hoehe": 0.78,
+      "tempo": 1.12
+    },
+    "giraffe": {
+      "hoehe": 1.1,
+      "tempo": 1.05
+    },
+    "pinguin": {
+      "hoehe": 1.38,
+      "tempo": 0.92
+    },
+    "loewe": {
+      "hoehe": 0.76,
+      "tempo": 1.08
     }
   },
   "tiersaetze": {
@@ -61,6 +77,10 @@
     "klage_zecke": "Es juckt mich so am Hals.",
     "klage_floh": "Es juckt und juckt mich überall!",
     "klage_bauchweh": "Oh, mein Bauch tut so weh.",
+    "klage_ruessel": "Mir steckt eine Nuss im Rüssel!",
+    "klage_hals": "Mein langer Hals tut so weh.",
+    "klage_hitze": "Mir ist viel zu heiß hier!",
+    "klage_dorn": "Grrr! In meiner Pfote steckt ein Dorn!",
     "klage_huf": "Aua! Ich trete mit jedem Schritt auf etwas Spitzes.",
     "klage_wolle": "Meine Wolle ist ganz verfilzt und juckt.",
     "klage_euter": "Mein Euter ist so voll, das drückt ganz doll.",
@@ -243,6 +263,30 @@
     "mg_flasche": "Halte die Flasche genau am Mäulchen, auch wenn das Baby zappelt.",
     "mg_wiegen": "Leg Gewichte auf, bis die Waage genau gerade steht.",
     "mg_impfen": "Tippe, wenn der rosa Ring genau auf dem grünen Kreis liegt.",
+    "befund_lupe_dorn": "Da steckt ein dicker Dorn in der Pfote.",
+    "befund_thermo_hitze": "Das Thermometer zeigt Rot. Dem Pinguin ist viel zu heiß.",
+    "befund_stetho_hals": "Beim Schlucken kratzt es im Hals. Das ist Halsweh.",
+    "befund_ohr_ruessel": "Schau mal! Im Rüssel steckt eine Nuss.",
+    "karte_ruessel": "Nuss im Rüssel",
+    "karte_hals": "Halsweh",
+    "karte_hitze": "Zu heiß",
+    "karte_dorn": "Dorn in der Pfote",
+    "richtig_ruessel": "Richtig! Die Nuss muss raus.",
+    "richtig_hals": "Richtig! Halsweh.",
+    "richtig_hitze": "Richtig! Der Pinguin braucht Kälte.",
+    "richtig_dorn": "Richtig! Ein Dorn in der Pfote.",
+    "buch_ruessel": "Mit dem Rüssel atmet, riecht und greift der Elefant. Steckt etwas darin fest, bekommt er schlecht Luft. Dann muss es vorsichtig heraus.",
+    "buch_hals": "Eine Giraffe hat einen sehr langen Hals, aber nur sieben Halswirbel, genau wie du. Wenn er wehtut, tut er an einer langen Strecke weh.",
+    "buch_hitze": "Pinguine leben oft dort, wo es kalt ist. Ihr dichtes Gefieder hält sie warm. Wird es zu heiß, brauchen sie Eis und kaltes Wasser.",
+    "buch_dorn": "Ein Dorn kann tief in die Pfote stechen. Beim Löwen muss man besonders vorsichtig sein. Dem Tierarzt helfen im Zoo die Tierpfleger.",
+    "zoo_start": "Heute besuchst du den Zoo. Die wilden Tiere brauchen deine Hilfe!",
+    "schritt_leiter": "Die Giraffe ist so groß! Nimm die Leiter.",
+    "schritt_eisblock": "Der Pinguin braucht Kälte. Nimm das Eis.",
+    "schritt_fleisch": "Vorsicht, ein Löwe! Nimm das Fleisch und schleich dich an.",
+    "mg_labyrinth": "Zieh die Nuss durch den Rüssel. Stoß nicht an die Wand!",
+    "mg_klettern": "Tippe links oder rechts, wo kein Ast im Weg ist. Schnell nach oben!",
+    "mg_eisstapeln": "Tippe, damit der Eisblock genau auf den Stapel fällt.",
+    "mg_schleichen": "Halte den Finger drauf, dann schleichst du los. Aber nur, solange der Löwe schläft. Wenn er wach wird, sofort loslassen!",
     "mg_schnitt": "Fahr mit der Gipsschere genau an der gestrichelten Linie entlang."
   }
 }

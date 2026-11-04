@@ -25,3 +25,7 @@ damit das iPad die neuen Dateien holt.
 ## Aussprache
 Wörter, die falsch ausgesprochen werden, in `erzeuge.py` bei `AUSSPRACHE` eintragen
 (z. B. wird „Belle“ als „Bell“ gesprochen).
+
+## Hinweis zu Piper 1.8
+Liegt das Werkzeug in einem sehr langen Ordnerpfad, findet Piper seine Sprachdaten nicht („phontab: No such file“).
+Dann das Werkzeug in einen kurzen Ordner legen oder in `piper/phonemize_espeak.py` `ESPEAK_DATA_DIR` auf einen kurzen Verweis setzen.
